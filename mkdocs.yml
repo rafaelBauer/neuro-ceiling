@@ -1,0 +1,12 @@
+site_name: Neuro-CEILing
+
+theme:
+  name: "material"
+
+plugins:
+  - mkdocstrings
+  - plantuml-colocator
+
+nav:
+  - Neuro-CEILing: index.md
+  - Design: design/design.md
