@@ -4,6 +4,7 @@ This project ...
 
 All the dependencies are in the environment.yml file. In order to
 have them installed, all you need is to have the following installed
+
 - Python
 - Conda
 
