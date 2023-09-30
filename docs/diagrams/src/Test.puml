@@ -1,0 +1,16 @@
+@startuml LAYOUT_TOP_DOWN Sample
+!include ../include/C4-PlantUML/C4_Container.puml
+
+/' Not needed because this is the default '/
+'LAYOUT_TOP_DOWN()
+
+Person(patient, "EEG")
+Container(ros_neuro, "ROS-Neuro Acquisition", "", "")
+
+System_Boundary(c1, 'Neuro-CEILing') {
+System(ros_subscriber, "ROS-Neuro Subscriber")
+}
+
+Rel_U(ros_neuro, patient, "Samples", "rate")
+Rel(ros_neuro, ros_subscriber, "Publishes data", "ROS")
+@enduml
