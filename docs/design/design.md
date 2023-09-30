@@ -1,4 +1,3 @@
 This page is meant to show the overview and design of the project
 
-
-![Alt Text](Test.puml)
+![Context](../diagrams/out/Overview.svg)

@@ -1,0 +1,58 @@
+@startuml Overview
+
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/v2.8.0/C4_Container.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/v2.8.0/C4_Component.puml
+
+/' Not needed because this is the default '/
+'LAYOUT_TOP_DOWN()
+
+'Boundary(c3, 'Option 1') {
+System(public_eeg_data, "Public EEG Data", "Option 1")
+'}
+'Boundary(c2, 'Option 2') {
+Person(patient, "EEG")
+System(ros_neuro, "ROS-Neuro Acquisition", "Option 2", "")
+'}
+'System(robot_feedback, "Robot Feedback", "", "")
+System(camera_feedback, "Camera Feedback", "", "")
+System(gamepad_feedback, "Gamepad Feedback", "", "")
+
+System_Boundary(c1, 'Neuro-CEILing') {
+Container(eeg_data_aq, "EEG Data Acquisition", "", "Gets data and does preprocessing of the data")
+Container(eeg_action_policy, "EEG-Action Policy", "", "Braindecode at first?")
+
+Container(motion_feedback, "Motion Feedback", "", "Combines data from camera, gamepad and robot states")
+
+
+'Container(motion_commands, "Motion Command", "", "")
+
+Container(action_motion_policy, "Action-Motion Policy", "", "CEILing framework??")
+
+Container(ros_commander, "ROS-Robot Commander", "", "")
+Container(ros_listener, "ROS-Robot Listener", "", "")
+
+}
+
+System(robot, "Robot", "", "")
+
+Rel_Up(ros_neuro, patient, "Samples", "rate")
+
+'Rel_Right(robot_feedback, motion_feedback, "t", "")
+Rel_R(camera_feedback, motion_feedback, "??", "")
+Rel_R(gamepad_feedback, motion_feedback, "Sets evaluative and corrective feedback", "")
+Rel_R(gamepad_feedback, eeg_action_policy, "Sets evaluative feedback ??", "")
+Rel_U(ros_listener, motion_feedback, "Pushes Robot states feedback", "")
+Lay_U(camera_feedback, motion_feedback)
+Lay_D(gamepad_feedback, motion_feedback)
+
+Rel(ros_neuro, eeg_data_aq, "Publishes data", "ROS")
+Rel(public_eeg_data, eeg_data_aq, "Pushes data", "Same Rate as ROS")
+Rel(eeg_data_aq, eeg_action_policy, "Pushes data", "New sample? Batch?")
+
+Rel(eeg_action_policy, action_motion_policy, "Requests Action", "Action changed")
+Rel_L(motion_feedback, action_motion_policy, "N", "")
+Rel(action_motion_policy, ros_commander, "Set motion set point", "")
+Rel(ros_commander, robot, "Requests Action", "ROS")
+Rel(robot, ros_listener, "Pushes new robot state", "ROS")
+
+@enduml

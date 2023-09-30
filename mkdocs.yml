@@ -1,12 +1,30 @@
 site_name: Neuro-CEILing
+repo_url: https://github.com/rafaelBauer/neuro-ceiling
 
 theme:
   name: "material"
+  icon:
+    repo: fontawesome/brands/github
 
 plugins:
   - mkdocstrings
   - plantuml-colocator
+  - search
+  - build_plantuml:
+      render: 'server' # or "local" for local rendering
+#      bin_path: '/usr/local/bin/plantuml' # ignored when render: server
+      server: 'http://www.plantuml.com/plantuml' # official plantuml server
+      disable_ssl_certificate_validation: false # for self-signed and invalid certs
+      output_format: 'svg' # or "png"
+      diagram_root: 'docs/diagrams' # should reside under docs_dir
+      output_folder: 'out'
+      input_folder: 'src'
+      input_extensions: '' # comma separated list of extensions to parse, by default every file is parsed
+  - exclude:
+      glob:
+        - diagrams/include/C4-PlantUML/*
 
 nav:
-  - Neuro-CEILing: index.md
+  - Neuro-CEILing: 'index.md'
+  - Setup/Update Environment: environment.md
   - Design: design/design.md

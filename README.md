@@ -1,5 +1,18 @@
 # Neuro-CEILing
+This project...
 
+# Documentation
+The documentation of the project can be found in https://rafaelbauer.github.io/neuro-ceiling/
+
+As a developer, to generate the documentation locally and run it in
+localhost, run:
+```
+mkdocs serve
+```
+To publish to the github pages, run: 
+```
+mkdocs gh-deploy
+```
 # Dependencies:
 
 All the dependencies are in the environment.yml file. In order to 
@@ -7,24 +20,5 @@ have them installed, all you need is to have the following installed
  - Python
  - Conda
 
-# How to
+To see how to set up the environment, see the [set up environment page](environment.md)
 
-## Setup environment
-
-To set up the environment, one can simply create a conda environment
-based on the YAML file and activate it by running
- ```
- conda env create -f environment.yml
- conda activate neuro-ceiling
- ```
-
-### Update YAML file from environment
-```
-conda env export > environment.yml
-```
-
-### Update the environment from YAML file
-
-```
-conda env update --prefix ./env --file environment.yml  --prune
-```
