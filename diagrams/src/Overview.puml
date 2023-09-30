@@ -33,7 +33,7 @@ Container(ros_listener, "ROS-Robot Listener", "", "")
 
 }
 
-System(robot, "Robot", "", "")
+System(robot, "Robot", "", "", $sprite="robot2")
 
 Rel_Up(ros_neuro, patient, "Samples", "rate")
 
