@@ -11,7 +11,15 @@ theme:
     - content.code.annotate
 
 plugins:
-  - mkdocstrings
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            paths: [ neuroceiling ]  # search packages folder
+            docstring_style: google
+            docstring_section_style: list
+            show_docstring_attributes: true
+            merge_init_into_class: false
   - plantuml-colocator
   - search
   - build_plantuml:
@@ -41,3 +49,5 @@ nav:
   - Neuro-CEILing: 'index.md'
   - Setup/Update Environment: environment.md
   - Design: design/design.md
+  - Notes: notes.md
+  - API: api.md
