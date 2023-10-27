@@ -43,3 +43,9 @@ To perform the feedback we have:
    - Corrective feedback (human): ??
    - Comparison feedback (human): ??
 
+
+
+## QUESTIONS
+- Define function type?
+- How to get the event_codes from the dataset?
+- Create custom dataset with my events?

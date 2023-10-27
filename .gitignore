@@ -161,3 +161,5 @@ cython_debug/
 
 # Plantuml compiled files
 docs/diagrams/out/
+
+run/

@@ -1,7 +1,10 @@
+import logging
+from typing import List
+
 import braindecode
 
-from neuroceiling.configuration import NeuroCeilingConfig
-from neuroceiling.dataaquisition import IDataset
+from neuroceiling.configuration import NeuroCeilingConfig, DatasetConfig
+from neuroceiling.dataaquisition import IDataset, DatasetFactory
 
 # Necessary for preprocessing
 from braindecode.preprocessing import preprocess, Preprocessor, exponential_moving_standardize
@@ -31,9 +34,10 @@ from matplotlib.lines import Line2D
 from sklearn.metrics import confusion_matrix
 from braindecode.visualization import plot_confusion_matrix
 
-def load_dataset(configuration: NeuroCeilingConfig) -> IDataset:
+
+def load_dataset(configuration: DatasetConfig) -> IDataset:
     # Load dataset
-    _dataset: IDataset = IDataset.get_dataset(configuration.dataset_config)
+    _dataset: IDataset = DatasetFactory.get_dataset(configuration.dataset_config)
     _dataset.load_dataset()
     return _dataset
 
@@ -216,11 +220,13 @@ def train_model(_model: torch.nn.Module, batch_size: int, n_epochs: int, learnin
 
 
 if __name__ == '__main__':
-    config: NeuroCeilingConfig = NeuroCeilingConfig.load("NeuroCeiling.json")
-    dataset: IDataset = load_dataset(config)
+    logging.basicConfig()
+    logging.root.setLevel(logging.NOTSET)
+    dataset_config: DatasetConfig = DatasetConfig.load("run/DatasetConfig.json")
+    dataset: IDataset = load_dataset(dataset_config)
 
     if not dataset.raw_dataset:
-        print('!!!! No raw dataset !!!!!!')
+        logging.error('!!!! No raw dataset !!!!!!')
         exit()
 
     preprocess_dataset(dataset)
@@ -235,13 +241,14 @@ if __name__ == '__main__':
     model: torch.nn.Module = create_model(N_CLASSES, training_set[0][0].shape[0], training_set[0][0].shape[1], CUDA)
 
     BATCH_SIZE = 64
-    N_EPOCHS = 4
+    N_EPOCHS = 10
     DEVICE = 'cuda' if CUDA else 'cpu'
     LEARNING_RATE = 0.0625 * 0.01
     WEIGHT_DECAY = 0
     clf: braindecode.classifier.EEGClassifier = (train_model(model, BATCH_SIZE, N_EPOCHS,
                                                              LEARNING_RATE, WEIGHT_DECAY, CLASSES,
                                                              training_set, validation_set, DEVICE))
+
 
     # plot
     # Extract loss and accuracy values for plotting from history object
@@ -270,9 +277,8 @@ if __name__ == '__main__':
     ax1.set_xlabel("Epoch", fontsize=14)
 
     # where some data has already been plotted to ax
-    handles = []
-    handles.append(Line2D([0], [0], color='black', linewidth=1, linestyle='-', label='Train'))
-    handles.append(Line2D([0], [0], color='black', linewidth=1, linestyle=':', label='Valid'))
+    handles: list[Line2D] = [Line2D([0], [0], color='black', linewidth=1, linestyle='-', label='Train'),
+                             Line2D([0], [0], color='black', linewidth=1, linestyle=':', label='Valid')]
     plt.legend(handles, [h.get_label() for h in handles], fontsize=14)
     plt.tight_layout()
 

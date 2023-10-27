@@ -3,6 +3,7 @@ from __future__ import annotations
 from braindecode.datasets import MOABBDataset
 
 from .dataset import IDataset, DatasetBaseConfig
+import logging
 
 
 class MoabbDatasetConfig(DatasetBaseConfig):
@@ -23,5 +24,6 @@ class MoabbDataset(IDataset):
         self.__name = config.dataset_name
 
     def load_dataset(self) -> None:
-        print("Loading " + self.TYPE_NAME)
-        self._raw_dataset = MOABBDataset(dataset_name=self.__name, subject_ids=self._subject_ids)
+        logging.info("Loading dataset: %s" % self.TYPE_NAME)
+        self._raw_dataset = MOABBDataset(dataset_name=self.__name, subject_ids=self.subject_ids)
+

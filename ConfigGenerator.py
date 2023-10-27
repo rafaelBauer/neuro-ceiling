@@ -1,16 +1,29 @@
-from neuroceiling.configuration import NeuroCeilingConfig
+from neuroceiling.configuration import NeuroCeilingConfig, DatasetConfig, DataStreamConfig
 from neuroceiling.dataaquisition import MoabbDatasetConfig
-
+from neuroceiling.dataaquisition import AntNeuroCapDataStreamConfig
 
 def generate_config():
-    config = NeuroCeilingConfig("NeuroCeiling.json")
+    datasetConfig = DatasetConfig("run/DatasetConfig.json")
 
-    config.dataset_config = MoabbDatasetConfig()
-    config.dataset_config.dataset_name = "BNCI2014001"
-    config.dataset_config.subject_ids = [1]
+    datasetConfig.dataset_config = MoabbDatasetConfig()
+    datasetConfig.dataset_config.dataset_name = "BNCI2014001"
+    datasetConfig.dataset_config.subject_ids = [1]
 
-    print(config)
-    config.save()
+    datasetConfig.save()
+
+    datastreamconfig = DataStreamConfig("run/Datastream.json")
+
+    datastreamconfig.datastream_config = AntNeuroCapDataStreamConfig()
+    datastreamconfig.datastream_config.hostname = ""
+    datastreamconfig.datastream_config.stream_name = ""
+    datastreamconfig.datastream_config.subject_ids = [1]
+
+    datastreamconfig.save()
+
+    neuroCeilingConfig = NeuroCeilingConfig("run/NeuroCeiling.json")
+
+    neuroCeilingConfig.save()
+
 
 
 if __name__ == '__main__':
