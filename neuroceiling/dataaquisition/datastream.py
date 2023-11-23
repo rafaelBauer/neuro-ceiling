@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import abc
-from typing import Optional
-
-import braindecode.datasets
+from typing import Callable, Any
 
 
 class DataStreamBaseConfig:
@@ -74,7 +72,7 @@ class IDataStream(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def subscribe_to_new_data(self, callback_func) -> None:     # return subscription handle afterwards
+    def subscribe_to_new_data(self, callback_func: Callable[[tuple[list, Any]], None]) -> None:     # return subscription handle afterwards
         """
 
         :param callback_func: Function to be called when a new datapoint is available

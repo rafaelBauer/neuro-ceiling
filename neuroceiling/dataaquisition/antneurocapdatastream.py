@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import threading
 
-from typing import Optional
+from typing import Optional, Callable, Any
 import logging
 
 from .datastream import IDataStream, DataStreamBaseConfig
@@ -103,7 +103,7 @@ class AntNeuroCapDataStream(IDataStream):
         self.__current_stream_info = streams[0]
         return True
 
-    def subscribe_to_new_data(self, callback_func) -> None:
+    def subscribe_to_new_data(self, callback_func: Callable[[tuple[list, Any]], None]) -> None:
         # TODO: Make possible to unsubscribe from it.. maybe a subscription handle.
         self.__callbacks.append(callback_func)
 
@@ -111,12 +111,12 @@ class AntNeuroCapDataStream(IDataStream):
         """
         Opens the stream, so we start to receive data
 
-        In order to open the stream, the stream name must have been specified, otherwise there could be
+        To open the stream its name must have been specified, otherwise there could be
         multiple streams available, and we would not know which stream to get the data from.
 
         In case the stream name is not defined, this method will print to the user the available streams as well as
         their names, so the user can define the correct name and open the stream.
-        :return: if the open was successful
+        :return: If the open was successful
         """
         # This should never happen, but in case it does, we first close the previously opened stream
         self.stop_stream()
@@ -140,7 +140,7 @@ class AntNeuroCapDataStream(IDataStream):
                 if new_sample:
                     for callback in self.__callbacks:
                         callback(new_sample)
-            self.__is_polling_stream.wait(0.05)  # waits for 50 ms.
+            self.__is_polling_stream.wait(0.01)  # waits for 10 ms.
 
     def stop_stream(self) -> bool:
         if self.__stream_inlet:
