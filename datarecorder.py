@@ -1,6 +1,8 @@
 import logging
 from typing import Any
 
+import pylsl
+
 from neuroceiling.configuration import DataStreamConfig
 from neuroceiling.dataaquisition import IDataStream, DataStreamFactory
 
@@ -25,8 +27,9 @@ def main() -> None:
         pass
 
 
-def new_data_callback(new_data: tuple[list, Any]) -> None:
-    print("New data received: " + new_data.__str__())
+def new_data_callback(timestamp: float, new_data: list) -> None:
+    print("Local clock: " + pylsl.local_clock() + "Time LSL: " + timestamp.__str__() + " Data: " + new_data.__str__())
+    
     gamepad.get_label()
 
 

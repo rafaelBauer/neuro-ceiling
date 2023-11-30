@@ -22,7 +22,6 @@ dependencies:
   - xz=5.4.2
   - zlib=1.2.13
   - pip:
-      - babel==2.12.1
       - braindecode==0.7
       - certifi==2023.7.22
       - charset-normalizer==3.2.0
@@ -73,13 +72,9 @@ dependencies:
       - pooch==1.7.0
       - psutil==5.9.5
       - pygments==2.16.1
-      - pylsl==1.16.1
+      - pylsl==1.16.2
       - pymdown-extensions==10.3
       - pynput==1.7.6
-      - pyobjc-core==10.0
-      - pyobjc-framework-applicationservices==10.0
-      - pyobjc-framework-cocoa==10.0
-      - pyobjc-framework-quartz==10.0
       - pyparsing==3.1.1
       - pyriemann==0.3
       - python-dateutil==2.8.2

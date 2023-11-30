@@ -27,7 +27,6 @@ class AntNeuroCapDataStreamConfig(DataStreamBaseConfig):
         super().__init__("AntNeuroCapDataStream")
         self.hostname: str = ""
         self.stream_name: str = ""
-        self.store_to_file_name: str = ""
 
 
 class AntNeuroCapDataStream(IDataStream):
@@ -44,14 +43,13 @@ class AntNeuroCapDataStream(IDataStream):
         # Constants that should not be changed during the lifetime of the object
         self.__STREAM_NAME = config.stream_name
         self.__HOSTNAME = config.hostname
-        self.__STORE_TO_FILE_NAME = config.store_to_file_name
 
         self.__stream_inlet: Optional[StreamInlet] = None
         self.__current_stream_info: Optional[StreamInfo] = None
 
         self.__polling_thread: Optional[threading.Thread] = None
         self.__is_polling_stream: threading.Event = threading.Event()
-        self.__callbacks = []
+        self.__callbacks: [Callable[[tuple[list, float, list[float]]], None]] = []
 
     def setup_stream(self) -> bool:
         """
@@ -103,7 +101,7 @@ class AntNeuroCapDataStream(IDataStream):
         self.__current_stream_info = streams[0]
         return True
 
-    def subscribe_to_new_data(self, callback_func: Callable[[tuple[list, Any]], None]) -> None:
+    def subscribe_to_new_data(self, callback_func: Callable[[tuple[list, float, list[float]]], None]) -> None:
         # TODO: Make possible to unsubscribe from it.. maybe a subscription handle.
         self.__callbacks.append(callback_func)
 
@@ -136,10 +134,10 @@ class AntNeuroCapDataStream(IDataStream):
     def __poll_stream(self) -> None:
         while self.__is_polling_stream.is_set():
             if self.__stream_inlet.samples_available() > 0:
-                new_sample = self.__stream_inlet.pull_sample(self.__REQUESTS_TIMEOUT_S)
+                new_sample, timestamp = self.__stream_inlet.pull_sample(self.__REQUESTS_TIMEOUT_S)
                 if new_sample:
                     for callback in self.__callbacks:
-                        callback(new_sample)
+                        callback(timestamp, new_sample)
             self.__is_polling_stream.wait(0.01)  # waits for 10 ms.
 
     def stop_stream(self) -> bool:
