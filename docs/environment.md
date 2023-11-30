@@ -10,7 +10,7 @@ conda activate neuro-ceiling
 
 ### Update YAML file from environment
 ```
-conda env export > environment.yml
+conda env export -f environment.yml --no-builds
 ```
 
 ### Update the environment from YAML file
