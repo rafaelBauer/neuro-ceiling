@@ -10,10 +10,10 @@ from pylsl import StreamInfo, StreamOutlet, local_clock
 
 
 def main(argv):
-    srate = 100
-    name = 'BioSemi'
+    srate = 50
+    name = 'EE225-000000-000573'
     type = 'EEG'
-    n_channels = 8
+    n_channels = 66
     help_string = 'SendData.py -s <sampling_rate> -n <stream_name> -t <stream_type>'
     try:
         opts, args = getopt.getopt(argv, "hs:c:n:t:", longopts=["srate=", "channels=", "name=", "type"])
