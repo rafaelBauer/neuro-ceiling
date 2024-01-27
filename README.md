@@ -22,4 +22,7 @@ have them installed, all you need is to have the following installed
 
 To see how to set up the environment, see the [set-up environment page](docs/environment.md)
 
-Computer hostname MININT-GB4BDRJ.imbit.privat
+EEG computer hostname MININT-GB4BDRJ.imbit.privat
+
+Hiwi computer IP 10.4.28.101
+

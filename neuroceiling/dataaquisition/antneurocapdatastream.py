@@ -7,7 +7,7 @@ import logging
 
 from .datastream import IDataStream, DataStreamBaseConfig
 
-from pylsl import StreamInlet, resolve_stream, StreamInfo
+from pylsl import StreamInlet, resolve_stream, StreamInfo, proc_clocksync
 
 
 class AntNeuroCapDataStreamConfig(DataStreamBaseConfig):
@@ -27,6 +27,7 @@ class AntNeuroCapDataStreamConfig(DataStreamBaseConfig):
         super().__init__("AntNeuroCapDataStream")
         self.hostname: str = ""
         self.stream_name: str = ""
+        self.max_samples_per_chunk: int = 100
 
 
 class AntNeuroCapDataStream(IDataStream):
@@ -43,6 +44,7 @@ class AntNeuroCapDataStream(IDataStream):
         # Constants that should not be changed during the lifetime of the object
         self.__STREAM_NAME = config.stream_name
         self.__HOSTNAME = config.hostname
+        self.__MAX_SAMPLES_PER_CHUNK = config.max_samples_per_chunk
 
         self.__stream_inlet: Optional[StreamInlet] = None
         self.__current_stream_info: Optional[StreamInfo] = None
@@ -120,7 +122,8 @@ class AntNeuroCapDataStream(IDataStream):
         self.stop_stream()
 
         # create a new inlet to read from the stream
-        self.__stream_inlet = StreamInlet(self.__current_stream_info)
+        self.__stream_inlet = StreamInlet(self.__current_stream_info, processing_flags=proc_clocksync)
+
         logging.info("Opening LSL stream %s in hostname %s" % (
         self.__current_stream_info.name(), self.__current_stream_info.hostname()))
         self.__stream_inlet.open_stream(self.__REQUESTS_TIMEOUT_S)
@@ -134,7 +137,8 @@ class AntNeuroCapDataStream(IDataStream):
     def __poll_stream(self) -> None:
         while self.__is_polling_stream.is_set():
             if self.__stream_inlet.samples_available() > 0:
-                new_sample, timestamp = self.__stream_inlet.pull_sample(self.__REQUESTS_TIMEOUT_S)
+                [new_sample, timestamp] = self.__stream_inlet.pull_chunk(self.__REQUESTS_TIMEOUT_S,
+                                                                         max_samples=self.__MAX_SAMPLES_PER_CHUNK)
                 if new_sample:
                     for callback in self.__callbacks:
                         callback(timestamp, new_sample)
