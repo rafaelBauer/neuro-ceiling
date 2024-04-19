@@ -1,13 +1,13 @@
 from neuroceiling.configuration import NeuroCeilingConfig, DatasetConfig, DataStreamConfig
 from neuroceiling.dataaquisition import MoabbDatasetConfig
-from neuroceiling.dataaquisition import AntNeuroCapDataStreamConfig
+from neuroceiling.dataaquisition import AntNeuroCapDataStreamConfig, XdfFileConfig
 
 def generate_config():
     datasetConfig = DatasetConfig("run/DatasetConfig.json")
 
-    datasetConfig.dataset_config = MoabbDatasetConfig()
-    datasetConfig.dataset_config.dataset_name = "BNCI2014001"
-    datasetConfig.dataset_config.subject_ids = [1]
+    datasetConfig.dataset_config = XdfFileConfig()
+    datasetConfig.dataset_config.filename = "run/sub-P001/ses-S001/eeg/sub-P001_ses-S001_task-Default_run-001_eeg.xdf"
+    # datasetConfig.dataset_config.subject_ids = [1]
 
     datasetConfig.save()
 

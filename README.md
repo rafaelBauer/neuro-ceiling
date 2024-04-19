@@ -1,6 +1,14 @@
 # Neuro-CEILing
 This project...
 
+# Dependencies
+
+This project depends on the following software packages:
+- Python >= 3.10
+- ManiSkill2
+- Pinnochio
+- 
+
 # Documentation
 The documentation of the project can be found in https://rafaelbauer.github.io/neuro-ceiling/
 
@@ -22,7 +30,4 @@ have them installed, all you need is to have the following installed
 
 To see how to set up the environment, see the [set-up environment page](docs/environment.md)
 
-EEG computer hostname MININT-GB4BDRJ.imbit.privat
-
-Hiwi computer IP 10.4.28.101
 

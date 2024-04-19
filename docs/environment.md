@@ -1,4 +1,4 @@
-## Setup environment
+## Setup Conda environment
 
 To set up the environment, one can simply create a conda environment
 based on the YAML file and activate it by running

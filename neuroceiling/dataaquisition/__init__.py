@@ -3,4 +3,5 @@ from .datastream import DataStreamBaseConfig, IDataStream, DataStreamFactory
 
 from .moabbdataset import MoabbDatasetConfig
 from .antneurocapdatastream import AntNeuroCapDataStreamConfig
+from .xdffile import XdfFileConfig
 

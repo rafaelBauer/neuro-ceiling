@@ -46,6 +46,8 @@ To perform the feedback we have:
 
 
 ## QUESTIONS
-- Define function type?
 - How to get the event_codes from the dataset?
 - Create custom dataset with my events?
+- I am creating an MNE dataset from my dataset, so then I can create an annotated BrainDecode 
+dataset, but as far as I understand, I can only generate discrete events "either 1 or -1", not "0.9".
+Could this be a problem for the future, when we integrate the robot?

@@ -27,3 +27,4 @@ class MoabbDataset(IDataset):
         logging.info("Loading dataset: %s" % self.TYPE_NAME)
         self._raw_dataset = MOABBDataset(dataset_name=self.__name, subject_ids=self.subject_ids)
 
+
