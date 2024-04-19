@@ -1,0 +1,22 @@
+
+# Install the dependencies for ManiSkill2
+-r ./thirdparty/ManiSkill2/requirements.txt
+# Install ManiSkill2 as development mode
+-e ./thirdparty/ManiSkill2
+
+
+# To generate documentation
+mkdocs
+
+# To read serialize and de-serialize objects (configuration, classes for example)
+jsonpickle
+
+# ===== EEG libraries =====
+pylsl==1.16.2       # To get EEG data via LSL
+braindecode==0.8.1  # To decode EEG data into labels
+
+# ====== Utils =======
+pynput==1.7.6   # To get keyboard inputs
+loguru          # Logging library
+omegaconf       # To manage configurations
+matplotlib      # plots
