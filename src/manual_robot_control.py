@@ -11,7 +11,7 @@ from omegaconf import MISSING, DictConfig, OmegaConf, SCMode
 from tqdm.auto import tqdm
 
 import utils.logging  # noqa
-from dataset.scene import SceneDataset, SceneDatasetConfig
+# from dataset.scene import SceneDataset, SceneDatasetConfig
 from envs import create_environment  # , Environment
 from envs.environment import BaseEnvironmentConfig
 # from policy import PolicyEnum, get_policy_class

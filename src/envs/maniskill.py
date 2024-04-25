@@ -71,7 +71,7 @@ class ManiSkillEnvironmentConfig(BaseEnvironmentConfig):
 
 
 class ManiSkillEnv(BaseEnvironment):
-    __RENDER_MODE: str = "cameras"
+    __RENDER_MODE: str = "human"
     __CONTROL_MODE: str = "pd_ee_delta_pose"
 
     # -------------------------------------------------------------------------- #
@@ -118,15 +118,15 @@ class ManiSkillEnv(BaseEnvironment):
     # -------------------------------------------------------------------------- #
     # Visualization
     # -------------------------------------------------------------------------- #
-    def render(self) -> None:
-        if not self.__HEADLESS:
-            if self.__render_sapien:
-                self.__env.render_human()
-            else:
-                obs = self.__env.render_cameras()
-                # self.cam_win_title
-                cv2.imshow("test", obs)
-                cv2.waitKey(1)
+    # def render(self) -> None:
+    #     if not self.__HEADLESS:
+    #         if self.__render_sapien:
+    #             self.__env.render_human()
+    #         else:
+    #             obs = self.__env.render_cameras()
+    #             # self.cam_win_title
+    #             cv2.imshow("test", obs)
+    #             cv2.waitKey(1)
 
     # -------------------------------------------------------------------------- #
     # Reset
@@ -217,7 +217,7 @@ class ManiSkillEnv(BaseEnvironment):
         # obs: SceneObservation = self.__process_observation(next_obs)
         obs = next_obs
 
-        self.render()
+        self.__env.render()
 
         return obs, reward, done, info
 
