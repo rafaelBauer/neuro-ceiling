@@ -8,14 +8,18 @@ import numpy as np
 from loguru import logger
 from omegaconf import MISSING
 
-from utils.geometry_np import (
-    axis_angle_to_quaternion,
-    euler_to_quaternion,
-    normalize_quaternion,
-    quat_real_first_to_real_last,
-    quaternion_to_axis_angle,
-)
+from utils.geometry_np import axis_angle_to_quaternion, quaternion_to_axis_angle
 from utils.observation import SceneObservation
+
+
+# from utils.geometry_np import (
+#     axis_angle_to_quaternion,
+#     euler_to_quaternion,
+#     normalize_quaternion,
+#     quat_real_first_to_real_last,
+#     quaternion_to_axis_angle,
+# )
+# from utils.observation import SceneObservation
 
 
 def squash(array, order=20):
@@ -92,67 +96,44 @@ class GripperPlot:
         self.set_data(1)
 
 
-@dataclass
 class BaseEnvironmentConfig:
-    task: str
+    def __init__(self, ENV_TYPE : str):
+        self.__ENV_TYPE: str = ENV_TYPE
 
-    cameras: tuple[str, ...]
-    # dict-value is numerical 7tuple, but OmegaConf cant handel that annotation
-    camera_pose: dict[str, Any]
-    image_size: tuple[int, int]
-
-    static_env: bool
-    headless_env: bool
-
-    scale_action: bool
-    delay_gripper: bool
-
-    gripper_plot: bool
-
-    # NOTE: these are always needed and postprocess_actions should always
-    # default to True. However, inheritance for dataclasses in Python does not
-    # allow to. When defining it here, and defining a default, or giving the
-    # default in the subclass (like we would for env), the attribute becomes a
-    # default argument of the constructor, after which no non-default arguments
-    # can follow, ie in the subclass we cannot define any non-default arguments
-    # TODO: find a decent workaround.
-    # env: str   # = MISSING  # Set in subclasses
-    # postprocess_actions: bool # = True
+    @property
+    def env_type(self) -> str:
+        return self.__ENV_TYPE
 
 
 class BaseEnvironment(ABC):
     def __init__(self, config: BaseEnvironmentConfig) -> None:
-        self.config = config
+        self.CONFIG: BaseEnvironmentConfig = config
 
-        self.do_postprocess_actions = config.postprocess_actions
-        self.do_scale_action = config.scale_action
-        self.do_delay_gripper = config.delay_gripper
+        self.do_postprocess_actions = False     # config.postprocess_actions
+        self.do_scale_action = False            # config.scale_action
+        self.do_delay_gripper = False           # config.delay_gripper
 
-        image_size = config.image_size
+        image_size = (256, 256)                 # config.image_size
 
         self.image_height, self.image_width = image_size
 
-        self.gripper_plot = GripperPlot(not config.gripper_plot)
+        self.gripper_plot = GripperPlot(False) # (not config.gripper_plot)
         self.gripper_open = 0.9
+        self.gripper_deque = None
 
-        self.queue_length = 4
-        self.gripper_deque = deque([0.9] * self.queue_length, maxlen=self.queue_length)
-
-        # Scale actions from [-1,1] to the actual action space, ie transtions
-        # in meters etc.
-        self._delta_pos_scale = 0.01
-        self._delta_angle_scale = 0.04
-
-    def reset(self) -> None:
+    def reset(self, **kwargs) -> None:
         """
         Reset the environment to a new episode. In the BaseEnvironment, this
         only resets the gripper plot.
+        :param kwargs: Not used by base
+        :return:
         """
+
         if self.gripper_plot:
             self.gripper_plot.reset()
 
         self.gripper_open = 0.9
-        self.gripper_deque = deque([0.9] * self.queue_length, maxlen=self.queue_length)
+        # self.gripper_deque = deque([0.9] * self.queue_length, maxlen=self.queue_length)
 
     def step(self, action: np.ndarray) -> tuple[SceneObservation, float, bool, dict]:
         """
@@ -180,40 +161,41 @@ class BaseEnvironment(ABC):
 
     @abstractmethod
     def _step(
-        self,
-        action: np.ndarray,
-        postprocess: bool = True,
-        delay_gripper: bool = True,
-        scale_action: bool = True,
+            self,
+            action: np.ndarray,
+            postprocess: bool = True,
+            delay_gripper: bool = True,
+            scale_action: bool = True,
     ) -> tuple[SceneObservation, float, bool, dict]:
         """
         Postprocess the action and execute it in the environment.
         """
         raise NotImplementedError
 
-    def render(self) -> None:
+    @abstractmethod
+    def start(self) -> None:
         """
-        Explicit render function for simulated environments. Currently only
-        used when replaying the downloaded demos from ManiSkill.
-        In the BaseEnvironment, this does nothing.
+        Starts the environment. In the real word would open the connections and do everything needed to allow the
+        interactions. In the simulation, it creates the environment.
+
+        :return:
         """
-        return
 
     @abstractmethod
-    def close(self):
+    def close(self) -> None:
         """
         Gracefully close the environment.
         """
         raise NotImplementedError
 
     def postprocess_action(
-        self,
-        action: np.ndarray,
-        prediction_is_quat: bool = True,
-        scale_action: bool = False,
-        delay_gripper: bool = False,
-        trans_scale: float | None = None,
-        rot_scale: float | None = None,
+            self,
+            action: np.ndarray,
+            prediction_is_quat: bool = True,
+            scale_action: bool = False,
+            delay_gripper: bool = False,
+            trans_scale: float | None = None,
+            rot_scale: float | None = None,
     ) -> np.ndarray:
         """
         Postprocess the action predicted by the policy for the action space of
@@ -268,54 +250,6 @@ class BaseEnvironment(ABC):
 
         return np.concatenate((delta_position, delta_rot_env, gripper))
 
-    def postprocess_quat_to_quat(self, quat: np.ndarray) -> np.ndarray:
-        """
-        Postprocess quat action to match environment quat convention.
-        RLBench uses real last, everything else uses real first.
-        """
-        return quat
-
-    def delay_gripper(self, gripper_action: float) -> float:
-        """
-        Delay gripper action, ie. only open/close gripper if the gripper action
-        is constant over the last few steps (self.queue_length).
-        Useful to smooth noisy gripper actions predicted by neural networks.
-
-        Parameters
-        ----------
-        gripper_action : float
-            The current gripper action.
-
-        Returns
-        -------
-        float
-            The smoothed/delayed gripper action.
-        """
-        if gripper_action >= 0.0:
-            gripper_action = 0.9
-        elif gripper_action < 0.0:
-            gripper_action = -0.9
-
-        self.gripper_plot.set_data(gripper_action)
-        self.gripper_deque.append(gripper_action)
-
-        if all(x == 0.9 for x in self.gripper_deque):
-            self.gripper_open = 1
-
-        elif all(x == -0.9 for x in self.gripper_deque):
-            self.gripper_open = 0
-
-        return self.gripper_open
-
-    def update_visualization(self, info: dict) -> None:
-        """
-        Update additional visualizations hosted by the environment.
-        Currently only used by franka env. And even that is a bit of a hack.
-
-        TODO Should move this outside of the environment class or use it more
-        consistently.
-        """
-        pass
 
     def postprocess_quat_action(self, quaternion: np.ndarray) -> np.ndarray:
         """
@@ -334,57 +268,6 @@ class BaseEnvironment(ABC):
         """
         raise NotImplementedError
 
-    def get_inverse_kinematics(self, target_pose: np.ndarray) -> np.ndarray:
-        """
-        Get the inverse kinematics of the robot for a given target pose.
-
-        Overwrite this method in the environment subclass to ensure that quaternion conventions are respected and that the proper ik model is used.
-
-        Parameters
-        ----------
-        target_pose : np.ndarray
-            The target pose.
-
-        Returns
-        -------
-        np.ndarray
-            The inverse kinematics for the target pose.
-        """
-        raise NotImplementedError
-
-    def _get_state(self) -> Any:
-        logger.info("No state to save for this environment.")
-
-    def _set_state(self, state: Any) -> None:
-        logger.info("No state to restore for this environment.")
-
-    def _get_action_mode(self) -> Any:
-        logger.info("No need to save action mode for this environment.")
-
-    def _set_action_mode(self, action_mode: Any) -> None:
-        logger.info("No need to restore action mode for this environment.")
-
+    @abstractmethod
     def reset_joint_pose(self) -> None:
         raise NotImplementedError("Need to implement in child class.")
-
-
-class RestoreEnvState:
-    def __init__(self, env):
-        self.env = env
-
-    def __enter__(self):
-        self.state = self.env._get_state()
-
-    def __exit__(self, type, value, traceback):
-        self.env._set_state(self.state)
-
-
-class RestoreActionMode:
-    def __init__(self, env):
-        self.env = env
-
-    def __enter__(self):
-        self.action_mode = self.env._get_action_mode()
-
-    def __exit__(self, type, value, traceback):
-        self.env._set_action_mode(self.action_mode)

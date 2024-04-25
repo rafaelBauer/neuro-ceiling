@@ -5,6 +5,7 @@ https://github.com/robot-learning-freiburg/CEILing/blob/main/src/utils.py
 from __future__ import annotations
 
 import sys
+from enum import Enum
 from typing import Callable, Optional
 import numpy as np
 from numpy import bool_
@@ -12,6 +13,12 @@ from pynput import keyboard
 from functools import partial
 import time
 import threading
+
+
+class HumanFeedback(Enum):
+    CORRECTED = -1
+    BAD = 0
+    GOOD = 1
 
 
 class KeyboardObserver:
@@ -28,8 +35,8 @@ class KeyboardObserver:
         self.__direction_lock: threading.Lock = threading.Lock()
         self.__hotkeys = keyboard.GlobalHotKeys(
             {
-                "g": partial(self.__set_label, 1),  # good
-                "b": partial(self.__set_label, 0),  # bad
+                "g": partial(self.__set_label, HumanFeedback.GOOD),
+                "b": partial(self.__set_label, HumanFeedback.BAD),  # bad
                 "c": partial(self.__set_gripper, -0.9),  # close
                 "v": partial(self.__set_gripper, 0.9),  # open
                 "f": partial(self.__set_gripper, 0),  # gripper free
@@ -59,7 +66,6 @@ class KeyboardObserver:
             "u": (5, -1),  # rotate left
             "o": (5, 1),  # rotate right
         }
-
 
         self.__label_callbacks: [Callable[[int], None]] = []
         self.__gripper_callbacks: [Callable[[float], None]] = []
@@ -117,6 +123,15 @@ class KeyboardObserver:
         with self.__gripper_lock:
             return self.__gripper
 
+    @property
+    def is_gripper_commanded(self) -> bool:
+        """
+        Method to verify weather there is any active gripper command
+        :return: If there is any gripper direction command, otherwise False
+        """
+        with self.__gripper_lock:
+            return abs(self.__gripper - 0) <= 0.000001
+
     def __set_direction(self, key) -> None:
         with self.__direction_lock:
             try:
@@ -153,13 +168,22 @@ class KeyboardObserver:
         with self.__direction_lock:
             return self.__direction
 
-    def has_joints_cor(self) -> np.bool_:
+    @property
+    def is_direction_commanded(self) -> bool:
+        """
+        Method to verify weather there is any active direction command
+        :return: If there is any active direction command, otherwise False
+        """
         with self.__direction_lock:
-            return self.__direction.any()
+            return np.count_nonzero(self.__direction) != 0
 
-    def has_gripper_update(self) -> bool:
-        with self.__gripper_lock:
-            return self.gripper is not None
+    # def has_joints_cor(self) -> np.bool_:
+    #     with self.__direction_lock:
+    #         return self.__direction.any()
+    #
+    # def has_gripper_update(self) -> bool:
+    #     with self.__gripper_lock:
+    #         return self.gripper is not None
 
     def get_ee_action(self) -> np.array:
         with self.__direction_lock:
@@ -173,7 +197,6 @@ class KeyboardObserver:
 
     def subscribe_callback_to_reset(self, callback_func: Callable[[], None]) -> None:
         self.__reset_callbacks.append(callback_func)
-
 
     @classmethod
     def __call_callbacks(cls, callbacks, value) -> None:

@@ -1,0 +1,10 @@
+[project]
+name = "neuro-ceiling"
+version = "0.1"
+requires-python = ">= 3.10"
+authors = [
+    {name = "Rafael Andrioli Bauer", email = "abauer.rafael@gmail.com"},
+]
+description = "..."
+readme = "README.md"
+license = {file = "LICENSE"}

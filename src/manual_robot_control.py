@@ -18,12 +18,6 @@ from envs.environment import BaseEnvironmentConfig
 from utils.argparse import parse_and_build_config
 from utils.config import ConfigBase
 from utils.keyboard_observer import KeyboardObserver
-from utils.misc import (
-    DataNamingConfig,
-    get_dataset_name,
-    get_full_task_name,
-    loop_sleep,
-)
 
 
 # from utils.random import configure_seeds
@@ -31,21 +25,9 @@ from utils.misc import (
 
 @dataclass
 class Config(ConfigBase):
-    # n_episodes: int
-    # sequence_len: int | None
-    #
-    # data_naming: DataNamingConfig
-    # dataset_config: SceneDatasetConfig
-
-    # env: Environment
     env_config: BaseEnvironmentConfig
-
     # policy: PolicyEnum
     # policy_config: Any
-
-    # pretraining_data: bool = MISSING
-
-    # horizon: int | None = 300  # None
 
 
 def parse_args() -> DictConfig:

@@ -1,19 +1,34 @@
 
 # Install the dependencies for ManiSkill2
-mani-skill2
+mani-skill
+gymnasium
+opencv-python
+# sapien
+
+# Motion planner
+mplib
 
 # To generate documentation
 mkdocs
+pylint
 
 # To read serialize and de-serialize objects (configuration, classes for example)
 jsonpickle
 
 # ===== EEG libraries =====
-pylsl==1.16.2       # To get EEG data via LSL
-braindecode==0.8.1  # To decode EEG data into labels
+pylsl
+mne
+braindecode
 
 # ====== Utils =======
-pynput==1.7.6   # To get keyboard inputs
+pynput
 loguru          # Logging library
 omegaconf       # To manage configurations
 matplotlib      # plots
+tqdm            # Library to show progress on the bash
+numpy
+torch
+tensordict
+pandas
+skorch
+scikit-learn

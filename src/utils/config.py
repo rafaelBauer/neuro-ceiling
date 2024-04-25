@@ -6,6 +6,7 @@ from typing import Any  # , NewType
 import jsonpickle
 from omegaconf import DictConfig, OmegaConf
 
+
 # Sentinel value to indicate that a value is to be set programmatically.
 # Can't implement sentinal value as a class because of OmegaConf, which does
 # not allow custom classes in type hints. Hence, using enum instead.
@@ -107,3 +108,11 @@ def recursive_compare_dataclass(d1: Any, d2: Any) -> str:
         return "Mismatched types: {} != {}".format(type(d1), type(d2))
     else:
         return recursive_compare_dict(dataclasses.asdict(d1), dataclasses.asdict(d2))
+
+
+class ConfigBase:
+    def __init__(self):
+        pass
+
+    def to_yaml(self) -> str:
+        return OmegaConf.to_yaml(self, resolve=True)

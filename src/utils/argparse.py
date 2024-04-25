@@ -12,14 +12,13 @@ def resolve_tuple(*args):
 OmegaConf.register_new_resolver("as_tuple", resolve_tuple)
 
 
-def parse_args(
-    data_load: bool, need_task: bool, extra_args: tuple = tuple()
-) -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
+def parse_args(program_description: str,data_load: bool, need_task: bool, extra_args: tuple = tuple()) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=program_description)
     parser.add_argument(
         "-c",
         "--config",
         required=True,
+        type=str,
         help="Path to config file to use.",
     )
 
@@ -28,6 +27,7 @@ def parse_args(
             "-t",
             "--task",
             default="PhoneOnBase",
+            type=str,
             help="Name of the task to train on.",
         )
 
@@ -36,6 +36,7 @@ def parse_args(
             "-f",
             "--feedback_type",
             default="pretrain_manual",
+            type=str,
             help="The training data type. Cloning, dcm, ...",
         )
         parser.add_argument(
@@ -54,8 +55,8 @@ def parse_args(
         nargs="+",
         default=[],
         help="Overwrite config values. Format: key=value. Keys need to be "
-        "fully qualified. E.g. "
-        "'training.steps=1000 observation.cameras=overhead'",
+             "fully qualified. E.g. "
+             "'training.steps=1000 observation.cameras=overhead'",
     )
 
     args = parser.parse_args()
@@ -64,8 +65,7 @@ def parse_args(
 
 
 def build_config(
-    data_load: bool, need_task: bool, args: argparse.Namespace
-) -> DictConfig:
+        data_load: bool, need_task: bool, args: argparse.Namespace) -> DictConfig:
     conf_file = import_config_file(args.config)
     config = conf_file.config
     config = OmegaConf.structured(config)
@@ -84,10 +84,8 @@ def build_config(
     return config
 
 
-def parse_and_build_config(
-    data_load: bool = True, need_task: bool = True, extra_args: tuple = tuple()
-) -> tuple[argparse.Namespace, DictConfig]:
-    args = parse_args(data_load, need_task, extra_args)
+def parse_and_build_config(program_description: str, data_load: bool = False, need_task: bool = False, extra_args: tuple = tuple()) -> tuple[argparse.Namespace, DictConfig]:
+    args = parse_args(program_description, data_load, need_task, extra_args)
     config = build_config(data_load, need_task, args)
 
     return args, config
