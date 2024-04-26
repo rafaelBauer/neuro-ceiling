@@ -18,6 +18,8 @@ from envs.environment import BaseEnvironmentConfig
 from utils.argparse import get_config_from_args
 from utils.config import ConfigBase
 from utils.keyboard_observer import KeyboardObserver
+
+
 # from utils.misc import (
 #     DataNamingConfig,
 #     get_dataset_name,
@@ -128,7 +130,7 @@ def main() -> None:
 
     # policy = Policy(config.policy_config, env=env, keyboard_obs=keyboard_obs)
 
-#    obs = env.reset()
+    #    obs = env.reset()
 
     time.sleep(5)
 

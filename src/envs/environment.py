@@ -62,6 +62,7 @@ class BaseEnvironment(ABC):
     reset_joint_pose() -> None
         Resets the joint pose. This method is abstract and should be implemented in child classes.
     """
+
     def __init__(self, config: BaseEnvironmentConfig) -> None:
         """
         Constructs all the necessary attributes for the BaseEnvironment object.

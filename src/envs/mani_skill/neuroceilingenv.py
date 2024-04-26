@@ -36,6 +36,7 @@ from mani_skill.utils.structs.types import GPUMemoryConfig, SimConfig
 
 __ENV_NAME__: str = "NeuroCeilingEnv-v0"
 
+
 # register the environment by a unique ID and specify a max time limit. Now once this file is imported you can do
 # gym.make("CustomEnv-v0")
 @register_env(__ENV_NAME__, max_episode_steps=200)

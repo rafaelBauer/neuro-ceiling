@@ -2,6 +2,7 @@ from neuroceiling.configuration import NeuroCeilingConfig, DatasetConfig, DataSt
 from neuroceiling.dataaquisition import MoabbDatasetConfig
 from neuroceiling.dataaquisition import AntNeuroCapDataStreamConfig, XdfFileConfig
 
+
 def generate_config():
     datasetConfig = DatasetConfig("run/DatasetConfig.json")
 
@@ -23,7 +24,6 @@ def generate_config():
     neuroCeilingConfig = NeuroCeilingConfig("run/NeuroCeiling.json")
 
     neuroCeilingConfig.save()
-
 
 
 if __name__ == '__main__':
