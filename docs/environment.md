@@ -26,3 +26,12 @@ Download an example ReplicaCAD scene from Habitat
 wget https://dl.fbaipublicfiles.com/habitat/ReplicaCAD/hab2_bench_assets.zip -P data
 cd data && unzip -q hab2_bench_assets.zip -d hab2_bench_assets
 ```
+
+## Remote Development X11 Forwarding
+To use it make sure the ~/.ssh/config contains the following:
+
+```
+Host *
+ForwardX11 yes
+ForwardX11Trusted yes
+```

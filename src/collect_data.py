@@ -11,19 +11,19 @@ from omegaconf import MISSING, DictConfig, OmegaConf, SCMode
 from tqdm.auto import tqdm
 
 import utils.logging  # noqa
-from dataset.scene import SceneDataset, SceneDatasetConfig
+
 from envs import create_environment  # , Environment
 from envs.environment import BaseEnvironmentConfig
 # from policy import PolicyEnum, get_policy_class
-from utils.argparse import parse_and_build_config
+from utils.argparse import get_config_from_args
 from utils.config import ConfigBase
 from utils.keyboard_observer import KeyboardObserver
-from utils.misc import (
-    DataNamingConfig,
-    get_dataset_name,
-    get_full_task_name,
-    loop_sleep,
-)
+# from utils.misc import (
+#     DataNamingConfig,
+#     get_dataset_name,
+#     get_full_task_name,
+#     loop_sleep,
+# )
 
 
 # from utils.random import configure_seeds
@@ -73,8 +73,8 @@ def parse_args() -> DictConfig:
             "help": "Whether the data is for pretraining. Used to name the dataset.",
         },
     )
-    args, dict_config = parse_and_build_config('Program meant to be used to XXXXX', data_load=False,
-                                               extra_args=extra_args)
+    args, dict_config = get_config_from_args('Program meant to be used to XXXXX', data_load=False,
+                                             extra_args=extra_args)
     dict_config = complete_config(args, dict_config)
 
     config = OmegaConf.to_container(

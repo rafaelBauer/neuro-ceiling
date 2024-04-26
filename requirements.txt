@@ -2,7 +2,6 @@
 # Install the dependencies for ManiSkill2
 mani-skill
 gymnasium
-opencv-python
 # sapien
 
 # Motion planner

@@ -15,11 +15,11 @@ def indent_logs(indent_size: int = 2):
     logger_indentation.set(val + indent_size)
     yield
     logger_indentation.set(val)
-
-
-def patcher(msg):
-    indentation = logger_indentation.get()
-    return " " * indentation + msg
+#
+#
+# def patcher(msg):
+#     indentation = logger_indentation.get()
+#     return " " * indentation + msg
 
 
 class DuplicateFilter:
@@ -37,7 +37,7 @@ def write_tqdm(msg):
 
 
 def formatter(record):
-    indentation = logger_indentation.get()
+    indentation = 0
     indentation = " " * indentation
     form = (
         "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> |"
@@ -46,7 +46,7 @@ def formatter(record):
     return form
 
 
-def setup_logger():
+def setup_logger() -> logger:
     logger.remove()
     duplicate_filter = DuplicateFilter()
     logger.add(write_tqdm, colorize=True, format=formatter, filter=duplicate_filter)
@@ -71,18 +71,27 @@ def log_constructor(init_func):
     return wrapper
 
 
-def indent_func_log(func):
-    """
-    Simple decorator to indent all logs that are created during the execution
-    of a function.
-    """
+# def indent_func_log(func):
+#     """
+#     Simple decorator to indent all logs that are created during the execution
+#     of a function.
+#     """
+#
+#     @wraps(func)
+#     def wrapper(*args, **kwargs):
+#         with indent_logs():
+#             return func(*args, **kwargs)
+#
+#     return wrapper
 
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        with indent_logs():
-            return func(*args, **kwargs)
 
-    return wrapper
+# class Logger():
+#     def __init__(self):
+#         loguru.logger.remove()
+#         duplicate_filter = DuplicateFilter()
+#         loguru.logger.add(write_tqdm, colorize=True, format=formatter, filter=duplicate_filter)
+#
+#         return loguru.logger
 
 
-logger = setup_logger()
+# logger = logger
