@@ -249,7 +249,6 @@ if __name__ == '__main__':
                                                              LEARNING_RATE, WEIGHT_DECAY, CLASSES,
                                                              training_set, validation_set, DEVICE))
 
-
     # plot
     # Extract loss and accuracy values for plotting from history object
     results_columns = ['train_loss', 'valid_loss', 'train_accuracy', 'valid_accuracy']

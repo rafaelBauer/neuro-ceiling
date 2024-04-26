@@ -11,7 +11,7 @@ class GamepadToLSL:
         self.__gamepad: KeyboardObserver = KeyboardObserver()
         self.__stream_outlet: pylsl.StreamOutlet = pylsl.StreamOutlet(pylsl.StreamInfo("Gamepad", "markers",
                                                                                        8, pylsl.IRREGULAR_RATE,
-                                                                                       pylsl.cf_float32, "Gamepad",))
+                                                                                       pylsl.cf_float32, "Gamepad", ))
 
     def start(self) -> None:
         self.__gamepad.subscribe_callback_to_gripper(self.__gripper_callback)
@@ -46,8 +46,6 @@ class GamepadToLSL:
 
     def __reset_callback(self) -> None:
         print("Reset requested")
-
-
 
 
 def main() -> None:

@@ -1,0 +1,33 @@
+
+# Install the dependencies for ManiSkill2
+mani-skill
+gymnasium
+# sapien
+
+# Motion planner
+mplib
+
+# To generate documentation
+mkdocs
+pylint
+
+# To read serialize and de-serialize objects (configuration, classes for example)
+jsonpickle
+
+# ===== EEG libraries =====
+pylsl
+mne
+braindecode
+
+# ====== Utils =======
+pynput
+loguru          # Logging library
+omegaconf       # To manage configurations
+matplotlib      # plots
+tqdm            # Library to show progress on the bash
+numpy
+torch
+tensordict
+pandas
+skorch
+scikit-learn

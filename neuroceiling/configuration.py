@@ -1,6 +1,6 @@
 from __future__ import annotations
 import jsonpickle
-from typing import BinaryIO, TextIO
+from typing import TextIO
 
 from .dataaquisition import DatasetBaseConfig, DataStreamBaseConfig
 
