@@ -2,7 +2,6 @@
 # Install the dependencies for ManiSkill2
 mani-skill
 gymnasium
-# sapien
 
 # Motion planner
 mplib
@@ -31,3 +30,4 @@ tensordict
 pandas
 skorch
 scikit-learn
+black

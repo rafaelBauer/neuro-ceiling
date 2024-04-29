@@ -8,3 +8,8 @@ authors = [
 description = "..."
 readme = "README.md"
 license = {file = "LICENSE"}
+
+[tool.black]
+line-length = 120
+target-version = ['py310']
+include = '\.pyi?$'
