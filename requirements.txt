@@ -1,11 +1,10 @@
 
 # Install the dependencies for ManiSkill2
-# mani-skill
-# gymnasium
-# sapien
+mani-skill
+gymnasium
 
 # Motion planner
-# mplib
+mplib
 
 # To generate documentation
 mkdocs
