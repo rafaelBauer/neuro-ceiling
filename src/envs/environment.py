@@ -94,8 +94,7 @@ class BaseEnvironment(ABC):
         ----------
         action : np.ndarray[(7,), np.float32]
            The raw action predicted by a policy. This should be a 7D vector consisting of the delta position (x, y, z),
-           delta rotation (quaternion - (x, y, z, w)),
-           and gripper action.
+           delta rotation (rx, ry, rz), and gripper action.
 
         Returns
         -------

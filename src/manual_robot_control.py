@@ -5,6 +5,7 @@ import numpy as np
 
 from utils.logging import logger
 from omegaconf import OmegaConf, SCMode
+
 # from tqdm.auto import tqdm
 
 from envs import create_environment
@@ -29,13 +30,11 @@ def create_config_from_args() -> Config:
         #     "help": "Whether the data is for pretraining. Used to name the dataset.",
         # },
     )
-    args, dict_config = get_config_from_args('Program meant to be used to XXXXX',
-                                             data_load=False,
-                                             extra_args=extra_args)
-
-    config: Config = OmegaConf.to_container(
-        dict_config, resolve=True, structured_config_mode=SCMode.INSTANTIATE
+    args, dict_config = get_config_from_args(
+        "Program meant to be used to XXXXX", data_load=False, extra_args=extra_args
     )
+
+    config: Config = OmegaConf.to_container(dict_config, resolve=True, structured_config_mode=SCMode.INSTANTIATE)
     return config
 
 
