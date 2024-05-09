@@ -46,8 +46,9 @@ class Timer(threading.Thread):
 
         This method clears the event that controls the running of the timer and joins the thread.
         """
-        self.__timer_runs.clear()
-        self.join()
+        if self.__timer_runs.is_set():
+            self.__timer_runs.clear()
+            self.join()
 
     def run(self):
         """

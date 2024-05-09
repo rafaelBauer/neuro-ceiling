@@ -54,7 +54,7 @@ class KeyboardObserver:
 
     def __init__(self):
         self.__label: HumanFeedback = HumanFeedback.GOOD
-        self.__gripper: float | None = None
+        self.__gripper: float = 0.0
         self.__direction: np.array = np.zeros(6)
 
         self.__label_lock: threading.Lock = threading.Lock()
@@ -66,7 +66,7 @@ class KeyboardObserver:
                 "b": partial(self.__set_label, HumanFeedback.BAD),  # bad
                 "c": partial(self.__set_gripper, -0.9),  # close
                 "v": partial(self.__set_gripper, 0.9),  # open
-                "f": partial(self.__set_gripper, None),  # gripper free
+                "f": partial(self.__set_gripper, 0),  # gripper free
                 "x": self.reset_episode,  # reset
             }
         )
@@ -79,6 +79,9 @@ class KeyboardObserver:
         self.__gripper_callbacks: [Callable[[float], None]] = []
         self.__direction_callbacks: [Callable[[np.array], None]] = []
         self.__reset_callbacks: [Callable[[], None]] = []
+
+    def __del__(self):
+        self.stop()
 
     def start(self) -> None:
         self.__hotkeys.start()
@@ -114,7 +117,7 @@ class KeyboardObserver:
         with self.__label_lock:
             return self.__label
 
-    def __set_gripper(self, value: float | None) -> None:
+    def __set_gripper(self, value: float) -> None:
         with self.__gripper_lock:
             self.__gripper = value
             self.__call_callbacks(self.__gripper_callbacks, self.__gripper)
@@ -132,7 +135,7 @@ class KeyboardObserver:
             self.__gripper_callbacks.remove(callback_func)
 
     @property
-    def gripper(self) -> float | None:
+    def gripper(self) -> float:
         with self.__gripper_lock:
             return self.__gripper
 
@@ -143,7 +146,7 @@ class KeyboardObserver:
         :return: If there is any gripper direction command, otherwise False
         """
         with self.__gripper_lock:
-            return self.__gripper is not None
+            return abs(self.__gripper - 0.0) > 0.0001
 
     def __set_direction(self, key) -> None:
         with self.__direction_lock:
@@ -195,8 +198,7 @@ class KeyboardObserver:
             return np.count_nonzero(self.__direction) != 0
 
     def get_ee_action(self) -> np.array:
-        with self.__direction_lock:
-            return self.direction * 0.9
+        return self.direction * 0.9
 
     def reset_episode(self) -> None:
         for callback in self.__reset_callbacks:

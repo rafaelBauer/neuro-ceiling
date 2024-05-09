@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+from typing import Final, final
+
 import numpy as np
 
 
@@ -23,7 +25,7 @@ class BaseEnvironmentConfig:
     """
 
     def __init__(self, env_type: str):
-        self.__ENV_TYPE: str = env_type
+        self.__ENV_TYPE: Final[str] = env_type
 
     @property
     def env_type(self) -> str:
@@ -85,6 +87,7 @@ class BaseEnvironment(ABC):
         """
         pass
 
+    @final
     def step(self, action: np.ndarray) -> tuple[dict, float, bool, dict]:
         """
         Executes the action in the environment. Simple wrapper around _step, that allows us to perform extra actions
