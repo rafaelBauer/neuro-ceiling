@@ -97,9 +97,7 @@ class ManiSkillEnv(BaseEnvironment):
             tuple[dict, float, bool, dict]: A tuple containing the next observation, reward, done flag, and additional info.
         """
 
-        zero_action = np.zeros_like(action)
-
-        next_obs, reward, done, _, info = self.__env.step(zero_action)
+        next_obs, reward, done, _, info = self.__env.step(action)
 
         obs = next_obs
 

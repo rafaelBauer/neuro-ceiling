@@ -21,8 +21,8 @@ class ManualPolicy(PolicyBase):
 
     @override
     def forward(self, states: Tensor) -> Tensor:
-        action = torch.tensor(self.__keyboard_observer.get_ee_action(), dtype=torch.float32)
-        gripper = torch.tensor([self.__keyboard_observer.gripper], dtype=torch.float32)
+        action = torch.tensor(self.__keyboard_observer.get_ee_action(), dtype=torch.float32) # torch.tensor(np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]), dtype=torch.float32)
+        gripper = torch.tensor([self.__keyboard_observer.gripper], dtype=torch.float32) # torch.tensor(np.array([0.0]), dtype=torch.float32)
         return cat([action, gripper])
 
     @override

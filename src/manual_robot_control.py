@@ -44,22 +44,22 @@ def main() -> None:
 
     agent = create_agent(config.agent_config)
 
-    keyboard_obs = KeyboardObserver()
+    # keyboard_obs = KeyboardObserver()
 
     logger.info("Go!")
 
-    keyboard_obs.start()
+    # keyboard_obs.start()
     agent.start()
 
     try:
         while True:
             # just need to sleep, since there is a thread in the agent doing the stepping and
             # everything else
-            time.sleep(0.004)
+            time.sleep(0.1)
 
     except KeyboardInterrupt:
         logger.info("Keyboard interrupt. Attempting graceful env shutdown ...")
-        keyboard_obs.stop()
+        # keyboard_obs.stop()
         agent.stop()
 
 

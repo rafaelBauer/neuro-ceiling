@@ -110,9 +110,9 @@ class NeuroCeilingEnv(BaseEnv):
             self, robot_init_qpos_noise=self.robot_init_qpos_noise
         )
         self.table_scene.build()
-        self.cubeA = actors.build_cube(self._scene, half_size=self.cube_half_size, color=[1, 0, 0, 1], name="cubeA")
-        self.cubeB = actors.build_cube(self._scene, half_size=self.cube_half_size, color=[0, 1, 0, 1], name="cubeB")
-        self.cubeC = actors.build_cube(self._scene, half_size=self.cube_half_size, color=[0, 0, 1, 1], name="cubeC")
+        self.cubeA = actors.build_cube(self.scene, half_size=self.cube_half_size, color=[1, 0, 0, 1], name="cubeA")
+        self.cubeB = actors.build_cube(self.scene, half_size=self.cube_half_size, color=[0, 1, 0, 1], name="cubeB")
+        self.cubeC = actors.build_cube(self.scene, half_size=self.cube_half_size, color=[0, 0, 1, 1], name="cubeC")
 
         # self.goal_site = actors.build_sphere(
         #     self._scene,

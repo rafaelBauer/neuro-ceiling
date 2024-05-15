@@ -1,15 +1,15 @@
 from manual_robot_control import Config
 
 # ====== ManiSkill environment ========
-# from envs.maniskill import ManiSkillEnvironmentConfig
+from envs.maniskill import ManiSkillEnvironmentConfig
 
-# env_config = ManiSkillEnvironmentConfig()
+env_config = ManiSkillEnvironmentConfig()
 
 
 # ====== Mock environment ========
-from envs.mock import MockEnvironmentConfig
-
-env_config = MockEnvironmentConfig()
+# from envs.mock import MockEnvironmentConfig
+#
+# env_config = MockEnvironmentConfig()
 
 # ====== Learn algorithm configuration ========
 from learnalgorithm.learnalgorithm import LearnAlgorithmBaseConfig
