@@ -2,15 +2,16 @@ import time
 from dataclasses import dataclass
 
 import numpy as np
-
-from utils.logging import logger
 from omegaconf import OmegaConf, SCMode
+
 # from tqdm.auto import tqdm
 
-from envs import create_environment
-from envs.environment import BaseEnvironmentConfig
+from agent import create_agent
+from agent.agent import AgentConfig
 from utils.argparse import get_config_from_args
 from utils.config import ConfigBase
+from utils.keyboard_observer import KeyboardObserver
+from utils.logging import logger
 
 
 # from utils.keyboard_observer import KeyboardObserver
@@ -18,7 +19,7 @@ from utils.config import ConfigBase
 
 @dataclass
 class Config(ConfigBase):
-    env_config: BaseEnvironmentConfig
+    agent_config: AgentConfig
 
 
 def create_config_from_args() -> Config:
@@ -29,13 +30,11 @@ def create_config_from_args() -> Config:
         #     "help": "Whether the data is for pretraining. Used to name the dataset.",
         # },
     )
-    args, dict_config = get_config_from_args('Program meant to be used to XXXXX',
-                                             data_load=False,
-                                             extra_args=extra_args)
-
-    config: Config = OmegaConf.to_container(
-        dict_config, resolve=True, structured_config_mode=SCMode.INSTANTIATE
+    _, dict_config = get_config_from_args(
+        "Program meant to be used to XXXXX", data_load=False, extra_args=extra_args
     )
+
+    config: Config = OmegaConf.to_container(dict_config, resolve=True, structured_config_mode=SCMode.INSTANTIATE)
     return config
 
 
@@ -43,24 +42,25 @@ def main() -> None:
     np.set_printoptions(suppress=True, precision=3)
     config: Config = create_config_from_args()
 
-    env = create_environment(config.env_config)
+    agent = create_agent(config.agent_config)
 
     # keyboard_obs = KeyboardObserver()
 
-    env.start()
-
-    time.sleep(5)
-
     logger.info("Go!")
+
+    # keyboard_obs.start()
+    agent.start()
 
     try:
         while True:
-            action: np.array = np.zeros(7)
-            env.step(action)
+            # just need to sleep, since there is a thread in the agent doing the stepping and
+            # everything else
+            time.sleep(0.1)
 
     except KeyboardInterrupt:
         logger.info("Keyboard interrupt. Attempting graceful env shutdown ...")
-        env.close()
+        # keyboard_obs.stop()
+        agent.stop()
 
 
 if __name__ == "__main__":
