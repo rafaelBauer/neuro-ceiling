@@ -19,7 +19,7 @@ mne
 braindecode
 
 # ====== Utils =======
-pynput @ git+https://github.com/moses-palmer/pynput@master
+pynput          # To sample keyboard and mouse
 loguru          # Logging library
 omegaconf       # To manage configurations
 matplotlib      # plots
