@@ -4,9 +4,10 @@ from typing import Final
 
 import numpy as np
 
-from envs import BaseEnvironmentConfig, create_environment
+from envs import BaseEnvironment
 from learnalgorithm.learnalgorithm import LearnAlgorithmBaseConfig
-from policy import PolicyBaseConfig, create_policy
+from policy import PolicyBase
+from utils.logging import log_constructor
 from utils.timer import Timer
 
 
@@ -14,20 +15,17 @@ from utils.timer import Timer
 class AgentConfig:
     polling_period_s: float
     learn_algorithm_config: LearnAlgorithmBaseConfig
-    policy_config: PolicyBaseConfig
-    environment: BaseEnvironmentConfig
 
 
 class AgentBase:
-    def __init__(self, config: AgentConfig):
+    @log_constructor
+    def __init__(self, config: AgentConfig, environment: BaseEnvironment, policy: PolicyBase):
         self.__CONFIG: Final[AgentConfig] = config
         self.__timer = Timer(self._timer_callback, self.__CONFIG.polling_period_s)
-        self.environment = create_environment(self.__CONFIG.environment)
-        self.__policy = create_policy(self.__CONFIG.policy_config)
+        self.__environment: Final[BaseEnvironment] = environment
+        self.__policy: Final[PolicyBase] = policy
 
     def start(self):
-        self.environment.start()
-        time.sleep(5)
         self.__timer.start()
 
     def stop(self):
@@ -35,6 +33,5 @@ class AgentBase:
 
     def _timer_callback(self):
         state: np.array = np.zeros(7)
-        # self.environment
         action: np.array = self.__policy(state)
-        self.environment.step(action)
+        self.__environment.step(action)

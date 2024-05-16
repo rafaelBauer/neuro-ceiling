@@ -5,6 +5,7 @@ import gymnasium as gym
 import numpy as np
 from mani_skill.envs.sapien_env import BaseEnv
 
+from utils.logging import log_constructor, logger
 from .mani_skill.neuroceilingenv import __ENV_NAME__
 from .environment import BaseEnvironment, BaseEnvironmentConfig
 
@@ -24,6 +25,7 @@ class ManiSkillEnv(BaseEnvironment):
     # -------------------------------------------------------------------------- #
     # Initialization
     # -------------------------------------------------------------------------- #
+    @log_constructor
     def __init__(self, config: ManiSkillEnvironmentConfig) -> None:
         super().__init__(config)
         self.__HEADLESS: bool = config.headless
@@ -32,6 +34,7 @@ class ManiSkillEnv(BaseEnvironment):
 
     @override
     def start(self):
+        logger.info("Starting ManiSkill environment {}", __ENV_NAME__)
         kwargs = {
             "control_mode": self.__CONTROL_MODE,
             "render_mode": self.__RENDER_MODE,
@@ -39,6 +42,7 @@ class ManiSkillEnv(BaseEnvironment):
         }
         self.__env = gym.make(__ENV_NAME__, **kwargs)
         self.reset()
+        logger.info("ManiSkill environment {} successfully started", __ENV_NAME__)
 
     # -------------------------------------------------------------------------- #
     # Observation

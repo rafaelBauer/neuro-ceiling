@@ -3,6 +3,8 @@ from typing import Final, final
 
 import numpy as np
 
+from utils.logging import log_constructor
+
 
 class BaseEnvironmentConfig:
     """
