@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from typing import Literal, Optional, Final, override
+from pathlib import Path
+from typing import Literal, Optional, Final, override, final, Sequence
 
 import gymnasium as gym
 import numpy as np
@@ -8,6 +9,7 @@ from mani_skill.envs.sapien_env import BaseEnv
 from utils.logging import log_constructor, logger
 from .mani_skill.neuroceilingenv import __ENV_NAME__
 from .environment import BaseEnvironment, BaseEnvironmentConfig
+from .robotinfo import RobotInfo, RobotMotionInfo
 
 
 @dataclass
@@ -30,17 +32,19 @@ class ManiSkillEnv(BaseEnvironment):
         super().__init__(config)
         self.__HEADLESS: bool = config.headless
         self.__render_sapien: bool = config.render_sapien
-        self.__env: Optional[BaseEnv] = None
-
-    @override
-    def start(self):
-        logger.info("Starting ManiSkill environment {}", __ENV_NAME__)
         kwargs = {
             "control_mode": self.__CONTROL_MODE,
             "render_mode": self.__RENDER_MODE,
             "reward_mode": "sparse",
         }
-        self.__env = gym.make(__ENV_NAME__, **kwargs)
+        self.__env: Final[BaseEnv] = gym.make(__ENV_NAME__, **kwargs)
+
+        self.__end_effector_link_index: Final[int] = (
+            [link for link in self.__env.agent.robot.links if "hand_tcp" in link.name][0].index.item())
+
+    @override
+    def start(self):
+        logger.info("Starting ManiSkill environment {}", __ENV_NAME__)
         self.reset()
         logger.info("ManiSkill environment {} successfully started", __ENV_NAME__)
 
@@ -68,6 +72,7 @@ class ManiSkillEnv(BaseEnvironment):
     def reset(self):
         super().reset()
         self.__env.reset()
+        self.__env.agent
 
     @override
     def reset_joint_pose(self) -> None:
@@ -82,11 +87,11 @@ class ManiSkillEnv(BaseEnvironment):
     # -------------------------------------------------------------------------- #
     @override
     def _step(
-        self,
-        action: np.ndarray[Literal[7]],
-        postprocess: bool = True,
-        delay_gripper: bool = True,
-        scale_action: bool = True,
+            self,
+            action: np.ndarray[Literal[7]],
+            postprocess: bool = True,
+            delay_gripper: bool = True,
+            scale_action: bool = True,
     ) -> tuple[dict, float, bool, dict]:
         """
         Perform a single step in the environment.
@@ -108,3 +113,28 @@ class ManiSkillEnv(BaseEnvironment):
         self.__env.render()
 
         return obs, reward, done, info
+
+    # -------------------------------------------------------------------------- #
+    # Info
+    # -------------------------------------------------------------------------- #
+    @override
+    def get_robot_info(self) -> final(RobotInfo):
+        LINK_NAMES: Final[Sequence[str]] = [link.get_name() for link in self.__env.agent.robot.get_links()]
+        JOINT_NAMES: Final[Sequence[str]] = [joint.get_name() for joint in self.__env.agent.robot.get_active_joints()]
+        URDF_PATH: Final[Path] = Path(self.__env.agent.urdf_path)
+        SRDF_PATH: Final[Path] = URDF_PATH.with_suffix(".srdf")
+        END_EFFECTOR_LINK_NAME: Final[str] = LINK_NAMES[self.__end_effector_link_index]
+
+        return RobotInfo(urdf_path=URDF_PATH,
+                         srdf_path=SRDF_PATH,
+                         links=LINK_NAMES,
+                         joints=JOINT_NAMES,
+                         end_effector_link=END_EFFECTOR_LINK_NAME
+                         )
+
+    @override
+    def get_robot_motion_info(self) -> final(RobotMotionInfo):
+        return RobotMotionInfo(current_end_effector_pose=
+                               self.__env.agent.robot.get_links()[self.__end_effector_link_index].pose)
+
+

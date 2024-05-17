@@ -1,7 +1,7 @@
 [project]
 name = "neuro-ceiling"
 version = "0.1"
-requires-python = ">= 3.10"
+requires-python = ">= 3.12"
 authors = [
     {name = "Rafael Andrioli Bauer", email = "abauer.rafael@gmail.com"},
 ]
@@ -11,5 +11,5 @@ license = {file = "LICENSE"}
 
 [tool.black]
 line-length = 120
-target-version = ['py310']
+target-version = ['py312']
 include = '\.pyi?$'

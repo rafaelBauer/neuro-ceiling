@@ -3,6 +3,7 @@ from typing import Final, final
 
 import numpy as np
 
+from envs.robotinfo import RobotInfo, RobotMotionInfo
 from utils.logging import log_constructor
 
 
@@ -147,5 +148,29 @@ class BaseEnvironment(ABC):
     def reset_joint_pose(self) -> None:
         """
         Resets the joint pose. This method is abstract and should be implemented in child classes.
+        """
+        raise NotImplementedError("Need to implement in child class.")
+
+    @abstractmethod
+    def get_robot_info(self) -> final(RobotInfo):
+        """
+        Returns the robot object of the environment.
+
+        Returns
+        -------
+        RobotInfo
+            The data object containing the robot information.
+        """
+        raise NotImplementedError("Need to implement in child class.")
+
+    @abstractmethod
+    def get_robot_motion_info(self) -> final(RobotMotionInfo):
+        """
+        Returns the robot object of the environment.
+
+        Returns
+        -------
+        RobotInfo
+            The data object containing the robot information.
         """
         raise NotImplementedError("Need to implement in child class.")

@@ -16,9 +16,13 @@ from learnalgorithm.learnalgorithm import LearnAlgorithmBaseConfig
 learn_algorithm_config = LearnAlgorithmBaseConfig("DQN")
 
 # ====== Policy configuration ========
-from policy.manualpolicy import ManualPolicyConfig
+# from policy.manualpolicy import ManualPolicyConfig
+#
+# policy_config = ManualPolicyConfig()
 
-policy_config = ManualPolicyConfig()
+from policy.motionplannerpolicy import MotionPlannerPolicyConfig
+
+policy_config = MotionPlannerPolicyConfig()
 
 # ====== Agent configuration ========
 from agent.agent import AgentConfig

@@ -17,6 +17,12 @@ class PolicyBaseConfig:
 
 class PolicyBase(nn.Module):
     def __init__(self, config: PolicyBaseConfig, **kwargs):
+        # Deleting unecessary kwargs from children classes
+        if 'environment' in kwargs:
+            del kwargs['environment']
+        if 'keyboard_observer' in kwargs:
+            del kwargs['keyboard_observer']
+
         super().__init__(**kwargs)
 
     @abstractmethod

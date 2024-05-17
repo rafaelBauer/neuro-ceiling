@@ -41,18 +41,20 @@ def main() -> None:
     np.set_printoptions(suppress=True, precision=3)
     config: Config = create_config_from_args()
 
-    environment: Final[BaseEnvironment] = create_environment(config.environment_config)
-    policy: Final[PolicyBase] = create_policy(config.policy_config)
-    agent: Final[AgentBase] = create_agent(config.agent_config, environment, policy)
+    keyboard_obs = KeyboardObserver()
 
-    # keyboard_obs = KeyboardObserver()
+    environment: Final[BaseEnvironment] = create_environment(config.environment_config)
+    policy: Final[PolicyBase] = create_policy(
+        config.policy_config, keyboard_observer=keyboard_obs, environment=environment
+    )
+    agent: Final[AgentBase] = create_agent(config.agent_config, environment, policy)
 
     environment.start()
     time.sleep(5)
 
     logger.info("Go!")
 
-    # keyboard_obs.start()
+    keyboard_obs.start()
     agent.start()
 
     try:
