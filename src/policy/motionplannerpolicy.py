@@ -37,8 +37,7 @@ class MotionPlannerPolicy(PolicyBase):
         current_motion_info = environment.get_robot_motion_info()
         target_pose: Tensor = current_motion_info.current_end_effector_pose.raw_pose[0].clone()
         target_pose[0] = 0.2
-        self.__current_path = self.__plan_to_pose(current_motion_info.current_end_effector_pose.raw_pose,
-                                                  target_pose)
+        self.__current_path = self.__plan_to_pose(current_motion_info.current_end_effector_pose.raw_pose, target_pose)
         super().__init__(config, **kwargs)
 
     @override
