@@ -34,4 +34,5 @@ class AgentBase:
     def _timer_callback(self):
         state: np.array = np.zeros(7)
         action: np.array = self.__policy(state)
-        self.__environment.step(action)
+        if action is not None:
+            self.__environment.step(action)

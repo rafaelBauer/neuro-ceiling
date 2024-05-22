@@ -22,7 +22,7 @@ class ManiSkillEnvironmentConfig(BaseEnvironmentConfig):
 
 class ManiSkillEnv(BaseEnvironment):
     __RENDER_MODE: Final[str] = "human"
-    __CONTROL_MODE: Final[str] = "pd_ee_delta_pose"
+    __CONTROL_MODE: Final[str] = "pd_joint_pos"
 
     # -------------------------------------------------------------------------- #
     # Initialization
@@ -134,7 +134,10 @@ class ManiSkillEnv(BaseEnvironment):
 
     @override
     def get_robot_motion_info(self) -> final(RobotMotionInfo):
-        return RobotMotionInfo(current_end_effector_pose=
-                               self.__env.agent.robot.get_links()[self.__end_effector_link_index].pose)
+        # Take index 0 because it is of shape (1,9), and we want a dim0  array.
+        return RobotMotionInfo(current_qpos=
+                               self.__env.agent.robot.get_qpos().cpu()[0],
+                               current_ee_pose=self.__env.agent.robot.get_links()[self.__end_effector_link_index].pose.raw_pose[0]
+                               )
 
 

@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence
 
+from torch import Tensor
+
 
 @dataclass
 class RobotInfo:
@@ -13,4 +15,5 @@ class RobotInfo:
 
 @dataclass
 class RobotMotionInfo:
-    current_end_effector_pose: Sequence[float]
+    current_qpos: Tensor
+    current_ee_pose: Tensor
