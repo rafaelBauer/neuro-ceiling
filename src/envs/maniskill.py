@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal, Optional, Final, override, final, Sequence
+from typing import Literal, Final, override, final, Sequence
 
 import gymnasium as gym
 import numpy as np
@@ -39,8 +39,9 @@ class ManiSkillEnv(BaseEnvironment):
         }
         self.__env: Final[BaseEnv] = gym.make(__ENV_NAME__, **kwargs)
 
-        self.__end_effector_link_index: Final[int] = (
-            [link for link in self.__env.agent.robot.links if "hand_tcp" in link.name][0].index.item())
+        self.__end_effector_link_index: Final[int] = [
+            link for link in self.__env.agent.robot.links if "hand_tcp" in link.name
+        ][0].index.item()
 
     @override
     def start(self):
@@ -72,7 +73,6 @@ class ManiSkillEnv(BaseEnvironment):
     def reset(self):
         super().reset()
         self.__env.reset()
-        self.__env.agent
 
     @override
     def reset_joint_pose(self) -> None:
@@ -87,11 +87,11 @@ class ManiSkillEnv(BaseEnvironment):
     # -------------------------------------------------------------------------- #
     @override
     def _step(
-            self,
-            action: np.ndarray[Literal[7]],
-            postprocess: bool = True,
-            delay_gripper: bool = True,
-            scale_action: bool = True,
+        self,
+        action: np.ndarray[Literal[7]],
+        postprocess: bool = True,
+        delay_gripper: bool = True,
+        scale_action: bool = True,
     ) -> tuple[dict, float, bool, dict]:
         """
         Perform a single step in the environment.
@@ -125,19 +125,18 @@ class ManiSkillEnv(BaseEnvironment):
         SRDF_PATH: Final[Path] = URDF_PATH.with_suffix(".srdf")
         END_EFFECTOR_LINK_NAME: Final[str] = LINK_NAMES[self.__end_effector_link_index]
 
-        return RobotInfo(urdf_path=URDF_PATH,
-                         srdf_path=SRDF_PATH,
-                         links=LINK_NAMES,
-                         joints=JOINT_NAMES,
-                         end_effector_link=END_EFFECTOR_LINK_NAME
-                         )
+        return RobotInfo(
+            urdf_path=URDF_PATH,
+            srdf_path=SRDF_PATH,
+            links=LINK_NAMES,
+            joints=JOINT_NAMES,
+            end_effector_link=END_EFFECTOR_LINK_NAME,
+        )
 
     @override
     def get_robot_motion_info(self) -> final(RobotMotionInfo):
         # Take index 0 because it is of shape (1,9), and we want a dim0  array.
-        return RobotMotionInfo(current_qpos=
-                               self.__env.agent.robot.get_qpos().cpu()[0],
-                               current_ee_pose=self.__env.agent.robot.get_links()[self.__end_effector_link_index].pose.raw_pose[0]
-                               )
-
-
+        return RobotMotionInfo(
+            current_qpos=self.__env.agent.robot.get_qpos().cpu()[0],
+            current_ee_pose=self.__env.agent.robot.get_links()[self.__end_effector_link_index].pose.raw_pose[0],
+        )

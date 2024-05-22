@@ -6,7 +6,7 @@ from torch import Tensor, cat
 
 from policy.policy import PolicyBase, PolicyBaseConfig
 from utils.keyboard_observer import KeyboardObserver
-from utils.logging import log_constructor, logger
+from utils.logging import log_constructor
 
 
 @dataclass(kw_only=True)
@@ -14,6 +14,7 @@ class ManualPolicyConfig(PolicyBaseConfig):
     """
     Configuration class for ManualPolicy. Inherits from PolicyBaseConfig.
     """
+
     _POLICY_TYPE: str = field(init=False, default="ManualPolicy")
 
 
