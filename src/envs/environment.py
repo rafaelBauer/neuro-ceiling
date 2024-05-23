@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Final, final
 
-import numpy as np
-
+from envs.robotactions import RobotAction
 from envs.robotinfo import RobotInfo, RobotMotionInfo
 from utils.logging import log_constructor
 
@@ -33,7 +32,6 @@ class BaseEnvironmentConfig:
     @property
     def env_type(self) -> str:
         return self.__ENV_TYPE
-
 
 class BaseEnvironment(ABC):
     """
@@ -91,7 +89,7 @@ class BaseEnvironment(ABC):
         pass
 
     @final
-    def step(self, action: np.ndarray) -> tuple[dict, float, bool, dict]:
+    def step(self, action: RobotAction) -> tuple[dict, float, bool, dict]:
         """
         Executes the action in the environment. Simple wrapper around _step, that allows us to perform extra actions
         before and after the step.
@@ -110,7 +108,7 @@ class BaseEnvironment(ABC):
         return self._step(action)
 
     @abstractmethod
-    def _step(self, action: np.ndarray) -> tuple[dict, float, bool, dict]:
+    def _step(self, action: RobotAction) -> tuple[dict, float, bool, dict]:
         """
         Executes the action in the environment. This method is abstract and should be implemented in child classes.
 

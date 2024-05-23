@@ -4,6 +4,8 @@ from typing import Sequence
 
 from torch import Tensor
 
+from utils.pose import Pose
+
 
 @dataclass
 class RobotInfo:
@@ -45,4 +47,4 @@ class RobotMotionInfo:
     """
 
     current_qpos: Tensor
-    current_ee_pose: Tensor
+    current_ee_pose: Pose

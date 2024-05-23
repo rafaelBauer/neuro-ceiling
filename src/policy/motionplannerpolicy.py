@@ -1,32 +1,17 @@
 from dataclasses import dataclass, field
-from enum import IntEnum
 from typing import override, Final
 
 import numpy as np
 import torch
 from torch import Tensor
-from mplib import Planner, Pose
+from mplib import Planner
 
 from envs import BaseEnvironment
+from envs.robotactions import TargetJointPositionAction, RobotAction, GripperCommand
 from envs.robotinfo import RobotInfo
 from policy.policy import PolicyBaseConfig, PolicyBase
 from utils.logging import logger, log_constructor
-
-
-class GripperCommand(IntEnum):
-    """
-    An enumeration representing the commands that can be sent to the gripper.
-
-    Attributes
-    ----------
-    OPEN : int
-       A command to open the gripper. The value of this command is 1.
-    CLOSE : int
-       A command to close the gripper. The value of this command is -1.
-    """
-
-    OPEN = 1
-    CLOSE = -1
+from utils.pose import Pose
 
 
 @dataclass(kw_only=True)
@@ -97,18 +82,17 @@ class MotionPlannerPolicy(PolicyBase):
         self.__gripper_command: GripperCommand = GripperCommand.OPEN
 
         current_motion_info = environment.get_robot_motion_info()
-
-        # At the current pose and with the gripper opened
-        self.__last_action: Tensor = torch.from_numpy(
-            np.hstack([current_motion_info.current_ee_pose, self.__gripper_command])
-        )
-
-        initial_pose: Pose = Pose(p=np.array([0.615, 0.0, 0.02]), q=np.array([0, 1, 0, 0]))
         current_qpos = current_motion_info.current_qpos.numpy()
 
+        # At the current pose and with the gripper opened
+        # The current qpos has the position of all joints (9 in total), the last 2 are the gripper joints, therefore
+        # we only take the first 7
+        self.__last_action: RobotAction = TargetJointPositionAction(current_qpos[:7], self.__gripper_command)
+
+        initial_pose: Pose = Pose(p=np.array([0.615, 0.0, 0.02]), q=np.array([0, 1, 0, 0]))
         self.__gripper_command: GripperCommand = GripperCommand.OPEN
         self.__current_path: list[np.ndarray] = self.__plan_to_pose(current_qpos, initial_pose)
-        logger.info("Initialized planner to initial pose {} with gripper {}", initial_pose, self.__gripper_command.name)
+        logger.info("Initialized planner to initial pose {} with gripper {}", current_motion_info.current_ee_pose, self.__gripper_command.name)
 
     @override
     def update(self):
@@ -133,8 +117,10 @@ class MotionPlannerPolicy(PolicyBase):
             The action to be taken by the robot.
         """
         if self.__current_path:
-            action: np.ndarray = np.hstack([self.__current_path.pop(0), self.__gripper_command])
-            self.__last_action = torch.from_numpy(action)
+            action: TargetJointPositionAction = TargetJointPositionAction(
+                self.__current_path.pop(0), self.__gripper_command
+            )
+            self.__last_action = action
         return self.__last_action
 
     def __plan_to_pose(self, current_qpos: np.ndarray, target_pose: Pose, time_step=0.05) -> list[np.ndarray]:
@@ -155,7 +141,24 @@ class MotionPlannerPolicy(PolicyBase):
         list[np.ndarray]
             The positions of the planned path.
         """
-        plan = self.__path_planner.plan_screw(target_pose, current_qpos, time_step=time_step)
+        # The plan is a dictionary with a "status" field that can be "Success" or different failures.
+        # If the status is success, it will also include the following keys:
+        #  - position: a NumPy array of shape (n x m) describes the joint positions of the waypoints.
+        #              n is the number of waypoints in the path, and each row describes a waypoint.
+        #              m is the number of active joints that affect the pose of the move_group link.
+        #              For example, for our panda robot arm, each row includes the positions for the first seven joints.
+        #
+        #   - duration: a scalar indicates the duration of the output path.
+        #               mplib returns the optimal duration considering the velocity and acceleration constraints.
+        #
+        #   - time: a NumPy array of shape (n) describes the time step of each waypoint.
+        #           The first element is equal to 0, and the last one is equal to the duration.
+        #           Argument time_step determines the interval of the elements.
+        #
+        #   - velocity: a NumPy array of shape (n x m) describes the joint velocities of the waypoints.
+        #
+        #   - acceleration: a NumPy array of shape (n x m) describing the joint accelerations of the waypoints.
+        plan = self.__path_planner.plan_screw(target_pose.mplib_pose, current_qpos, time_step=time_step)
 
         if not plan["status"] == "Success":
             logger.error("Could not plan path. Current pose {} -> Target pose {}", current_qpos, target_pose)

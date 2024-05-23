@@ -7,8 +7,10 @@ import numpy as np
 from mani_skill.envs.sapien_env import BaseEnv
 
 from utils.logging import log_constructor, logger
+from utils.pose import Pose
 from .mani_skill.neuroceilingenv import __ENV_NAME__
 from .environment import BaseEnvironment, BaseEnvironmentConfig
+from .robotactions import RobotAction
 from .robotinfo import RobotInfo, RobotMotionInfo
 
 
@@ -22,7 +24,7 @@ class ManiSkillEnvironmentConfig(BaseEnvironmentConfig):
 
 class ManiSkillEnv(BaseEnvironment):
     __RENDER_MODE: Final[str] = "human"
-    __CONTROL_MODE: Final[str] = "pd_joint_pos"
+    __CONTROL_MODE: Final[str] = "pd_joint_pos"     # "pd_ee_delta_pose"
 
     # -------------------------------------------------------------------------- #
     # Initialization
@@ -88,7 +90,7 @@ class ManiSkillEnv(BaseEnvironment):
     @override
     def _step(
         self,
-        action: np.ndarray[Literal[7]],
+        action: RobotAction,
         postprocess: bool = True,
         delay_gripper: bool = True,
         scale_action: bool = True,
@@ -106,7 +108,12 @@ class ManiSkillEnv(BaseEnvironment):
             tuple[dict, float, bool, dict]: A tuple containing the next observation, reward, done flag, and additional info.
         """
 
-        next_obs, reward, done, _, info = self.__env.step(action)
+        # if self.__CONTROL_MODE == "pd_joint_pos":
+        #     action = np.concatenate([action, np.array([0])])
+        # elif self.__CONTROL_MODE == "pd_ee_delta_pose":
+        #     action = np.concatenate([action, np.array([0, 0, 0, 0, 0, 0, 0])])
+
+        next_obs, reward, done, _, info = self.__env.step(action.get_raw_action())
 
         obs = next_obs
 
@@ -136,7 +143,8 @@ class ManiSkillEnv(BaseEnvironment):
     @override
     def get_robot_motion_info(self) -> final(RobotMotionInfo):
         # Take index 0 because it is of shape (1,9), and we want a dim0  array.
+        internal_pose = self.__env.agent.robot.get_links()[self.__end_effector_link_index].pose.sp
         return RobotMotionInfo(
             current_qpos=self.__env.agent.robot.get_qpos().cpu()[0],
-            current_ee_pose=self.__env.agent.robot.get_links()[self.__end_effector_link_index].pose.raw_pose[0],
+            current_ee_pose=Pose(obj=internal_pose),
         )
