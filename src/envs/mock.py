@@ -23,8 +23,8 @@ class MockEnv(BaseEnvironment):
         logger.info("Reset joint poses")
 
     @override
-    def close(self) -> None:
-        logger.info("Closed Environment")
+    def stop(self) -> None:
+        logger.info("Stopped Environment")
 
     @override
     def start(self) -> None:

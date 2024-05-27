@@ -65,8 +65,8 @@ def main() -> None:
 
     except KeyboardInterrupt:
         logger.info("Keyboard interrupt. Attempting graceful env shutdown ...")
-        keyboard_obs.stop()
         agent.stop()
+        keyboard_obs.stop()
 
 
 if __name__ == "__main__":

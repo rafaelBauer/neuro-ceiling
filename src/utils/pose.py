@@ -24,11 +24,15 @@ class Pose:
     __pose: mplib.Pose
 
     def __getstate__(self) -> tuple:
+        """
+        Get the state of the Pose object. This is used for serialization.
+        """
         return self.__pose.__getstate__()
 
     def __imul__(self, other: 'Pose') -> 'Pose':
         """
         Overloading operator *= for ``Pose<S> *= Pose<S>``
+        This allows for in-place multiplication of Pose objects.
         """
         self.__pose *= other.__pose
         return self
@@ -46,21 +50,34 @@ class Pose:
     def __mul__(self, other: 'Pose') -> 'Pose':
         """
         Overloading operator * for ``Pose<S> * Pose<S>``
+        This allows for multiplication of Pose objects.
         """
         return Pose(obj=(self.__pose * other.__pose))
 
     def __repr__(self) -> str:
+        """
+        Returns a string representation of the Pose object.
+        """
         return self.__pose.__repr__()
 
     def __setstate__(self, arg0: tuple) -> None:
+        """
+        Set the state of the Pose object. This is used for deserialization.
+        """
         self.__pose.__setstate__(arg0)
 
     @property
     def p(self) -> numpy.ndarray:
+        """
+        Returns the position (x,y,z) of the Pose object.
+        """
         return self.__pose.p
 
     @p.setter
     def p(self, value):
+        """
+        Sets the position (x,y,z) of the Pose object.
+        """
         self.__pose.p = value
 
     @property
@@ -75,24 +92,39 @@ class Pose:
         """
         Rotation representation in euler angles, AKA axis angles, (x, y, z)
         """
-        theta, omega = transforms3d.quaternions.quat2axangle(self.__pose.q)
-        return_val = transforms3d.euler.axangle2euler(theta, omega)
+        vector, theta = transforms3d.quaternions.quat2axangle(self.__pose.q)
+        return_val = transforms3d.euler.axangle2euler(vector, theta)
         return numpy.array(return_val)
 
     @property
     def raw_quaternion(self) -> numpy.ndarray:
+        """
+        Returns the raw quaternion representation of the Pose object.
+        """
         return numpy.hstack([self.p, self.__rotation_representation[RotationRepresentation.QUATERNION]])
 
     @property
     def raw_euler(self) -> numpy.ndarray:
+        """
+        Returns the raw euler representation of the Pose object.
+        """
         return numpy.hstack([self.p, self.__rotation_representation[RotationRepresentation.EULER]])
 
     @property
     def mplib_pose(self) -> mplib.Pose:
+        """
+        Returns the underlying mplib.Pose object.
+        """
         return self.__pose
 
     def get_raw_pose(self, rotation_representation: RotationRepresentation):
+        """
+        Returns the raw pose representation of the Pose object based on the provided rotation representation.
+        """
         return numpy.hstack([self.p, self.__rotation_representation[rotation_representation]])
 
     def inv(self):
+        """
+        Returns the inverse of the Pose object.
+        """
         return self.__pose.inv()

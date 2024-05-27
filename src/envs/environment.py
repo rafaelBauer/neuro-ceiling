@@ -59,8 +59,8 @@ class BaseEnvironment(ABC):
         Starts the environment. In the real word would open the connections and do everything needed to allow the
         interactions. In the simulation, it creates the environment.
 
-    close() -> None
-        Gracefully close the environment.
+    stop() -> None
+        Gracefully stops and closes the environment.
 
     reset_joint_pose() -> None
         Resets the joint pose. This method is abstract and should be implemented in child classes.
@@ -136,9 +136,9 @@ class BaseEnvironment(ABC):
         """
 
     @abstractmethod
-    def close(self) -> None:
+    def stop(self) -> None:
         """
-        Gracefully close the environment.
+        Gracefully stops and closes the environment.
         """
         raise NotImplementedError
 

@@ -30,6 +30,7 @@ class AgentBase:
 
     def stop(self):
         self.__timer.stop()
+        self.__environment.stop()
 
     def _timer_callback(self):
         state: np.array = np.zeros(7)

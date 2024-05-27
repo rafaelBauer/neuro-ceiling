@@ -128,7 +128,7 @@ class MotionPlannerPolicy(PolicyBase):
 
     def __plan_to_pose(self, current_qpos: np.ndarray, target_pose: Pose, time_step=0.05) -> list[np.ndarray]:
         """
-        Plans a path from the current pose to the target end-effector pose.
+        Plans a path with the target pose of the end-effector from the current joint positions.
 
         Parameters
         ----------
@@ -142,7 +142,7 @@ class MotionPlannerPolicy(PolicyBase):
         Returns
         -------
         list[np.ndarray]
-            The positions of the planned path.
+            The target positions of the end-effector resulting in a path.
         """
         # The plan is a dictionary with a "status" field that can be "Success" or different failures.
         # If the status is success, it will also include the following keys:
@@ -162,8 +162,6 @@ class MotionPlannerPolicy(PolicyBase):
         #
         #   - acceleration: a NumPy array of shape (n x m) describing the joint accelerations of the waypoints.
         plan = self.__path_planner.plan_screw(target_pose.mplib_pose, current_qpos, time_step=time_step)
-        pinocchio_model = self.__path_planner.pinocchio_model
-        # test = self.__path_planner.pinocchio_model.compute_forward_kinematics(plan["position"][-1])
         if not plan["status"] == "Success":
             logger.error("Could not plan path. Current pose {} -> Target pose {}", current_qpos, target_pose)
             return []

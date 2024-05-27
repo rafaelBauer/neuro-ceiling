@@ -24,7 +24,7 @@ class ManiSkillEnvironmentConfig(BaseEnvironmentConfig):
 
 class ManiSkillEnv(BaseEnvironment):
     __RENDER_MODE: Final[str] = "human"
-    __CONTROL_MODE: Final[str] = "pd_ee_delta_pose"  # "pd_joint_pos", "pd_ee_delta_pose"
+    __CONTROL_MODE: Final[str] = "pd_joint_pos"  # "pd_joint_pos", "pd_ee_delta_pose"
 
     # -------------------------------------------------------------------------- #
     # Initialization
@@ -82,8 +82,10 @@ class ManiSkillEnv(BaseEnvironment):
         pass
 
     @override
-    def close(self):
-        pass
+    def stop(self):
+        logger.info("Stopping ManiSkill environment {}", __ENV_NAME__)
+        self.__env.close()
+        logger.info("ManiSkill environment {} stopped", __ENV_NAME__)
 
     # -------------------------------------------------------------------------- #
     # Step
