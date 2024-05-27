@@ -3,6 +3,8 @@ from dataclasses import dataclass, field
 
 from torch import nn, Tensor
 
+from utils.logging import log_constructor
+
 
 @dataclass(kw_only=True)
 class PolicyBaseConfig:
@@ -14,7 +16,13 @@ class PolicyBaseConfig:
 
 
 class PolicyBase(nn.Module):
-    def __init__(self, **kwargs):
+    def __init__(self, config: PolicyBaseConfig, **kwargs):
+        # Deleting unecessary kwargs from children classes
+        if "environment" in kwargs:
+            del kwargs["environment"]
+        if "keyboard_observer" in kwargs:
+            del kwargs["keyboard_observer"]
+
         super().__init__(**kwargs)
 
     @abstractmethod

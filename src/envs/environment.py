@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import Final, final
 
-import numpy as np
+from envs.robotactions import RobotAction
+from envs.robotinfo import RobotInfo, RobotMotionInfo
+from utils.logging import log_constructor
 
 
 class BaseEnvironmentConfig:
@@ -31,7 +33,6 @@ class BaseEnvironmentConfig:
     def env_type(self) -> str:
         return self.__ENV_TYPE
 
-
 class BaseEnvironment(ABC):
     """
     This is the base class for all environments. It defines the common interface that all environments should adhere to.
@@ -58,8 +59,8 @@ class BaseEnvironment(ABC):
         Starts the environment. In the real word would open the connections and do everything needed to allow the
         interactions. In the simulation, it creates the environment.
 
-    close() -> None
-        Gracefully close the environment.
+    stop() -> None
+        Gracefully stops and closes the environment.
 
     reset_joint_pose() -> None
         Resets the joint pose. This method is abstract and should be implemented in child classes.
@@ -88,7 +89,7 @@ class BaseEnvironment(ABC):
         pass
 
     @final
-    def step(self, action: np.ndarray) -> tuple[dict, float, bool, dict]:
+    def step(self, action: RobotAction) -> tuple[dict, float, bool, dict]:
         """
         Executes the action in the environment. Simple wrapper around _step, that allows us to perform extra actions
         before and after the step.
@@ -107,7 +108,7 @@ class BaseEnvironment(ABC):
         return self._step(action)
 
     @abstractmethod
-    def _step(self, action: np.ndarray) -> tuple[dict, float, bool, dict]:
+    def _step(self, action: RobotAction) -> tuple[dict, float, bool, dict]:
         """
         Executes the action in the environment. This method is abstract and should be implemented in child classes.
 
@@ -135,9 +136,9 @@ class BaseEnvironment(ABC):
         """
 
     @abstractmethod
-    def close(self) -> None:
+    def stop(self) -> None:
         """
-        Gracefully close the environment.
+        Gracefully stops and closes the environment.
         """
         raise NotImplementedError
 
@@ -145,5 +146,29 @@ class BaseEnvironment(ABC):
     def reset_joint_pose(self) -> None:
         """
         Resets the joint pose. This method is abstract and should be implemented in child classes.
+        """
+        raise NotImplementedError("Need to implement in child class.")
+
+    @abstractmethod
+    def get_robot_info(self) -> final(RobotInfo):
+        """
+        Returns the robot object of the environment.
+
+        Returns
+        -------
+        RobotInfo
+            The data object containing the robot information.
+        """
+        raise NotImplementedError("Need to implement in child class.")
+
+    @abstractmethod
+    def get_robot_motion_info(self) -> final(RobotMotionInfo):
+        """
+        Returns the robot object of the environment.
+
+        Returns
+        -------
+        RobotInfo
+            The data object containing the robot information.
         """
         raise NotImplementedError("Need to implement in child class.")

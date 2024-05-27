@@ -4,7 +4,7 @@ from typing import override
 import numpy as np
 
 from envs import BaseEnvironment, BaseEnvironmentConfig
-from utils.logging import logger
+from utils.logging import logger, log_constructor
 
 
 @dataclass
@@ -14,6 +14,7 @@ class MockEnvironmentConfig(BaseEnvironmentConfig):
 
 
 class MockEnv(BaseEnvironment):
+    @log_constructor
     def __init__(self, config: BaseEnvironmentConfig) -> None:
         super().__init__(config)
 
@@ -22,12 +23,12 @@ class MockEnv(BaseEnvironment):
         logger.info("Reset joint poses")
 
     @override
-    def close(self) -> None:
-        logger.info("Closed Environment")
+    def stop(self) -> None:
+        logger.info("Stopped Environment")
 
     @override
     def start(self) -> None:
-        logger.info("Started Environment")
+        logger.info("Starting Environment")
 
     @override
     def _step(self, action: np.ndarray) -> tuple[dict, float, bool, dict]:

@@ -179,10 +179,11 @@ class NeuroCeilingEnv(BaseEnv):
             xyz_cubeB[:, 2] = self.cube_half_size
             xyz_cubeC[:, :2] = torch.tensor([[0, -0.2]])
             xyz_cubeC[:, 2] = self.cube_half_size
-            qs = randomization.random_quaternions(b, lock_x=True, lock_y=True)
+            qs = torch.Tensor([0, 0, 0, 1])
             self.cubeA.set_pose(Pose.create_from_pq(xyz_cubeA, qs))
             self.cubeB.set_pose(Pose.create_from_pq(xyz_cubeB, qs))
             self.cubeC.set_pose(Pose.create_from_pq(xyz_cubeC, qs))
+
 
             #
             # goal_xyz = torch.zeros((b, 3))

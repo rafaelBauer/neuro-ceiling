@@ -4,7 +4,7 @@ mani-skill
 gymnasium
 
 # Motion planner
-mplib
+mplib==0.2.0a0
 
 # To generate documentation
 mkdocs
@@ -19,7 +19,7 @@ mne
 braindecode
 
 # ====== Utils =======
-pynput @ git+https://github.com/moses-palmer/pynput@master
+pynput          # To sample keyboard and mouse
 loguru          # Logging library
 omegaconf       # To manage configurations
 matplotlib      # plots
