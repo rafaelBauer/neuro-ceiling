@@ -24,7 +24,7 @@ class ManiSkillEnvironmentConfig(BaseEnvironmentConfig):
 
 class ManiSkillEnv(BaseEnvironment):
     __RENDER_MODE: Final[str] = "human"
-    __CONTROL_MODE: Final[str] = "pd_joint_pos"     # "pd_ee_delta_pose"
+    __CONTROL_MODE: Final[str] = "pd_ee_delta_pose"  # "pd_joint_pos", "pd_ee_delta_pose"
 
     # -------------------------------------------------------------------------- #
     # Initialization
@@ -42,8 +42,9 @@ class ManiSkillEnv(BaseEnvironment):
         self.__env: Final[BaseEnv] = gym.make(__ENV_NAME__, **kwargs)
 
         self.__end_effector_link_index: Final[int] = [
-            link for link in self.__env.agent.robot.links if "hand_tcp" in link.name
+            link for link in self.__env.get_wrapper_attr("agent").robot.links if "hand_tcp" in link.name
         ][0].index.item()
+        self.__pinocchio_model = self.__env.get_wrapper_attr("agent").robot.create_pinocchio_model()
 
     @override
     def start(self):
@@ -108,12 +109,17 @@ class ManiSkillEnv(BaseEnvironment):
             tuple[dict, float, bool, dict]: A tuple containing the next observation, reward, done flag, and additional info.
         """
 
-        # if self.__CONTROL_MODE == "pd_joint_pos":
-        #     action = np.concatenate([action, np.array([0])])
-        # elif self.__CONTROL_MODE == "pd_ee_delta_pose":
-        #     action = np.concatenate([action, np.array([0, 0, 0, 0, 0, 0, 0])])
+        if self.__CONTROL_MODE == "pd_joint_pos":
+            robot_raw_action = action.to_target_joint_position().get_raw_action()
+        elif self.__CONTROL_MODE == "pd_ee_delta_pose":
+            motion_info = self.get_robot_motion_info()
+            robot_raw_action = action.to_delta_ee_pose(
+                self.__pinocchio_model, self.__end_effector_link_index, motion_info.current_ee_pose
+            ).get_raw_action()
+        else:
+            raise NotImplementedError(f"Action for control mode {self.__CONTROL_MODE} not implemented")
 
-        next_obs, reward, done, _, info = self.__env.step(action.get_raw_action())
+        next_obs, reward, done, _, info = self.__env.step(robot_raw_action)
 
         obs = next_obs
 
@@ -126,9 +132,13 @@ class ManiSkillEnv(BaseEnvironment):
     # -------------------------------------------------------------------------- #
     @override
     def get_robot_info(self) -> final(RobotInfo):
-        LINK_NAMES: Final[Sequence[str]] = [link.get_name() for link in self.__env.agent.robot.get_links()]
-        JOINT_NAMES: Final[Sequence[str]] = [joint.get_name() for joint in self.__env.agent.robot.get_active_joints()]
-        URDF_PATH: Final[Path] = Path(self.__env.agent.urdf_path)
+        LINK_NAMES: Final[Sequence[str]] = [
+            link.get_name() for link in self.__env.get_wrapper_attr("agent").robot.get_links()
+        ]
+        JOINT_NAMES: Final[Sequence[str]] = [
+            joint.get_name() for joint in self.__env.get_wrapper_attr("agent").robot.get_active_joints()
+        ]
+        URDF_PATH: Final[Path] = Path(self.__env.get_wrapper_attr("agent").urdf_path)
         SRDF_PATH: Final[Path] = URDF_PATH.with_suffix(".srdf")
         END_EFFECTOR_LINK_NAME: Final[str] = LINK_NAMES[self.__end_effector_link_index]
 
@@ -143,8 +153,12 @@ class ManiSkillEnv(BaseEnvironment):
     @override
     def get_robot_motion_info(self) -> final(RobotMotionInfo):
         # Take index 0 because it is of shape (1,9), and we want a dim0  array.
-        internal_pose = self.__env.agent.robot.get_links()[self.__end_effector_link_index].pose.sp
+        end_effector_pose = (
+            self.__env.get_wrapper_attr("agent").robot.get_links()[self.__end_effector_link_index].pose.sp
+        )  # W.R.T what??
+        robot_pose = self.__env.get_wrapper_attr("agent").robot.pose.sp
+        end_effector_pose_wrt_base = robot_pose.inv() * end_effector_pose
         return RobotMotionInfo(
-            current_qpos=self.__env.agent.robot.get_qpos().cpu()[0],
-            current_ee_pose=Pose(obj=internal_pose),
+            current_qpos=self.__env.get_wrapper_attr("agent").robot.get_qpos().cpu()[0],
+            current_ee_pose=Pose(obj=end_effector_pose_wrt_base),
         )

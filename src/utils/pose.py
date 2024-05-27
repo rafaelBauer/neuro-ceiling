@@ -1,7 +1,19 @@
+from enum import Enum
+
 import mplib
 
 import numpy
-from scipy.spatial.transform import Rotation
+
+import transforms3d
+
+
+class RotationRepresentation(Enum):
+    """
+    Enum for the different rotation representations
+    """
+    QUATERNION = "quaternion",
+    EULER = "euler"
+
 
 class Pose:
     """
@@ -26,6 +38,10 @@ class Pose:
         Constructs a default Pose with p = (0,0,0) and q = (1,0,0,0)
         """
         self.__pose = mplib.Pose(**kwargs)
+        self.__rotation_representation: dict[RotationRepresentation, numpy.ndarray] = {
+            RotationRepresentation.QUATERNION: self.q,
+            RotationRepresentation.EULER: self.euler
+        }
 
     def __mul__(self, other: 'Pose') -> 'Pose':
         """
@@ -43,22 +59,40 @@ class Pose:
     def p(self) -> numpy.ndarray:
         return self.__pose.p
 
+    @p.setter
+    def p(self, value):
+        self.__pose.p = value
+
     @property
     def q(self) -> numpy.ndarray:
+        """
+        Rotation representation in quaternion (w, x, y, z)
+        """
         return self.__pose.q
 
     @property
     def euler(self) -> numpy.ndarray:
-        return Rotation.from_quat(self.__pose.q).as_euler('xyz', degrees=True)
+        """
+        Rotation representation in euler angles, AKA axis angles, (x, y, z)
+        """
+        theta, omega = transforms3d.quaternions.quat2axangle(self.__pose.q)
+        return_val = transforms3d.euler.axangle2euler(theta, omega)
+        return numpy.array(return_val)
 
     @property
-    def raw_quartenion(self) -> numpy.ndarray:
-        return numpy.hstack([self.p, self.q])
+    def raw_quaternion(self) -> numpy.ndarray:
+        return numpy.hstack([self.p, self.__rotation_representation[RotationRepresentation.QUATERNION]])
 
     @property
     def raw_euler(self) -> numpy.ndarray:
-        return numpy.hstack([self.p, self.euler])
+        return numpy.hstack([self.p, self.__rotation_representation[RotationRepresentation.EULER]])
 
     @property
     def mplib_pose(self) -> mplib.Pose:
         return self.__pose
+
+    def get_raw_pose(self, rotation_representation: RotationRepresentation):
+        return numpy.hstack([self.p, self.__rotation_representation[rotation_representation]])
+
+    def inv(self):
+        return self.__pose.inv()

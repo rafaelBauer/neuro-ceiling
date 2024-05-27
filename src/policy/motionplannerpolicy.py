@@ -2,7 +2,6 @@ from dataclasses import dataclass, field
 from typing import override, Final
 
 import numpy as np
-import torch
 from torch import Tensor
 from mplib import Planner
 
@@ -92,7 +91,11 @@ class MotionPlannerPolicy(PolicyBase):
         initial_pose: Pose = Pose(p=np.array([0.615, 0.0, 0.02]), q=np.array([0, 1, 0, 0]))
         self.__gripper_command: GripperCommand = GripperCommand.OPEN
         self.__current_path: list[np.ndarray] = self.__plan_to_pose(current_qpos, initial_pose)
-        logger.info("Initialized planner to initial pose {} with gripper {}", current_motion_info.current_ee_pose, self.__gripper_command.name)
+        logger.info(
+            "Initialized planner to initial pose {} with gripper {}",
+            initial_pose,
+            self.__gripper_command.name,
+        )
 
     @override
     def update(self):
@@ -159,7 +162,8 @@ class MotionPlannerPolicy(PolicyBase):
         #
         #   - acceleration: a NumPy array of shape (n x m) describing the joint accelerations of the waypoints.
         plan = self.__path_planner.plan_screw(target_pose.mplib_pose, current_qpos, time_step=time_step)
-
+        pinocchio_model = self.__path_planner.pinocchio_model
+        # test = self.__path_planner.pinocchio_model.compute_forward_kinematics(plan["position"][-1])
         if not plan["status"] == "Success":
             logger.error("Could not plan path. Current pose {} -> Target pose {}", current_qpos, target_pose)
             return []
