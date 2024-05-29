@@ -33,6 +33,7 @@ class BaseEnvironmentConfig:
     def env_type(self) -> str:
         return self.__ENV_TYPE
 
+
 class BaseEnvironment(ABC):
     """
     This is the base class for all environments. It defines the common interface that all environments should adhere to.

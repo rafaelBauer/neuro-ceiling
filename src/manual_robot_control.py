@@ -10,10 +10,12 @@ from omegaconf import OmegaConf, SCMode
 from agent import create_agent, AgentBase, AgentConfig
 from envs import BaseEnvironmentConfig, create_environment, BaseEnvironment
 from policy import PolicyBaseConfig, PolicyBase, create_policy
+from task.movetoposition import MoveObjectToPosition
 from utils.argparse import get_config_from_args
 from utils.config import ConfigBase
 from utils.keyboard_observer import KeyboardObserver
 from utils.logging import logger
+from utils.pose import Pose
 
 
 @dataclass
@@ -54,10 +56,23 @@ def main() -> None:
 
     logger.info("Go!")
 
-    keyboard_obs.start()
-    agent.start()
-
     try:
+        keyboard_obs.start()
+        agent.start()
+
+        # time.sleep(5)
+        #
+        # # MoveObjectToPosition()
+        # object_pose = Pose(p=[0.615, 0, 0.02], q=[0, 1, 0, 0])
+        # target_pose = Pose(p=[0.615, 0.2, 0.06], q=[0, 1, 0, 0])
+        # move_object_task = MoveObjectToPosition(object_pose, target_pose)
+        # agent.execute_task(move_object_task)
+        # time.sleep(15)
+        # object_pose2 = Pose(p=[0.615, -0.2, 0.02], q=[0, 1, 0, 0])
+        # target_pose2 = Pose(p=[0.615, 0.2, 0.1], q=[0, 1, 0, 0])
+        # move_object_task = MoveObjectToPosition(object_pose2, target_pose2)
+        # agent.execute_task(move_object_task)
+
         while True:
             # just need to sleep, since there is a thread in the agent doing the stepping and
             # everything else

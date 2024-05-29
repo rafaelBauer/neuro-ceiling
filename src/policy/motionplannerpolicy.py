@@ -9,6 +9,7 @@ from envs import BaseEnvironment
 from envs.robotactions import TargetJointPositionAction, RobotAction, GripperCommand
 from envs.robotinfo import RobotInfo
 from policy.policy import PolicyBaseConfig, PolicyBase
+from task.task import Task
 from utils.logging import logger, log_constructor
 from utils.pose import Pose
 
@@ -79,8 +80,11 @@ class MotionPlannerPolicy(PolicyBase):
         super().__init__(config, **kwargs)
 
         self.__gripper_command: GripperCommand = GripperCommand.OPEN
+        self.__target_sequence: list[tuple[Pose, GripperCommand]] = []
+        # Store motion info function pointer to be able to call it when a plan is needed
+        self.__get_robot_motion_info = environment.get_robot_motion_info
 
-        current_motion_info = environment.get_robot_motion_info()
+        current_motion_info = self.__get_robot_motion_info()
         current_qpos = current_motion_info.current_qpos.numpy()
 
         # At the current pose and with the gripper opened
@@ -88,8 +92,8 @@ class MotionPlannerPolicy(PolicyBase):
         # we only take the first 7
         self.__last_action: RobotAction = TargetJointPositionAction(current_qpos[:7], self.__gripper_command)
 
-        initial_pose: Pose = Pose(p=np.array([0.615, 0.0, 0.02]), q=np.array([0, 1, 0, 0]))
-        self.__gripper_command: GripperCommand = GripperCommand.OPEN
+        initial_pose: Pose = Pose(p=np.array([0.615, 0.0, 0.2]), q=np.array([0, 1, 0, 0]))
+        self.gripper_command = GripperCommand.OPEN
         self.__current_path: list[np.ndarray] = self.__plan_to_pose(current_qpos, initial_pose)
         logger.info(
             "Initialized planner to initial pose {} with gripper {}",
@@ -124,7 +128,40 @@ class MotionPlannerPolicy(PolicyBase):
                 self.__current_path.pop(0), self.__gripper_command
             )
             self.__last_action = action
+        else:
+            self.__update_path_to_next_target()
         return self.__last_action
+
+    @override
+    def plan_task(self, task: Task):
+        self.__target_sequence = task.get_action_sequence()
+        robot_motion_info = self.__get_robot_motion_info()
+
+        # Ensure that end effector is not too low, so it doesn't hit the objects.
+        if robot_motion_info.current_ee_pose.p[2] < 0.1:
+            robot_motion_info.current_ee_pose.p[2] = 0.1
+            self.__current_path = self.__plan_to_pose(robot_motion_info.current_qpos.numpy(),
+                                                      robot_motion_info.current_ee_pose[0])
+        else:
+            self.__update_path_to_next_target()
+
+    @property
+    def gripper_command(self) -> GripperCommand:
+        return self.__gripper_command
+
+    @gripper_command.setter
+    def gripper_command(self, command: GripperCommand):
+        logger.debug("Setting gripper command to {}", command.name)
+        self.__gripper_command = command
+
+    def __update_path_to_next_target(self) -> bool:
+        if self.__target_sequence:
+            current_action: tuple[Pose, GripperCommand] = self.__target_sequence.pop(0)
+            self.__current_path = self.__plan_to_pose(self.__get_robot_motion_info().current_qpos.numpy(),
+                                                      current_action[0])
+            self.gripper_command = current_action[1]
+            return True
+        return False
 
     def __plan_to_pose(self, current_qpos: np.ndarray, target_pose: Pose, time_step=0.05) -> list[np.ndarray]:
         """

@@ -184,8 +184,6 @@ class NeuroCeilingEnv(BaseEnv):
             self.cubeB.set_pose(Pose.create_from_pq(xyz_cubeB, qs))
             self.cubeC.set_pose(Pose.create_from_pq(xyz_cubeC, qs))
 
-
-            #
             # goal_xyz = torch.zeros((b, 3))
             # goal_xyz[:, :2] = torch.rand((b, 2)) * 0.2 - 0.1
             # goal_xyz[:, 2] = torch.rand((b)) * 0.3 + xyz[:, 2]
@@ -193,7 +191,6 @@ class NeuroCeilingEnv(BaseEnv):
 
     """
     Modifying observations, goal parameterization, and success conditions for your task
-
     the code below all impact some part of `self.step` function
     """
 

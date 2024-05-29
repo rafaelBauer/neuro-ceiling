@@ -1,12 +1,14 @@
+import threading
 from dataclasses import dataclass
 import time
-from typing import Final
+from typing import Final, Any
 
 import numpy as np
 
 from envs import BaseEnvironment
 from learnalgorithm.learnalgorithm import LearnAlgorithmBaseConfig
 from policy import PolicyBase
+from task.task import Task
 from utils.logging import log_constructor
 from utils.timer import Timer
 
@@ -25,6 +27,13 @@ class AgentBase:
         self.__environment: Final[BaseEnvironment] = environment
         self.__policy: Final[PolicyBase] = policy
 
+        # Control variables for learning
+        self.__current_observation: np.array = np.array([])
+        self.__current_reward: float = 0.0
+        self.__episode_finished: bool = False
+        self.__current_info: dict[str, Any] = {}
+        self.__policy_lock: threading.Lock = threading.Lock()
+
     def start(self):
         self.__timer.start()
 
@@ -32,8 +41,17 @@ class AgentBase:
         self.__timer.stop()
         self.__environment.stop()
 
+    def execute_task(self, task: Task):
+        with self.__policy_lock:
+            self.__policy.plan_task(task)
+
     def _timer_callback(self):
-        state: np.array = np.zeros(7)
-        action: np.array = self.__policy(state)
+        action: np.array
+        with self.__policy_lock:
+            action = self.__policy(self.__current_observation)
+
         if action is not None:
-            self.__environment.step(action)
+            (self.__current_observation,
+             self.__current_reward,
+             self.__episode_finished,
+             self.__current_info) = self.__environment.step(action)

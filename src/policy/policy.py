@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 
 from torch import nn, Tensor
 
+from task.task import Task
 from utils.logging import log_constructor
 
 
@@ -17,7 +18,7 @@ class PolicyBaseConfig:
 
 class PolicyBase(nn.Module):
     def __init__(self, config: PolicyBaseConfig, **kwargs):
-        # Deleting unecessary kwargs from children classes
+        # Deleting unnecessary kwargs from children classes
         if "environment" in kwargs:
             del kwargs["environment"]
         if "keyboard_observer" in kwargs:
@@ -32,8 +33,12 @@ class PolicyBase(nn.Module):
     @abstractmethod
     def forward(self, states: Tensor) -> Tensor:
         """
-        In the forward function we accept a Tensor of input data and we must return
+        In the forward function we accept a Tensor of input data, and we must return
         a Tensor of output data. We can use Modules defined in the constructor as
         well as arbitrary (differentiable) operations on Tensors.
         """
+        pass
+
+    @abstractmethod
+    def plan_task(self, task: Task):
         pass
