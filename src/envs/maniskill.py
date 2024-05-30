@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal, Final, override, final, Sequence
+from typing import Literal, Final, override, final, Sequence, Any
 
 import gymnasium as gym
 import numpy as np

@@ -1,3 +1,4 @@
+import copy
 from enum import Enum
 
 import mplib
@@ -64,7 +65,7 @@ class Pose:
         """
         Set the state of the Pose object. This is used for deserialization.
         """
-        self.__pose.__setstate__(arg0)
+        self.__init__(p=arg0[:3], q=arg0[3:])
 
     @property
     def p(self) -> numpy.ndarray:
@@ -128,3 +129,6 @@ class Pose:
         Returns the inverse of the Pose object.
         """
         return self.__pose.inv()
+
+    def copy(self):
+        return copy.copy(self)
