@@ -1,3 +1,4 @@
+import threading
 from dataclasses import dataclass, field
 from typing import override, Final
 
@@ -26,9 +27,12 @@ class MotionPlannerPolicyConfig(PolicyBaseConfig):
     _POLICY_TYPE : str
         A string representing the type of policy. This is set to "MotionPlannerPolicy" and
         cannot be changed during initialization.
+    minimum_z_height_between_paths : float
+        The minimum height between paths to avoid collision with objects.
     """
 
     _POLICY_TYPE: str = field(init=False, default="MotionPlannerPolicy")
+    minimum_z_height_between_paths: float = 0.1
 
 
 class MotionPlannerPolicy(PolicyBase):
@@ -90,7 +94,7 @@ class MotionPlannerPolicy(PolicyBase):
         # At the current pose and with the gripper opened
         # The current qpos has the position of all joints (9 in total), the last 2 are the gripper joints, therefore
         # we only take the first 7
-        self.__last_action: RobotAction = TargetJointPositionAction(current_qpos[:7], self.__gripper_command)
+        self.__last_action: RobotAction = TargetJointPositionAction(current_qpos[:7], self.gripper_command)
 
         initial_pose: Pose = Pose(p=np.array([0.615, 0.0, 0.2]), q=np.array([0, 1, 0, 0]))
         self.gripper_command = GripperCommand.OPEN
@@ -98,8 +102,10 @@ class MotionPlannerPolicy(PolicyBase):
         logger.info(
             "Initialized planner to initial pose {} with gripper {}",
             initial_pose,
-            self.__gripper_command.name,
+            self.gripper_command.name,
         )
+        self.__forward_lock: threading.Lock = threading.Lock()
+        self.__task_lock: threading.Lock = threading.Lock()
 
     @override
     def update(self):
@@ -123,40 +129,68 @@ class MotionPlannerPolicy(PolicyBase):
         Tensor
             The action to be taken by the robot.
         """
-        # If there is still a path, keep sampling from it.
-        if self.__current_path:
-            action: TargetJointPositionAction = TargetJointPositionAction(
-                self.__current_path.pop(0), self.__gripper_command
-            )
-            self.__last_action = action
-        else:
-            # Try to update the path to the next target, if there is no target, the last action will be returned.
-            self.__update_path_to_next_target()
+        with self.__forward_lock:
+            # If there is still a path, keep sampling from it.
+            if self.__current_path:
+                action: TargetJointPositionAction = TargetJointPositionAction(
+                    self.__current_path.pop(0), self.gripper_command
+                )
+                self.__last_action = action
+            else:
+                # Try to update the path to the next target, if there is no target, the last action will be returned.
+                self.__update_path_to_next_target()
         return self.__last_action
 
     @override
-    def plan_task(self, task: Task):
-        self.__target_sequence = task.get_action_sequence()
-        robot_motion_info = self.__get_robot_motion_info()
+    def task_to_be_executed(self, task: Task):
+        """
+        Method called by the agent to inform which task has to be executed by it.
+        In the case of this policy, since it is a deterministic policy, it is responsible for getting a sequence of
+        Poses and gripper commands, so it can plan the paths to fulfill the task.
 
-        # Ensure that end effector is not too low, so it doesn't hit the objects.
-        if robot_motion_info.current_ee_pose.p[2] < 0.1:
-            robot_motion_info.current_ee_pose.p[2] = 0.1
-            self.__current_path = self.__plan_to_pose(robot_motion_info.current_qpos.numpy(),
-                                                      robot_motion_info.current_ee_pose[0])
-        else:
-            self.__update_path_to_next_target()
+        Parameters:
+            task (Task): The task that has to be executed.
+        """
+        with self.__task_lock:
+            self.__target_sequence = task.get_action_sequence()
+            robot_motion_info = self.__get_robot_motion_info()
+
+            # Ensure that end effector is not too low, so it doesn't hit the objects.
+            if robot_motion_info.current_ee_pose.p[2] < self.__config.minimum_z_height_between_paths:
+                robot_motion_info.current_ee_pose.p[2] = self.__config.minimum_z_height_between_paths
+                self.__current_path = self.__plan_to_pose(robot_motion_info.current_qpos.numpy(),
+                                                          robot_motion_info.current_ee_pose[0])
+            else:
+                self.__update_path_to_next_target()
 
     @property
     def gripper_command(self) -> GripperCommand:
+        """
+        This method is a getter for the gripper command.
+
+        Returns:
+            GripperCommand: The current command for the gripper.
+        """
         return self.__gripper_command
 
     @gripper_command.setter
     def gripper_command(self, command: GripperCommand):
+        """
+        This method is a setter for the gripper command.
+
+        Parameters:
+            command (GripperCommand): The command for the gripper.
+        """
         logger.debug("Setting gripper command to {}", command.name)
         self.__gripper_command = command
 
     def __update_path_to_next_target(self) -> bool:
+        """
+        This method updates the path to the next target.
+
+        Returns:
+            bool: True if the path to the next target was updated, False otherwise.
+        """
         if self.__target_sequence:
             current_action: tuple[Pose, GripperCommand] = self.__target_sequence.pop(0)
             self.__current_path = self.__plan_to_pose(self.__get_robot_motion_info().current_qpos.numpy(),

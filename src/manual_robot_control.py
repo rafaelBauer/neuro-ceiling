@@ -60,18 +60,18 @@ def main() -> None:
         keyboard_obs.start()
         agent.start()
 
-        # time.sleep(5)
-        #
-        # # MoveObjectToPosition()
-        # object_pose = Pose(p=[0.615, 0, 0.02], q=[0, 1, 0, 0])
-        # target_pose = Pose(p=[0.615, 0.2, 0.06], q=[0, 1, 0, 0])
-        # move_object_task = MoveObjectToPosition(object_pose, target_pose)
-        # agent.execute_task(move_object_task)
-        # time.sleep(15)
-        # object_pose2 = Pose(p=[0.615, -0.2, 0.02], q=[0, 1, 0, 0])
-        # target_pose2 = Pose(p=[0.615, 0.2, 0.1], q=[0, 1, 0, 0])
-        # move_object_task = MoveObjectToPosition(object_pose2, target_pose2)
-        # agent.execute_task(move_object_task)
+        time.sleep(5)
+
+        # MoveObjectToPosition()
+        object_pose = Pose(p=[0.615, 0, 0.02], q=[0, 1, 0, 0])
+        target_pose = Pose(p=[0.615, 0.2, 0.06], q=[0, 1, 0, 0])
+        move_object_task = MoveObjectToPosition(object_pose, target_pose)
+        agent.execute_task(move_object_task)
+        time.sleep(15)
+        object_pose2 = Pose(p=[0.615, -0.2, 0.02], q=[0, 1, 0, 0])
+        target_pose2 = Pose(p=[0.615, 0.2, 0.1], q=[0, 1, 0, 0])
+        move_object_task = MoveObjectToPosition(object_pose2, target_pose2)
+        agent.execute_task(move_object_task)
 
         while True:
             # just need to sleep, since there is a thread in the agent doing the stepping and

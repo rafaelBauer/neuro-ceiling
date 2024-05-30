@@ -1,4 +1,3 @@
-import threading
 from dataclasses import dataclass
 import time
 from typing import Final, Any
@@ -32,7 +31,6 @@ class AgentBase:
         self.__current_reward: float = 0.0
         self.__episode_finished: bool = False
         self.__current_info: dict[str, Any] = {}
-        self.__policy_lock: threading.Lock = threading.Lock()
 
     def start(self):
         self.__timer.start()
@@ -42,13 +40,10 @@ class AgentBase:
         self.__environment.stop()
 
     def execute_task(self, task: Task):
-        with self.__policy_lock:
-            self.__policy.plan_task(task)
+        self.__policy.task_to_be_executed(task)
 
     def _timer_callback(self):
-        action: np.array
-        with self.__policy_lock:
-            action = self.__policy(self.__current_observation)
+        action = self.__policy(self.__current_observation)
 
         if action is not None:
             (self.__current_observation,
