@@ -123,12 +123,14 @@ class MotionPlannerPolicy(PolicyBase):
         Tensor
             The action to be taken by the robot.
         """
+        # If there is still a path, keep sampling from it.
         if self.__current_path:
             action: TargetJointPositionAction = TargetJointPositionAction(
                 self.__current_path.pop(0), self.__gripper_command
             )
             self.__last_action = action
         else:
+            # Try to update the path to the next target, if there is no target, the last action will be returned.
             self.__update_path_to_next_target()
         return self.__last_action
 
