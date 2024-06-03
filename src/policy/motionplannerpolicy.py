@@ -10,7 +10,7 @@ from envs import BaseEnvironment
 from envs.robotactions import TargetJointPositionAction, RobotAction, GripperCommand
 from envs.robotinfo import RobotInfo
 from policy.policy import PolicyBaseConfig, PolicyBase
-from task.task import Task
+from goal.goal import Goal
 from utils.logging import logger, log_constructor
 from utils.pose import Pose
 
@@ -105,7 +105,7 @@ class MotionPlannerPolicy(PolicyBase):
             self.gripper_command.name,
         )
         self.__forward_lock: threading.Lock = threading.Lock()
-        self.__task_lock: threading.Lock = threading.Lock()
+        self.__goal_lock: threading.Lock = threading.Lock()
 
     @override
     def update(self):
@@ -142,17 +142,17 @@ class MotionPlannerPolicy(PolicyBase):
         return self.__last_action
 
     @override
-    def task_to_be_executed(self, task: Task):
+    def task_to_be_executed(self, goal: Goal):
         """
-        Method called by the agent to inform which task has to be executed by it.
+        Method called by the controller to inform which goal has to be executed by it.
         In the case of this policy, since it is a deterministic policy, it is responsible for getting a sequence of
-        Poses and gripper commands, so it can plan the paths to fulfill the task.
+        Poses and gripper commands, so it can plan the paths to fulfill the goal.
 
         Parameters:
-            task (Task): The task that has to be executed.
+            goal (Goal): The goal that has to be executed.
         """
-        with self.__task_lock:
-            self.__target_sequence = task.get_action_sequence()
+        with self.__goal_lock:
+            self.__target_sequence = goal.get_action_sequence()
             robot_motion_info = self.__get_robot_motion_info()
 
             # Ensure that end effector is not too low, so it doesn't hit the objects.

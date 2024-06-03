@@ -4,9 +4,12 @@ from typing import Final, override
 import torch
 from torch import Tensor, cat
 
+from goal.goal import Goal
+from goal.movetoposition import MoveObjectToPosition
 from policy.policy import PolicyBase, PolicyBaseConfig
 from utils.keyboard_observer import KeyboardObserver
 from utils.logging import log_constructor
+from utils.pose import Pose
 
 
 @dataclass(kw_only=True)
@@ -41,9 +44,16 @@ class ManualPolicy(PolicyBase):
         # For when the keyboard observer is not working
         # action = torch.tensor(np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]), dtype=torch.float32)
         # gripper = torch.tensor(np.array([0.0]), dtype=torch.float32)
-        action = torch.tensor(self.__keyboard_observer.get_ee_action(), dtype=torch.float32)
-        gripper = torch.tensor([self.__keyboard_observer.gripper], dtype=torch.float32)
-        return cat([action, gripper])
+        # action = torch.tensor(self.__keyboard_observer.get_ee_action(), dtype=torch.float32)
+        # gripper = torch.tensor([self.__keyboard_observer.gripper], dtype=torch.float32)
+        # return cat([action, gripper])
+
+        # MoveObjectToPosition()
+        object_pose = Pose(p=[0.615, 0, 0.02], q=[0, 1, 0, 0])
+        target_pose = Pose(p=[0.615, 0.2, 0.06], q=[0, 1, 0, 0])
+        move_object_task = MoveObjectToPosition(object_pose, target_pose)
+
+        return move_object_task
 
     @override
     def update(self):
@@ -51,3 +61,8 @@ class ManualPolicy(PolicyBase):
         Update method for the ManualPolicy class. This method is currently not implemented.
         """
         pass
+
+    @override
+    def task_to_be_executed(self, task: Goal):
+        pass
+

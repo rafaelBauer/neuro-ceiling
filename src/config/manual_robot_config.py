@@ -16,17 +16,24 @@ from learnalgorithm.learnalgorithm import LearnAlgorithmBaseConfig
 learn_algorithm_config = LearnAlgorithmBaseConfig("DQN")
 
 # ====== Policy configuration ========
-# from policy.manualpolicy import ManualPolicyConfig
-#
-# policy_config = ManualPolicyConfig()
+from policy.manualpolicy import ManualPolicyConfig
+
+high_level_policy_config = ManualPolicyConfig()
 
 from policy.motionplannerpolicy import MotionPlannerPolicyConfig
 
 policy_config = MotionPlannerPolicyConfig()
 
 # ====== Agent configuration ========
-from agent.agent import AgentConfig
+from controller.periodiccontroller import PeriodicControllerConfig
 
-agent_config = AgentConfig(polling_period_s=0.05, learn_algorithm_config=learn_algorithm_config)
+controller_config = PeriodicControllerConfig(polling_period_s=0.05, learn_algorithm_config=learn_algorithm_config)
+high_level_controller_config = PeriodicControllerConfig(polling_period_s=5, learn_algorithm_config=learn_algorithm_config)
 
-config = Config(agent_config=agent_config, policy_config=policy_config, environment_config=env_config)
+config = Config(
+    low_level_controller_config=controller_config,
+    low_level_policy_config=policy_config,
+    high_level_policy_config=high_level_policy_config,
+    high_level_controller_config=high_level_controller_config,
+    environment_config=env_config,
+)
