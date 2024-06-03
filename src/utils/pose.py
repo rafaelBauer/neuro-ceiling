@@ -42,6 +42,9 @@ class Pose:
         """
         Constructs a default Pose with p = (0,0,0) and q = (1,0,0,0)
         """
+        if 'euler' in kwargs:
+            kwargs['q'] = transforms3d.euler.euler2quat(kwargs['euler'][0], kwargs['euler'][1], kwargs['euler'][2])
+            del kwargs['euler']
         self.__pose = mplib.Pose(**kwargs)
         self.__rotation_representation: dict[RotationRepresentation, numpy.ndarray] = {
             RotationRepresentation.QUATERNION: self.q,

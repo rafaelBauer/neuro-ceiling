@@ -25,6 +25,8 @@ class PolicyBase(nn.Module):
         if "keyboard_observer" in kwargs:
             del kwargs["keyboard_observer"]
 
+        self._CONFIG = config
+
         super().__init__(**kwargs)
 
     @abstractmethod
