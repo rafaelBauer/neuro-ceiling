@@ -67,6 +67,9 @@ class Pose:
         """
         self.__init__(p=arg0[:3], q=arg0[3:])
 
+    def __eq__(self, other):
+        return self.__pose.p.all() == other.__pose.p.all() and self.__pose.q.all() == other.__pose.q.all()
+
     @property
     def p(self) -> numpy.ndarray:
         """
