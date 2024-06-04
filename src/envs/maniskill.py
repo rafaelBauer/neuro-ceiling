@@ -1,9 +1,8 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal, Final, override, final, Sequence, Any
+from typing import Final, override, final, Sequence
 
 import gymnasium as gym
-import numpy as np
 from mani_skill.envs.sapien_env import BaseEnv
 
 from utils.logging import log_constructor, logger
@@ -108,7 +107,8 @@ class ManiSkillEnv(BaseEnvironment):
             scale_action (bool, optional): Whether to scale the action. Defaults to True.
 
         Returns:
-            tuple[dict, float, bool, dict]: A tuple containing the next observation, reward, done flag, and additional info.
+            tuple[dict, float, bool, dict]: A tuple containing the next observation, reward, done flag, and additional
+            info.
         """
 
         if self.__CONTROL_MODE == "pd_joint_pos":
