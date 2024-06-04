@@ -24,6 +24,8 @@ class PolicyBase(nn.Module):
             del kwargs["environment"]
         if "keyboard_observer" in kwargs:
             del kwargs["keyboard_observer"]
+        if "scene" in kwargs:
+            del kwargs["scene"]
 
         self._CONFIG = config
 

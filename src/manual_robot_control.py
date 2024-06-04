@@ -9,6 +9,8 @@ from omegaconf import OmegaConf, SCMode
 
 from controller import create_controller, ControllerBase, ControllerConfig
 from envs import BaseEnvironmentConfig, create_environment, BaseEnvironment
+from envs.object import Object, Spot
+from envs.scene import Scene
 from policy import PolicyBaseConfig, PolicyBase, create_policy
 from goal.movetoposition import MoveObjectToPosition
 from utils.argparse import get_config_from_args
@@ -47,6 +49,16 @@ def main() -> None:
     np.set_printoptions(suppress=True, precision=3)
     config: Config = create_config_from_args()
 
+    cube_a: Object = Object(Pose(p=[0.615, -0.2, 0.02], q=[0, 1, 0, 0]))
+    cube_b: Object = Object(Pose(p=[0.615, 0.0, 0.02], q=[0, 1, 0, 0]))
+    cube_c: Object = Object(Pose(p=[0.615, 0.2, 0.02], q=[0, 1, 0, 0]))
+
+    spot_a: Spot = Spot(object=cube_a)
+    spot_b: Spot = Spot(object=cube_b)
+    spot_c: Spot = Spot(object=cube_c)
+
+    scene: Scene = Scene([cube_a, cube_b, cube_c], [spot_a, spot_b, spot_c])
+
     keyboard_obs = KeyboardObserver()
 
     environment: Final[BaseEnvironment] = create_environment(config.environment_config)
@@ -58,7 +70,7 @@ def main() -> None:
     )
 
     high_level_policy: Final[PolicyBase] = create_policy(
-        config.high_level_policy_config, keyboard_observer=keyboard_obs, environment=environment
+        config.high_level_policy_config, keyboard_observer=keyboard_obs, environment=environment, scene=scene
     )
     high_level_controller: Final[ControllerBase] = create_controller(
         config.high_level_controller_config, environment, high_level_policy, low_level_controller

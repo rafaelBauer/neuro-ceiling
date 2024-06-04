@@ -158,8 +158,9 @@ class MotionPlannerPolicy(PolicyBase):
             # Ensure that end effector is not too low, so it doesn't hit the objects.
             if robot_motion_info.current_ee_pose.p[2] < self.__config.minimum_z_height_between_paths:
                 robot_motion_info.current_ee_pose.p[2] = self.__config.minimum_z_height_between_paths
-                self.__current_path = self.__plan_to_pose(robot_motion_info.current_qpos.numpy(),
-                                                          robot_motion_info.current_ee_pose[0])
+                self.__current_path = self.__plan_to_pose(
+                    robot_motion_info.current_qpos.numpy(), robot_motion_info.current_ee_pose[0]
+                )
             else:
                 self.__update_path_to_next_target()
 
@@ -193,8 +194,9 @@ class MotionPlannerPolicy(PolicyBase):
         """
         if self.__target_sequence:
             current_action: tuple[Pose, GripperCommand] = self.__target_sequence.pop(0)
-            self.__current_path = self.__plan_to_pose(self.__get_robot_motion_info().current_qpos.numpy(),
-                                                      current_action[0])
+            self.__current_path = self.__plan_to_pose(
+                self.__get_robot_motion_info().current_qpos.numpy(), current_action[0]
+            )
             self.gripper_command = current_action[1]
             return True
         return False
@@ -236,6 +238,8 @@ class MotionPlannerPolicy(PolicyBase):
         #   - acceleration: a NumPy array of shape (n x m) describing the joint accelerations of the waypoints.
         plan = self.__path_planner.plan_screw(target_pose.mplib_pose, current_qpos, time_step=time_step)
         if not plan["status"] == "Success":
-            logger.error("Could not plan path. Current pose {} -> Target pose {}", current_qpos, target_pose)
-            return []
+            plan = self.__path_planner.plan_pose(target_pose.mplib_pose, current_qpos, time_step=time_step)
+            if not plan["status"] == "Success":
+                logger.error("Could not plan path. Current pose {} -> Target pose {}", current_qpos, target_pose)
+                return []
         return plan.pop("position").tolist()
