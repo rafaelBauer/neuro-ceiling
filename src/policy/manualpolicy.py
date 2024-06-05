@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from typing import Final, override
 
 import numpy
-from torch import Tensor, cat
+from torch import Tensor
 
 from goal.goal import Goal
 from policy.policy import PolicyBase, PolicyBaseConfig
