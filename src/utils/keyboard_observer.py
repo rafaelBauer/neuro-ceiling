@@ -2,6 +2,7 @@
 Class based from CEILing project. Some extra features were added and functions renamed.
 https://github.com/robot-learning-freiburg/CEILing/blob/main/src/utils.py
 """
+
 from __future__ import annotations
 from enum import Enum
 from collections.abc import Callable
@@ -70,9 +71,7 @@ class KeyboardObserver:
                 "x": self.reset_episode,  # reset
             }
         )
-        self.__listener = keyboard.Listener(
-            on_press=self.__set_direction, on_release=self.__reset_direction
-        )
+        self.__listener = keyboard.Listener(on_press=self.__set_direction, on_release=self.__reset_direction)
         self.__direction_keys_pressed: set = set()  # store which keys are pressed
 
         self.__label_callbacks: [Callable[[int], None]] = []
@@ -106,9 +105,7 @@ class KeyboardObserver:
         with self.__label_lock:
             self.__label_callbacks.append(callback_func)
 
-    def unsubscribe_callback_to_label(
-        self, callback_func: Callable[[int], None]
-    ) -> None:
+    def unsubscribe_callback_to_label(self, callback_func: Callable[[int], None]) -> None:
         with self.__label_lock:
             self.__label_callbacks.remove(callback_func)
 
@@ -122,15 +119,11 @@ class KeyboardObserver:
             self.__gripper = value
             self.__call_callbacks(self.__gripper_callbacks, self.__gripper)
 
-    def subscribe_callback_to_gripper(
-        self, callback_func: Callable[[float], None]
-    ) -> None:
+    def subscribe_callback_to_gripper(self, callback_func: Callable[[float], None]) -> None:
         with self.__gripper_lock:
             self.__gripper_callbacks.append(callback_func)
 
-    def unsubscribe_callback_to_gripper(
-        self, callback_func: Callable[[float], None]
-    ) -> None:
+    def unsubscribe_callback_to_gripper(self, callback_func: Callable[[float], None]) -> None:
         with self.__gripper_lock:
             self.__gripper_callbacks.remove(callback_func)
 
@@ -159,15 +152,11 @@ class KeyboardObserver:
             except (KeyError, AttributeError):
                 pass
 
-    def subscribe_callback_to_direction(
-        self, callback_func: Callable[[np.array], None]
-    ) -> None:
+    def subscribe_callback_to_direction(self, callback_func: Callable[[np.array], None]) -> None:
         with self.__direction_lock:
             self.__direction_callbacks.append(callback_func)
 
-    def unsubscribe_callback_to_direction(
-        self, callback_func: Callable[[np.array], None]
-    ) -> None:
+    def unsubscribe_callback_to_direction(self, callback_func: Callable[[np.array], None]) -> None:
         with self.__direction_lock:
             self.__direction_callbacks.remove(callback_func)
 

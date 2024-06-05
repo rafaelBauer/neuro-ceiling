@@ -1,9 +1,11 @@
+from abc import abstractmethod
 from dataclasses import dataclass, field
 from typing import Final, override
 
-import torch
-from torch import Tensor, cat
+import numpy
+from torch import Tensor
 
+from goal.goal import Goal
 from policy.policy import PolicyBase, PolicyBaseConfig
 from utils.keyboard_observer import KeyboardObserver
 from utils.logging import log_constructor
@@ -34,20 +36,41 @@ class ManualPolicy(PolicyBase):
         :param kwargs: Additional keyword arguments.
         """
         super().__init__(config, **kwargs)
-        self.__keyboard_observer: Final[KeyboardObserver] = keyboard_observer
+        self._keyboard_observer: Final[KeyboardObserver] = keyboard_observer
+        self._CONFIG: ManualPolicyConfig = config
 
     @override
     def forward(self, states: Tensor) -> Tensor:
         # For when the keyboard observer is not working
-        # action = torch.tensor(np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0]), dtype=torch.float32)
-        # gripper = torch.tensor(np.array([0.0]), dtype=torch.float32)
-        action = torch.tensor(self.__keyboard_observer.get_ee_action(), dtype=torch.float32)
-        gripper = torch.tensor([self.__keyboard_observer.gripper], dtype=torch.float32)
-        return cat([action, gripper])
+        # action = numpy.array([0.0, 0.0, 0.0, -0.9, 0.0, 0.9])
+        # gripper = numpy.array([0.0])
+        action = self._keyboard_observer.get_ee_action()
+        gripper = self._keyboard_observer.gripper
+        return self.specific_forward(numpy.concatenate((action, gripper)))
 
     @override
     def update(self):
         """
         Update method for the ManualPolicy class. This method is currently not implemented.
         """
-        pass
+
+    @override
+    def task_to_be_executed(self, goal: Goal):
+        """
+        Method to be executed when a task is to be executed. This method is currently not implemented.
+
+        Parameters:
+            goal: Goal object representing the task to be executed.
+        """
+
+    @abstractmethod
+    def specific_forward(self, action: numpy.array):
+        """
+        Abstract method for the specific forward pass of the policy.
+
+        Parameters:
+            action (numpy.array): representing the action to be taken.
+
+        Returns:
+            Tensor: representing the output of the forward pass.
+        """

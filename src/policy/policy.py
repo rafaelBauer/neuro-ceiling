@@ -3,26 +3,51 @@ from dataclasses import dataclass, field
 
 from torch import nn, Tensor
 
-from task.task import Task
+from goal.goal import Goal
 from utils.logging import log_constructor
 
 
 @dataclass(kw_only=True)
 class PolicyBaseConfig:
+    """
+    The PolicyBaseConfig class represents the base configuration for a policy.
+
+    Attributes:
+        _POLICY_TYPE (str): The type of the policy.
+    """
+
     _POLICY_TYPE: str = field(init=True)
 
     @property
     def policy_type(self) -> str:
+        """
+        The policy_type property of the policy base configuration.
+
+        Returns:
+            str: The type of the policy.
+        """
         return self._POLICY_TYPE
 
 
 class PolicyBase(nn.Module):
+    """
+    The PolicyBase class is the base for every policy.
+
+    Attributes:
+        _CONFIG (PolicyBaseConfig): The configuration for the policy base.
+    """
+
+    @log_constructor
     def __init__(self, config: PolicyBaseConfig, **kwargs):
         # Deleting unnecessary kwargs from children classes
         if "environment" in kwargs:
             del kwargs["environment"]
         if "keyboard_observer" in kwargs:
             del kwargs["keyboard_observer"]
+        if "scene" in kwargs:
+            del kwargs["scene"]
+
+        self._CONFIG = config
 
         super().__init__(**kwargs)
 
@@ -51,18 +76,18 @@ class PolicyBase(nn.Module):
         raise NotImplementedError("The forward method must be implemented in a subclass.")
 
     @abstractmethod
-    def task_to_be_executed(self, task: Task):
+    def task_to_be_executed(self, goal: Goal):
         """
-        Method that will cause the policy to know which task the has to be executed by the agent. It might
+        Method that will cause the policy to know which goal the has to be executed by the controller. It might
         use this information to adjust itself, or simply ignore this information.
 
         This method could potentially cause a race condition if it is called from a different thread than the
         forward method. So it must be implemented in a way that it is thread-safe.
 
         Parameters:
-            task (Task): The task to be planned.
+            goal (Goal): The goal to be planned.
 
         Raises:
             NotImplementedError: If the method is not implemented in a subclass.
         """
-        raise NotImplementedError("The plan_task method must be implemented in a subclass.")
+        raise NotImplementedError("The task_to_be_executed method must be implemented in a subclass.")

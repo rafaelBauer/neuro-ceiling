@@ -12,7 +12,8 @@ class RotationRepresentation(Enum):
     """
     Enum for the different rotation representations
     """
-    QUATERNION = "quaternion",
+
+    QUATERNION = ("quaternion",)
     EULER = "euler"
 
 
@@ -30,7 +31,7 @@ class Pose:
         """
         return self.__pose.__getstate__()
 
-    def __imul__(self, other: 'Pose') -> 'Pose':
+    def __imul__(self, other: "Pose") -> "Pose":
         """
         Overloading operator *= for ``Pose<S> *= Pose<S>``
         This allows for in-place multiplication of Pose objects.
@@ -42,13 +43,16 @@ class Pose:
         """
         Constructs a default Pose with p = (0,0,0) and q = (1,0,0,0)
         """
+        if "euler" in kwargs:
+            kwargs["q"] = transforms3d.euler.euler2quat(kwargs["euler"][0], kwargs["euler"][1], kwargs["euler"][2])
+            del kwargs["euler"]
         self.__pose = mplib.Pose(**kwargs)
         self.__rotation_representation: dict[RotationRepresentation, numpy.ndarray] = {
             RotationRepresentation.QUATERNION: self.q,
-            RotationRepresentation.EULER: self.euler
+            RotationRepresentation.EULER: self.euler,
         }
 
-    def __mul__(self, other: 'Pose') -> 'Pose':
+    def __mul__(self, other: "Pose") -> "Pose":
         """
         Overloading operator * for ``Pose<S> * Pose<S>``
         This allows for multiplication of Pose objects.
@@ -66,6 +70,9 @@ class Pose:
         Set the state of the Pose object. This is used for deserialization.
         """
         self.__init__(p=arg0[:3], q=arg0[3:])
+
+    def __eq__(self, other):
+        return self.__pose.p.all() == other.__pose.p.all() and self.__pose.q.all() == other.__pose.q.all()
 
     @property
     def p(self) -> numpy.ndarray:

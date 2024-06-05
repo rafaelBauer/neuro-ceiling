@@ -1,13 +1,13 @@
 from typing import override
 
 from envs.robotactions import GripperCommand
-from .task import Task
+from .goal import Goal
 from utils.pose import Pose
 
 
-class MoveObjectToPosition(Task):
+class MoveObjectToPosition(Goal):
     """
-    This class represents a task of moving an object from one position to another.
+    This class represents a goal of moving an object from one position to another.
 
     Attributes:
         __object_pose (Pose): The initial pose of the object.
@@ -25,6 +25,14 @@ class MoveObjectToPosition(Task):
         self.__object_pose = object_pose
         self.__target_pose = target_pose
         super().__init__()
+
+    def __str__(self):
+        return f"MoveObjectToPosition from Pose {self.__object_pose} to {self.__target_pose}"
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, MoveObjectToPosition):
+            return False
+        return self.__object_pose == other.__object_pose and self.__target_pose == other.__target_pose
 
     @override
     def get_action_sequence(self) -> list[tuple[Pose, GripperCommand]]:

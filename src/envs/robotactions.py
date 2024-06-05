@@ -124,7 +124,7 @@ class TargetJointPositionAction(RobotAction):
         # Just created to have a variable name, but it is irrelevant since those values will not be set as an action.
         gripper_joints_position: numpy.ndarray = numpy.array([0, 0])
         pinocchio_model.compute_forward_kinematics(numpy.hstack([self.target_position, gripper_joints_position]))
-        ee_target_pose = pinocchio_model.get_link_pose(ee_link_index)
+        ee_target_pose = Pose(obj=pinocchio_model.get_link_pose(ee_link_index))
         delta_ee_pose = Pose(obj=(current_pose.inv() * ee_target_pose))
         return DeltaEEPoseAction(
             pose=delta_ee_pose,

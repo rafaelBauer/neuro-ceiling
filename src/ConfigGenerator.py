@@ -1,3 +1,4 @@
+# pylint: skip-file
 from neuroceiling.configuration import NeuroCeilingConfig, DatasetConfig, DataStreamConfig
 from neuroceiling.dataaquisition import MoabbDatasetConfig
 from neuroceiling.dataaquisition import AntNeuroCapDataStreamConfig, XdfFileConfig
@@ -26,5 +27,5 @@ def generate_config():
     neuroCeilingConfig.save()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     generate_config()

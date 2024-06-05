@@ -8,6 +8,12 @@ mplib==0.2.0a0
 
 # To generate documentation
 mkdocs
+mkdocs-material
+mkdocstrings-python
+mkdocs-exclude
+mkdocs-plantuml
+mkdocs-build-plantuml-plugin
+plantuml
 pylint
 
 # To read serialize and de-serialize objects (configuration, classes for example)

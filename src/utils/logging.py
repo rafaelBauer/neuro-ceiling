@@ -42,8 +42,8 @@ def formatter(record):
     indentation = 0
     indentation = " " * indentation
     form = (
-            "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> |"
-            " <level>{level: <8}</level> | " + indentation + " <level>{message}</level>\n"
+        "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> |"
+        " <level>{level: <8}</level> | " + indentation + " <level>{message}</level>\n"
     )
     return form
 
@@ -71,6 +71,7 @@ def log_constructor(init_func):
             return init_func(*args, **kwargs)
 
     return wrapper
+
 
 # def indent_func_log(func):
 #     """
