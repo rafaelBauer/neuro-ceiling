@@ -53,12 +53,24 @@ class ManualPolicy(PolicyBase):
         """
         Update method for the ManualPolicy class. This method is currently not implemented.
         """
-        pass
 
     @override
-    def task_to_be_executed(self, task: Goal):
-        pass
+    def task_to_be_executed(self, goal: Goal):
+        """
+        Method to be executed when a task is to be executed. This method is currently not implemented.
+
+        Parameters:
+            goal: Goal object representing the task to be executed.
+        """
 
     @abstractmethod
     def specific_forward(self, action: numpy.array):
-        pass
+        """
+        Abstract method for the specific forward pass of the policy.
+
+        Parameters:
+            action (numpy.array): representing the action to be taken.
+
+        Returns:
+            Tensor: representing the output of the forward pass.
+        """

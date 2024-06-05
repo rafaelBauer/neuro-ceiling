@@ -12,7 +12,6 @@ from envs import BaseEnvironmentConfig, create_environment, BaseEnvironment
 from envs.object import Object, Spot
 from envs.scene import Scene
 from policy import PolicyBaseConfig, PolicyBase, create_policy
-from goal.movetoposition import MoveObjectToPosition
 from utils.argparse import get_config_from_args
 from utils.config import ConfigBase
 from utils.keyboard_observer import KeyboardObserver

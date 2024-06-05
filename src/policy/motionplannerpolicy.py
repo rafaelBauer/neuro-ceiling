@@ -112,7 +112,6 @@ class MotionPlannerPolicy(PolicyBase):
         """
         Updates the policy. This method is currently not implemented.
         """
-        pass
 
     @override
     def forward(self, states: Tensor) -> Tensor:
