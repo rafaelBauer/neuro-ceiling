@@ -25,13 +25,12 @@ jobs:
       run: |
         pip install --upgrade pip
         pip install -r requirements.txt
-        python --version
+        python3 --version
     - name: Check formatting with black
       uses: psf/black@stable
       with:
         options: "--check --verbose"
         src: "./src"
-        use_pyproject: true
     - name: Analysing the code with pylint
       run: |
         pylint src/
