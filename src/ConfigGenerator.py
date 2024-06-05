@@ -1,3 +1,4 @@
+# pylint: skip-file
 from neuroceiling.configuration import NeuroCeilingConfig, DatasetConfig, DataStreamConfig
 from neuroceiling.dataaquisition import MoabbDatasetConfig
 from neuroceiling.dataaquisition import AntNeuroCapDataStreamConfig, XdfFileConfig

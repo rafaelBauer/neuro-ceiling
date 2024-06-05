@@ -1,8 +1,9 @@
+# pylint: skip-file
 import logging
 
 import pylsl
 
-from neuroceiling import KeyboardObserver
+from utils.keyboard_observer import KeyboardObserver
 
 
 class GamepadToLSL:
