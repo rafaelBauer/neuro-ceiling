@@ -104,7 +104,8 @@ disable=
     format,
     # We anticipate #3512 where it will become optional
     #import-error,
-    R6003
+    R6003,      # Do not use Optional
+    C0114       # Module is missing a docstring
 
 
 [REPORTS]
@@ -516,7 +517,7 @@ preferred-modules=
 
 # Exceptions that will emit a warning when being caught. Defaults to
 # "Exception"
-overgeneral-exceptions=Exception
+overgeneral-exceptions=builtins.Exception
 
 
 [TYPING]

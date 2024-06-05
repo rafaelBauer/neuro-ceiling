@@ -9,14 +9,34 @@ from utils.logging import log_constructor
 
 @dataclass(kw_only=True)
 class PolicyBaseConfig:
+    """
+    The PolicyBaseConfig class represents the base configuration for a policy.
+
+    Attributes:
+        _POLICY_TYPE (str): The type of the policy.
+    """
+
     _POLICY_TYPE: str = field(init=True)
 
     @property
     def policy_type(self) -> str:
+        """
+        The policy_type property of the policy base configuration.
+
+        Returns:
+            str: The type of the policy.
+        """
         return self._POLICY_TYPE
 
 
 class PolicyBase(nn.Module):
+    """
+    The PolicyBase class is the base for every policy.
+
+    Attributes:
+        _CONFIG (PolicyBaseConfig): The configuration for the policy base.
+    """
+
     @log_constructor
     def __init__(self, config: PolicyBaseConfig, **kwargs):
         # Deleting unnecessary kwargs from children classes

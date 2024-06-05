@@ -21,6 +21,10 @@ from utils.pose import Pose
 
 @dataclass
 class Config(ConfigBase):
+    """
+    Configuration class for the manual robot control program.
+    """
+
     low_level_controller_config: ControllerConfig
     low_level_policy_config: PolicyBaseConfig
     high_level_controller_config: ControllerConfig
@@ -29,6 +33,12 @@ class Config(ConfigBase):
 
 
 def create_config_from_args() -> Config:
+    """
+    Method to create the configuration from the command line arguments.
+
+    Returns:
+        Config: The configuration object.
+    """
     extra_args = (
         # {
         #     "name": "--pretraining",
@@ -45,6 +55,9 @@ def create_config_from_args() -> Config:
 
 
 def main() -> None:
+    """
+    Main method for the manual robot control program.
+    """
     np.set_printoptions(suppress=True, precision=3)
     config: Config = create_config_from_args()
 

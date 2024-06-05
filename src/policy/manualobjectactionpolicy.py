@@ -22,6 +22,17 @@ class ManualObjectActionPolicyConfig(ManualPolicyConfig):
 
 
 class ManualObjectActionPolicy(ManualPolicy):
+    """
+    The ManualObjectActionPolicy class represents a policy for manually generate the MoveObjectToPosition objects.
+    It inherits from the ManualPolicy class.
+
+    It is expected that the user selects the object, and to which spot they want the object to be moved to.
+
+    Attributes:
+        __scene (Scene): The scene in which the policy is applied.
+        __last_goal (Goal): The last goal that was set.
+    """
+
     def __init__(
         self, config: ManualObjectActionPolicyConfig, keyboard_observer: KeyboardObserver, scene: Scene, **kwargs
     ):

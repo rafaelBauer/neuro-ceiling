@@ -20,6 +20,15 @@ class ManualRobotActionPolicyConfig(ManualPolicyConfig):
 
 
 class ManualRobotActionPolicy(ManualPolicy):
+    """
+    The ManualRobotActionPolicy class represents a policy to manually control the robot.
+    It generates DeltaEEPoseAction commands based on the user input.
+
+    Attributes:
+        config (ManualRobotActionPolicyConfig): The configuration for the manual robot action policy.
+        keyboard_observer (KeyboardObserver): The keyboard observer for the manual robot action policy.
+    """
+
     def __init__(self, config: ManualRobotActionPolicyConfig, keyboard_observer: KeyboardObserver, **kwargs):
         super().__init__(config, keyboard_observer, **kwargs)
 

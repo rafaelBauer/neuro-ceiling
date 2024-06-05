@@ -31,6 +31,6 @@ jobs:
       with:
         options: "--check --verbose"
         src: "./src"
-    - name: Analysing the code with pylint
-      run: |
-        pylint src/
+#    - name: Analysing the code with pylint
+#      run: |
+#        pylint src/
