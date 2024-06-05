@@ -19,6 +19,7 @@ jobs:
     - name: Activate Conda environment
       run: |
         conda info --envs
+        conda init
         conda activate neuroceiling
     - name: Install dependencies
       run: |
