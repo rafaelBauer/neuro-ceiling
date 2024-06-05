@@ -10,16 +10,19 @@ jobs:
         python-version: ["3.12"]
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Conda and Python ${{ matrix.python-version }}
       uses: conda-incubator/setup-miniconda@v3
       with:
         auto-update-conda: true
         activate-environment: neuroceiling
         python-version: ${{ matrix.python-version }}
+    - name: Current env
+      run: |
+        conda info --envs
     - name: Install dependencies
       run: |
         pip install --upgrade pip
         pip install -r requirements.txt
     - name: Analysing the code with pylint
       run: |
-        ./pylint.sh
+        ./lint.sh
