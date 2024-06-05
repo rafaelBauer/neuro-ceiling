@@ -14,6 +14,7 @@ import utils.logging  # noqa
 
 from envs import create_environment  # , Environment
 from envs.environment import BaseEnvironmentConfig
+
 # from policy import PolicyEnum, get_policy_class
 from utils.argparse import get_config_from_args
 from utils.config import ConfigBase
@@ -75,13 +76,12 @@ def parse_args() -> DictConfig:
             "help": "Whether the data is for pretraining. Used to name the dataset.",
         },
     )
-    args, dict_config = get_config_from_args('Program meant to be used to XXXXX', data_load=False,
-                                             extra_args=extra_args)
+    args, dict_config = get_config_from_args(
+        "Program meant to be used to XXXXX", data_load=False, extra_args=extra_args
+    )
     dict_config = complete_config(args, dict_config)
 
-    config = OmegaConf.to_container(
-        dict_config, resolve=True, structured_config_mode=SCMode.INSTANTIATE
-    )
+    config = OmegaConf.to_container(dict_config, resolve=True, structured_config_mode=SCMode.INSTANTIATE)
     return config
 
 

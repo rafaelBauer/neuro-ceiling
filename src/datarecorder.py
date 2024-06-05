@@ -37,5 +37,5 @@ def new_eeg_data_callback(timestamps: [float], new_data: [list]) -> None:
         #        new_data.__str__())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

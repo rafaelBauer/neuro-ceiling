@@ -11,6 +11,7 @@ class Object:
         __pose (Pose): The pose of the object.
         __height (float): The height of the object.
     """
+
     def __init__(self, init_pose: Pose, height: float = 0.02):
         """
         The constructor for the Object class.
@@ -62,6 +63,7 @@ class Spot:
         _objects (List[Object]): The list of objects at this spot.
         _pose (Final[Pose]): The pose of the spot.
     """
+
     def __init__(self, **kwargs):
         """
         The constructor for the Spot class.

@@ -28,7 +28,9 @@ policy_config = MotionPlannerPolicyConfig()
 from controller.periodiccontroller import PeriodicControllerConfig
 
 controller_config = PeriodicControllerConfig(polling_period_s=0.05, learn_algorithm_config=learn_algorithm_config)
-high_level_controller_config = PeriodicControllerConfig(polling_period_s=5, learn_algorithm_config=learn_algorithm_config)
+high_level_controller_config = PeriodicControllerConfig(
+    polling_period_s=5, learn_algorithm_config=learn_algorithm_config
+)
 
 config = Config(
     low_level_controller_config=controller_config,

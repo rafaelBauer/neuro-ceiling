@@ -1,6 +1,5 @@
 import logging
 
-import numpy as np
 import pylsl
 
 from neuroceiling import KeyboardObserver
@@ -9,9 +8,16 @@ from neuroceiling import KeyboardObserver
 class GamepadToLSL:
     def __init__(self):
         self.__gamepad: KeyboardObserver = KeyboardObserver()
-        self.__stream_outlet: pylsl.StreamOutlet = pylsl.StreamOutlet(pylsl.StreamInfo("Gamepad", "markers",
-                                                                                       8, pylsl.IRREGULAR_RATE,
-                                                                                       pylsl.cf_float32, "Gamepad", ))
+        self.__stream_outlet: pylsl.StreamOutlet = pylsl.StreamOutlet(
+            pylsl.StreamInfo(
+                "Gamepad",
+                "markers",
+                8,
+                pylsl.IRREGULAR_RATE,
+                pylsl.cf_float32,
+                "Gamepad",
+            )
+        )
 
     def start(self) -> None:
         self.__gamepad.subscribe_callback_to_gripper(self.__gripper_callback)
@@ -27,19 +33,19 @@ class GamepadToLSL:
         self.__gamepad.stop()
 
     def __gripper_callback(self, gripper: float) -> None:
-        print("Gripper: " + gripper.__str__())
+        print("Gripper: " + str(gripper))
         data = [self.__gamepad.label, gripper]
         data.extend(self.__gamepad.direction)
         self.__stream_outlet.push_sample(data)
 
     def __label_callback(self, label: int) -> None:
-        print("Label: " + label.__str__())
+        print("Label: " + str(label))
         data = [label, self.__gamepad.gripper]
         data.extend(self.__gamepad.direction)
         self.__stream_outlet.push_sample(data)
 
     def __direction_callback(self, direction: [float]) -> None:
-        print("Direction: " + direction.__str__())
+        print("Direction: " + str(direction))
         data = [self.__gamepad.label, self.__gamepad.gripper]
         data.extend(direction)
         self.__stream_outlet.push_sample(data)
@@ -63,5 +69,5 @@ def main() -> None:
         gamepad_to_lsl.stop()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

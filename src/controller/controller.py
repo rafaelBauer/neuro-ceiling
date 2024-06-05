@@ -29,7 +29,7 @@ class ControllerBase:
         config: ControllerConfig,
         environment: BaseEnvironment,
         policy: PolicyBase,
-        child_controller: Optional['ControllerBase'] = None,
+        child_controller: Optional["ControllerBase"] = None,
     ):
         self.__CONFIG: Final[ControllerConfig] = config
         self._environment: Final[BaseEnvironment] = environment

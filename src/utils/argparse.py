@@ -12,8 +12,9 @@ def resolve_tuple(*args):
 OmegaConf.register_new_resolver("as_tuple", resolve_tuple)
 
 
-def parse_args(program_description: str, data_load: bool = False, need_task: bool = False,
-               extra_args: tuple = tuple()) -> argparse.Namespace:
+def parse_args(
+    program_description: str, data_load: bool = False, need_task: bool = False, extra_args: tuple = tuple()
+) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=program_description)
     parser.add_argument(
         "-c",
@@ -56,15 +57,16 @@ def parse_args(program_description: str, data_load: bool = False, need_task: boo
         nargs="+",
         default=[],
         help="Overwrite config values. Format: key=value. Keys need to be "
-             "fully qualified. E.g. "
-             "'training.steps=1000 observation.cameras=overhead'",
+        "fully qualified. E.g. "
+        "'training.steps=1000 observation.cameras=overhead'",
     )
     __args__ = parser.parse_args()
     return __args__
 
 
-def get_config_from_args(program_description: str, data_load: bool = False, need_task: bool = False,
-                         extra_args: tuple = tuple()) -> tuple[argparse.Namespace, DictConfig]:
+def get_config_from_args(
+    program_description: str, data_load: bool = False, need_task: bool = False, extra_args: tuple = tuple()
+) -> tuple[argparse.Namespace, DictConfig]:
     args = parse_args(program_description, data_load, need_task, extra_args)
     config = build_dict_config_object(args.config, args.overwrite)
 
