@@ -31,4 +31,3 @@ class Goal:
         Raises:
             NotImplementedError: If the method is not implemented in a subclass.
         """
-        raise NotImplementedError("Must be implemented in subclass")

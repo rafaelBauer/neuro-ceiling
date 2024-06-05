@@ -45,7 +45,7 @@ class ManualPolicy(PolicyBase):
         # action = numpy.array([0.0, 0.0, 0.0, -0.9, 0.0, 0.9])
         # gripper = numpy.array([0.0])
         action = self._keyboard_observer.get_ee_action()
-        gripper = self._keyboard_observer.gripper
+        gripper = numpy.array([self._keyboard_observer.gripper])
         return self.specific_forward(numpy.concatenate((action, gripper)))
 
     @override
