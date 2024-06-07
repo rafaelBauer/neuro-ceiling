@@ -22,8 +22,8 @@ class MoveObjectToPosition(Goal):
             object_pose (Pose): The initial pose of the object.
             target_pose (Pose): The target pose where the object needs to be moved.
         """
-        self.__object_pose = object_pose
-        self.__target_pose = target_pose
+        self.__object_pose: Pose = object_pose
+        self.__target_pose: Pose = target_pose
         super().__init__()
 
     def __str__(self):

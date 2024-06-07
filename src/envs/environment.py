@@ -106,6 +106,7 @@ class BaseEnvironment(ABC):
         tuple[dict, float, bool, dict]
             The observation, reward, done flag and info dict.
         """
+        assert isinstance(action, RobotAction), f"Action should be of type RobotAction, but got {type(action)}"
         return self._step(action)
 
     @abstractmethod
