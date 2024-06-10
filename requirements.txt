@@ -4,7 +4,7 @@ mani-skill
 gymnasium
 
 # Motion planner
-mplib==0.2.0a0
+mplib==0.2.0a1
 
 # To generate documentation
 mkdocs

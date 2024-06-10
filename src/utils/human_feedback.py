@@ -1,7 +1,20 @@
+from enum import IntEnum
+
 import numpy as np
 
-from .keyboard_observer import HumanFeedback
+class HumanFeedback(IntEnum):
+    """
+    Enum class for human feedback.
 
+    Attributes:
+        CORRECTED: A human had to correct the action. Value is -1.
+        BAD: A human considered a bad action. Value is 0.
+        GOOD: A human considered a good action Value is 1.
+    """
+
+    CORRECTED = -1
+    BAD = 0
+    GOOD = 1
 
 def human_feedback(keyboard_obs, action, feedback_type) -> tuple[HumanFeedback, np.array]:
     if feedback_type == "evaluative":

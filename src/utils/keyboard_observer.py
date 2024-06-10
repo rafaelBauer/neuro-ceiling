@@ -14,20 +14,7 @@ from typing import Final
 import numpy as np
 from pynput import keyboard
 
-
-class HumanFeedback(Enum):
-    """
-    Enum class for human feedback.
-
-    Attributes:
-        CORRECTED: A human had to correct the action. Value is -1.
-        BAD: A human considered a bad action. Value is 0.
-        GOOD: A human considered a good action Value is 1.
-    """
-
-    CORRECTED = -1
-    BAD = 0
-    GOOD = 1
+from .human_feedback import HumanFeedback
 
 
 class KeyboardObserver:
