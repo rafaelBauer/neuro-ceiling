@@ -13,7 +13,7 @@ class RotationRepresentation(Enum):
     Enum for the different rotation representations
     """
 
-    QUATERNION = "quaternion",
+    QUATERNION = ("quaternion",)
     EULER = "euler"
 
 

@@ -2,6 +2,7 @@ from enum import IntEnum
 
 import numpy as np
 
+
 class HumanFeedback(IntEnum):
     """
     Enum class for human feedback.
@@ -15,6 +16,7 @@ class HumanFeedback(IntEnum):
     CORRECTED = -1
     BAD = 0
     GOOD = 1
+
 
 def human_feedback(keyboard_obs, action, feedback_type) -> tuple[HumanFeedback, np.array]:
     if feedback_type == "evaluative":
