@@ -1,9 +1,10 @@
 import threading
 from abc import abstractmethod
 from dataclasses import dataclass, field
-from typing import Final, Any, Optional
+from typing import Final, Any, Optional, Callable
 
 import numpy as np
+from torch import Tensor
 
 from envs import BaseEnvironment
 from learnalgorithm.learnalgorithm import LearnAlgorithmBaseConfig
@@ -46,10 +47,12 @@ class ControllerBase:
 
         self._goal: Goal = Goal()
 
+        self._post_step_function: Optional[Callable[[tuple[dict, float, bool, dict], Tensor], None]] = None
+
         if self._child_controller is not None:
-            self._action_step_function = self._child_controller.set_goal
+            self._step_function: Callable[[Tensor], tuple[dict, float, bool, dict]] = self._child_controller.set_goal
         else:
-            self._action_step_function = self._environment.step
+            self._step_function: Callable[[Tensor], tuple[dict, float, bool, dict]] = self._environment.step
 
     def start(self):
         if self._child_controller is not None:
@@ -76,3 +79,16 @@ class ControllerBase:
             self._policy.task_to_be_executed(self._goal)
         with self._control_variables_lock:
             return self._current_observation, self._current_reward, self._episode_finished, self._current_info
+
+    def _step(self, action: Tensor):
+        with self._control_variables_lock:
+            previous_observation = self._current_observation
+            (self._current_observation, self._current_reward, self._episode_finished, self._current_info) = (
+                self._step_function(action)
+            )
+            if self._post_step_function is not None:
+                args = (previous_observation, self._current_reward, self._episode_finished, self._current_info)
+                self._post_step_function(args, action)
+
+    def set_post_step_function(self, post_step_function):
+        self._post_step_function = post_step_function

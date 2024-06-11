@@ -4,6 +4,8 @@ from enum import IntEnum
 
 import numpy
 from mplib.pymp.kinematics import pinocchio
+from tensordict.prototype import tensorclass
+from torch import Tensor
 
 from utils.pose import Pose, RotationRepresentation
 
@@ -24,9 +26,11 @@ class GripperCommand(IntEnum):
     CLOSE = -1
 
 
+@tensorclass
 class RobotAction:  # (torch.Tensor):
     # def __new__(cls, x, gripper_command, *args, **kwargs):
     #     return super().__new__(cls, x, *args, **kwargs)
+    gripper_command: Tensor
 
     def __init__(self, gripper_command: GripperCommand, *args, **kwargs):
         self._gripper_command: GripperCommand = gripper_command

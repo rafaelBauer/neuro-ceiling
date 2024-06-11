@@ -35,10 +35,5 @@ class PeriodicController(ControllerBase):
         self.__timer.stop()
 
     def _timer_callback(self):
-        action = self._policy(self._current_observation)
-
-        if action is not None:
-            with self._control_variables_lock:
-                (self._current_observation, self._current_reward, self._episode_finished, self._current_info) = (
-                    self._action_step_function(action)
-                )
+        if (action := self._policy(self._current_observation)) is not None:
+            self._step(action)

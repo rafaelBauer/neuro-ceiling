@@ -1,9 +1,13 @@
+import os
 import time
 from dataclasses import dataclass
 from typing import Final
 
 import numpy as np
+import torch
 from omegaconf import OmegaConf, SCMode
+from tensordict import TensorDict
+from torch import Tensor
 
 from tqdm.auto import tqdm
 
@@ -14,6 +18,8 @@ from envs.scene import Scene
 from policy import PolicyBaseConfig, PolicyBase, create_policy
 from utils.argparse import get_config_from_args
 from utils.config import ConfigBase
+from utils.dataset import TrajectoriesDataset, TrajectoryData
+from utils.human_feedback import HumanFeedback
 from utils.keyboard_observer import KeyboardObserver
 from utils.logging import logger
 from utils.pose import Pose
@@ -31,6 +37,8 @@ class Config(ConfigBase):
     high_level_policy_config: PolicyBaseConfig
     environment_config: BaseEnvironmentConfig
     episodes: int = 5
+    trajectory_size: int = 150
+    save_demos: bool = True
 
 
 def create_config_from_args() -> Config:
@@ -62,12 +70,47 @@ def create_config_from_args() -> Config:
     return config
 
 
+def post_step_function(
+    args: tuple[dict, float, bool, dict],
+    action: Tensor,
+    replay_buffer: TrajectoriesDataset,
+    episodes_count,
+    progress_bar,
+) -> None:
+    """
+    Post step function to save the data to the replay buffer.
+
+    Parameters
+    ----------
+    args : tuple[dict, float, bool, dict]
+        The arguments from the step function.
+    replay_buffer : TrajectoriesDataset
+        The replay buffer to save the data to.
+    """
+    observation, reward, done, info = args
+    step: TrajectoryData = TrajectoryData()
+    step.camera_obs = TensorDict({"ee_camera": observation["ee_camera"]}, [])
+    step.proprioceptive_obs = observation["joints"]
+    step.feedback = torch.Tensor([HumanFeedback.GOOD])
+    step.action = action
+    # step.object_poses = TensorDict()
+    # step.spots = TensorDict()
+    replay_buffer.add(step)
+
+    if done is True:
+        episodes_count += 1
+        progress_bar.update(1)
+
+
 def main() -> None:
     """
     Main method for the manual robot control program.
     """
     np.set_printoptions(suppress=True, precision=3)
     config: Config = create_config_from_args()
+
+    save_path = os.path.join("data/")
+    os.makedirs(save_path, exist_ok=True)
 
     cube_a: Object = Object(Pose(p=[0.615, -0.2, 0.02], q=[0, 1, 0, 0]))
     cube_b: Object = Object(Pose(p=[0.615, 0.0, 0.02], q=[0, 1, 0, 0]))
@@ -96,25 +139,30 @@ def main() -> None:
         config.high_level_controller_config, environment, high_level_policy, low_level_controller
     )
 
-    # environment.start()
+    replay_buffer = TrajectoriesDataset(config.trajectory_size)
+    environment.start()
     time.sleep(5)
+    keyboard_obs.start()
+    high_level_controller.start()
 
     logger.info("Go!")
-
     try:
-        # keyboard_obs.start()
-        # high_level_controller.start()
-
         episodes_count = 0
 
         with tqdm(total=config.episodes, desc="Sampling Episodes") as progress_bar:
+            high_level_controller.set_post_step_function(
+                lambda args, action: post_step_function(args, action, replay_buffer, episodes_count, progress_bar)
+            )
+            high_level_controller.start()
             while episodes_count < config.episodes:
                 # just need to sleep, since there is a thread in the controller doing the stepping and
                 # everything else
                 time.sleep(2)
-                episodes_count += 1
-                progress_bar.update(1)
 
+        high_level_controller.stop()
+        file_name = "demos_" + str(config.episodes) + ".dat"
+        if config.save_demos:
+            torch.save(replay_buffer, save_path + file_name)
     except KeyboardInterrupt:
         logger.info("Keyboard interrupt. Attempting graceful env shutdown ...")
         high_level_controller.stop()
