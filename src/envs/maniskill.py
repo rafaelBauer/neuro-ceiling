@@ -8,6 +8,7 @@ from overrides import override
 
 from utils.logging import log_constructor, logger
 from utils.pose import Pose
+from utils.sceneobservation import SceneObservation
 from .mani_skill.neuroceilingenv import __ENV_NAME__
 from .environment import BaseEnvironment, BaseEnvironmentConfig
 from .robotactions import RobotAction
@@ -25,7 +26,7 @@ class ManiSkillEnvironmentConfig(BaseEnvironmentConfig):
 class ManiSkillEnv(BaseEnvironment):
     __RENDER_MODE: Final[str] = "human"
     __CONTROL_MODE: Final[str] = "pd_joint_pos"  # "pd_joint_pos", "pd_ee_delta_pose"
-
+    __OBS_MODE: Final[str] = "sensor_data"  # "state", "state_dict", "none", "sensor_data", "rgb", "rgbd", "pointcloud"
     # -------------------------------------------------------------------------- #
     # Initialization
     # -------------------------------------------------------------------------- #
@@ -37,6 +38,7 @@ class ManiSkillEnv(BaseEnvironment):
         kwargs = {
             "control_mode": self.__CONTROL_MODE,
             "render_mode": self.__RENDER_MODE,
+            "obs_mode": self.__OBS_MODE,
             "reward_mode": "sparse",
         }
         self.__env: Final[BaseEnv] = gym.make(__ENV_NAME__, **kwargs)
@@ -97,7 +99,7 @@ class ManiSkillEnv(BaseEnvironment):
         postprocess: bool = True,
         delay_gripper: bool = True,
         scale_action: bool = True,
-    ) -> tuple[dict, float, bool, dict]:
+    ) -> tuple[SceneObservation, float, bool, dict]:
         """
         Perform a single step in the environment.
 
@@ -124,11 +126,10 @@ class ManiSkillEnv(BaseEnvironment):
 
         next_obs, reward, done, _, info = self.__env.step(robot_raw_action)
 
-        obs = next_obs
-
         self.__env.render()
 
-        return obs, reward, done, info
+        scene_observation = self.convert_to_scene_observation(next_obs)
+        return scene_observation, reward, done, info
 
     # -------------------------------------------------------------------------- #
     # Info
@@ -165,3 +166,9 @@ class ManiSkillEnv(BaseEnvironment):
             current_qpos=self.__env.get_wrapper_attr("agent").robot.get_qpos().cpu()[0],
             current_ee_pose=Pose(obj=end_effector_pose_wrt_base),
         )
+
+    # -------------------------------------------------------------------------- #
+    # Create Scene Observation
+    # -------------------------------------------------------------------------- #
+    def convert_to_scene_observation(self, observation: dict) -> SceneObservation:
+        return SceneObservation(camera_observation=observation["sensor_data"], proprioceptive_obs=observation["agent"]["qpos"])

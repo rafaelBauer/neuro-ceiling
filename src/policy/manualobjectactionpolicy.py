@@ -63,5 +63,5 @@ class ManualObjectActionPolicy(ManualPolicy):
 
         if object_pose is not None and target_pose is not None:
             target_pose.p = target_pose.p + [0, 0, 0.04]
-            self.__last_goal = MoveObjectToPosition(object_pose, target_pose)
+            self.__last_goal = MoveObjectToPosition(object_pose=object_pose, target_pose=target_pose)
         return self.__last_goal

@@ -1,5 +1,8 @@
 from abc import abstractmethod
 
+import torch
+from tensordict import tensorclass
+
 
 class Goal:
     """
@@ -17,11 +20,11 @@ class Goal:
         """
         The constructor for goal class. It doesn't take any parameters.
         """
-        pass
+        empty: torch.Tensor = torch.Tensor(0)
 
     @abstractmethod
-    def __eq__(self, other):
-        pass
+    def __eq__(self, other) -> bool:
+        return False
 
     @abstractmethod
     def get_action_sequence(self):

@@ -5,12 +5,15 @@ from typing import Final, Any, Optional, Callable
 
 import numpy as np
 from torch import Tensor
+import torch
 
 from envs import BaseEnvironment
+from envs.robotactions import RobotAction
 from learnalgorithm.learnalgorithm import LearnAlgorithmBaseConfig
 from policy import PolicyBase
 from goal.goal import Goal
 from utils.logging import log_constructor, logger
+from utils.sceneobservation import SceneObservation
 
 
 @dataclass
@@ -39,7 +42,7 @@ class ControllerBase:
         self._child_controller: Optional[ControllerBase] = child_controller
 
         # Control variables for learning
-        self._current_observation: np.array = np.array([])
+        self._current_observation: SceneObservation = SceneObservation(camera_observation={}, proprioceptive_obs=torch.tensor([]))
         self._current_reward: float = 0.0
         self._episode_finished: bool = False
         self._current_info: dict[str, Any] = {}
@@ -50,9 +53,9 @@ class ControllerBase:
         self._post_step_function: Optional[Callable[[tuple[dict, float, bool, dict], Tensor], None]] = None
 
         if self._child_controller is not None:
-            self._step_function: Callable[[Tensor], tuple[dict, float, bool, dict]] = self._child_controller.set_goal
+            self._step_function: Callable[[Goal], tuple[dict, float, bool, dict]] = self._child_controller.set_goal
         else:
-            self._step_function: Callable[[Tensor], tuple[dict, float, bool, dict]] = self._environment.step
+            self._step_function: Callable[[RobotAction], tuple[dict, float, bool, dict]] = self._environment.step
 
     def start(self):
         if self._child_controller is not None:
@@ -73,7 +76,7 @@ class ControllerBase:
         pass
 
     def set_goal(self, goal: Goal):
-        if not self._goal == goal:
+        if not (self._goal == goal):
             self._goal = goal
             logger.debug("Setting goal to policy: {}", self._goal)
             self._policy.task_to_be_executed(self._goal)
@@ -83,10 +86,13 @@ class ControllerBase:
     def _step(self, action: Tensor):
         with self._control_variables_lock:
             previous_observation = self._current_observation
+            assert isinstance(action, RobotAction | Goal), f"Action should be of type RobotAction or Goal, but got {type(action)}"
             (self._current_observation, self._current_reward, self._episode_finished, self._current_info) = (
                 self._step_function(action)
             )
             if self._post_step_function is not None:
+                # TODO: Convert action into a tensor
+                # TODO:: Make args a tensorclass or dataclass
                 args = (previous_observation, self._current_reward, self._episode_finished, self._current_info)
                 self._post_step_function(args, action)
 

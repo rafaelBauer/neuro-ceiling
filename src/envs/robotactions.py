@@ -3,6 +3,7 @@ from abc import abstractmethod
 from enum import IntEnum
 
 import numpy
+import torch
 from mplib.pymp.kinematics import pinocchio
 from overrides import override
 from tensordict.prototype import tensorclass
@@ -27,21 +28,22 @@ class GripperCommand(IntEnum):
     CLOSE = -1
 
 
+@tensorclass
 class RobotAction:  # (torch.Tensor):
     # def __new__(cls, x, gripper_command, *args, **kwargs):
     #     return super().__new__(cls, x, *args, **kwargs)
-    gripper_command: Tensor
+    _gripper_command: Tensor
 
-    def __init__(self, gripper_command: GripperCommand, *args, **kwargs):
-        self._gripper_command: GripperCommand = gripper_command
+    def __init__(self, gripper_command: GripperCommand):
+        self._gripper_command: Tensor = torch.tensor(gripper_command)
         # super().__init__(*args, **kwargs)
 
     @property
     def gripper_command(self) -> GripperCommand:
-        return self._gripper_command
+        return GripperCommand(self._gripper_command.item())
 
     @abstractmethod
-    def get_raw_action(self) -> numpy.ndarray:
+    def get_raw_action(self) -> torch.Tensor:
         pass
 
     @abstractmethod
@@ -69,7 +71,7 @@ class PoseActionBase(RobotAction):
     ):
         self.__pose: Pose = pose
         self.__rotation_representation: RotationRepresentation = rotation_representation
-        super().__init__(gripper_command, *args, **kwargs)
+        super().__init__(gripper_command=gripper_command)
 
     @property
     def pose(self) -> Pose:
@@ -80,8 +82,8 @@ class PoseActionBase(RobotAction):
         return self.__rotation_representation
 
     @override
-    def get_raw_action(self) -> numpy.ndarray:
-        return numpy.hstack([self.pose.get_raw_pose(self.rotation_representation), self.gripper_command])
+    def get_raw_action(self) -> torch.Tensor:
+        return torch.hstack([self.pose.get_raw_pose(self.rotation_representation), self._gripper_command])
 
 
 class DeltaEEPoseAction(PoseActionBase):
@@ -89,13 +91,11 @@ class DeltaEEPoseAction(PoseActionBase):
         self,
         pose: Pose,
         rotation_representation: RotationRepresentation,
-        gripper_command: GripperCommand,
-        *args,
-        **kwargs,
+        gripper_command: GripperCommand
     ):
         if (numpy.abs(pose.p)).max() > 1:  # position clipping
             pose.p = numpy.clip(pose.p, -1, 1)
-        super().__init__(pose, rotation_representation, gripper_command, *args, **kwargs)
+        super().__init__(pose, rotation_representation, gripper_command=gripper_command)
 
     @override
     def to_delta_ee_pose(
@@ -109,17 +109,17 @@ class DeltaEEPoseAction(PoseActionBase):
 
 
 class TargetJointPositionAction(RobotAction):
-    def __init__(self, target_position: numpy.ndarray, gripper_command: GripperCommand, *args, **kwargs):
-        self.__target_position: numpy.ndarray = target_position
-        super().__init__(gripper_command, *args, **kwargs)
+    def __init__(self, target_position: numpy.ndarray, gripper_command: GripperCommand):
+        self.__target_position: Tensor = torch.from_numpy(target_position)
+        super().__init__(gripper_command=gripper_command)
 
     @property
     def target_position(self):
         return self.__target_position
 
     @override
-    def get_raw_action(self) -> numpy.ndarray:
-        return numpy.hstack([self.__target_position, self.gripper_command])
+    def get_raw_action(self) -> torch.Tensor:
+        return torch.hstack([self.__target_position, self._gripper_command])
 
     @override
     def to_delta_ee_pose(

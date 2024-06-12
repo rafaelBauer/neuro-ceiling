@@ -15,6 +15,7 @@ from controller import create_controller, ControllerBase, ControllerConfig
 from envs import BaseEnvironmentConfig, create_environment, BaseEnvironment
 from envs.object import Object, Spot
 from envs.scene import Scene
+from goal.goal import Goal
 from policy import PolicyBaseConfig, PolicyBase, create_policy
 from utils.argparse import get_config_from_args
 from utils.config import ConfigBase
@@ -23,6 +24,7 @@ from utils.human_feedback import HumanFeedback
 from utils.keyboard_observer import KeyboardObserver
 from utils.logging import logger
 from utils.pose import Pose
+from utils.sceneobservation import SceneObservation
 
 
 @dataclass
@@ -71,11 +73,12 @@ def create_config_from_args() -> Config:
 
 
 def post_step_function(
-    args: tuple[dict, float, bool, dict],
+    args: tuple[SceneObservation, float, bool, dict],
     action: Tensor,
     replay_buffer: TrajectoriesDataset,
     episodes_count,
     progress_bar,
+    keyboard_obs
 ) -> None:
     """
     Post step function to save the data to the replay buffer.
@@ -89,12 +92,12 @@ def post_step_function(
     """
     observation, reward, done, info = args
     step: TrajectoryData = TrajectoryData()
-    step.camera_obs = TensorDict({"ee_camera": observation["ee_camera"]}, [])
-    step.proprioceptive_obs = observation["joints"]
+    step.sceneObservation = observation
     step.feedback = torch.Tensor([HumanFeedback.GOOD])
     step.action = action
     # step.object_poses = TensorDict()
     # step.spots = TensorDict()
+
     replay_buffer.add(step)
 
     if done is True:
@@ -143,7 +146,6 @@ def main() -> None:
     environment.start()
     time.sleep(5)
     keyboard_obs.start()
-    high_level_controller.start()
 
     logger.info("Go!")
     try:
@@ -151,7 +153,7 @@ def main() -> None:
 
         with tqdm(total=config.episodes, desc="Sampling Episodes") as progress_bar:
             high_level_controller.set_post_step_function(
-                lambda args, action: post_step_function(args, action, replay_buffer, episodes_count, progress_bar)
+                lambda args, action: post_step_function(args, action, replay_buffer, episodes_count, progress_bar, keyboard_obs)
             )
             high_level_controller.start()
             while episodes_count < config.episodes:

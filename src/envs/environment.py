@@ -4,6 +4,7 @@ from typing import Final, final
 from envs.robotactions import RobotAction
 from envs.robotinfo import RobotInfo, RobotMotionInfo
 from utils.logging import log_constructor
+from utils.sceneobservation import SceneObservation
 
 
 class BaseEnvironmentConfig:
@@ -90,16 +91,15 @@ class BaseEnvironment(ABC):
         pass
 
     @final
-    def step(self, action: RobotAction) -> tuple[dict, float, bool, dict]:
+    def step(self, action: RobotAction) -> tuple[SceneObservation, float, bool, dict]:
         """
         Executes the action in the environment. Simple wrapper around _step, that allows us to perform extra actions
         before and after the step.
 
         Parameters
         ----------
-        action : np.ndarray[(7,), np.float32]
-           The raw action predicted by a policy. This should be a 7D vector consisting of the delta position (x, y, z),
-           delta rotation (rx, ry, rz), and gripper action.
+        action : RobotAction
+           The action predicted by a policy. This should be a RobotAction object.
 
         Returns
         -------
@@ -110,7 +110,7 @@ class BaseEnvironment(ABC):
         return self._step(action)
 
     @abstractmethod
-    def _step(self, action: RobotAction) -> tuple[dict, float, bool, dict]:
+    def _step(self, action: RobotAction) -> tuple[SceneObservation, float, bool, dict]:
         """
         Executes the action in the environment. This method is abstract and should be implemented in child classes.
 

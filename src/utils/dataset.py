@@ -7,6 +7,7 @@ from torch import Tensor
 from torch.utils.data import Dataset
 
 from utils.human_feedback import HumanFeedback
+from utils.sceneobservation import SceneObservation
 
 
 class TrajectoryData:
@@ -14,8 +15,7 @@ class TrajectoryData:
     Data structure that contains the data for a single step in a trajectory.
     """
 
-    camera_obs: TensorDict
-    proprioceptive_obs: Tensor
+    sceneObservation: SceneObservation
     action: Tensor
     feedback: Tensor
     object_poses: TensorDict
