@@ -1,4 +1,4 @@
-from typing import override
+from overrides import override
 
 from envs.robotactions import GripperCommand
 from .goal import Goal

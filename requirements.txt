@@ -36,4 +36,5 @@ tensordict
 pandas
 skorch
 scikit-learn
+overrides
 black

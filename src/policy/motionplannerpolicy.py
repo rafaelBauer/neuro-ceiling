@@ -1,8 +1,9 @@
 import threading
 from dataclasses import dataclass, field
-from typing import override, Final
+from typing import Final
 
 import numpy as np
+from overrides import override
 from torch import Tensor
 from mplib import Planner
 

@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
-from typing import override, Optional
+from typing import Optional
 
 import numpy
+from overrides import override
 from torch import Tensor
 
 from envs.scene import Scene

@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
-from typing import override, Final, Optional
+from typing import Optional
+
+from overrides import override
 
 from controller import ControllerConfig, ControllerBase
 from envs import BaseEnvironment

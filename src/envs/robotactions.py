@@ -4,6 +4,7 @@ from enum import IntEnum
 
 import numpy
 from mplib.pymp.kinematics import pinocchio
+from overrides import override
 from tensordict.prototype import tensorclass
 from torch import Tensor
 
@@ -26,7 +27,6 @@ class GripperCommand(IntEnum):
     CLOSE = -1
 
 
-@tensorclass
 class RobotAction:  # (torch.Tensor):
     # def __new__(cls, x, gripper_command, *args, **kwargs):
     #     return super().__new__(cls, x, *args, **kwargs)
@@ -79,7 +79,7 @@ class PoseActionBase(RobotAction):
     def rotation_representation(self):
         return self.__rotation_representation
 
-    @typing.override
+    @override
     def get_raw_action(self) -> numpy.ndarray:
         return numpy.hstack([self.pose.get_raw_pose(self.rotation_representation), self.gripper_command])
 
@@ -97,13 +97,13 @@ class DeltaEEPoseAction(PoseActionBase):
             pose.p = numpy.clip(pose.p, -1, 1)
         super().__init__(pose, rotation_representation, gripper_command, *args, **kwargs)
 
-    @typing.override
+    @override
     def to_delta_ee_pose(
         self, pinocchio_model: pinocchio.PinocchioModel, ee_link_index: int, current_pose: Pose
     ) -> RobotAction:
         return self
 
-    @typing.override
+    @override
     def to_target_joint_position(self) -> RobotAction:
         pass
 
@@ -117,11 +117,11 @@ class TargetJointPositionAction(RobotAction):
     def target_position(self):
         return self.__target_position
 
-    @typing.override
+    @override
     def get_raw_action(self) -> numpy.ndarray:
         return numpy.hstack([self.__target_position, self.gripper_command])
 
-    @typing.override
+    @override
     def to_delta_ee_pose(
         self, pinocchio_model: pinocchio.PinocchioModel, ee_link_index: int, current_pose: Pose
     ) -> RobotAction:
@@ -136,6 +136,6 @@ class TargetJointPositionAction(RobotAction):
             gripper_command=self.gripper_command,
         )
 
-    @typing.override
+    @override
     def to_target_joint_position(self) -> RobotAction:
         return self

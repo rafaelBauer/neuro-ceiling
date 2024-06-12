@@ -1,9 +1,10 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Final, override, final, Sequence
+from typing import Final, final, Sequence
 
 import gymnasium as gym
 from mani_skill.envs.sapien_env import BaseEnv
+from overrides import override
 
 from utils.logging import log_constructor, logger
 from utils.pose import Pose
@@ -72,7 +73,7 @@ class ManiSkillEnv(BaseEnvironment):
     # Reset
     # -------------------------------------------------------------------------- #
     @override
-    def reset(self):
+    def reset(self, **kwargs):
         super().reset()
         self.__env.reset()
 
