@@ -34,3 +34,13 @@ class Goal:
         Raises:
             NotImplementedError: If the method is not implemented in a subclass.
         """
+
+    @abstractmethod
+    def to_tensor(self):
+        """
+        Method to convert the goal to a tensor.
+
+        Returns:
+            torch.Tensor: A tensor representing the goal.
+        """
+        return torch.tensor([])

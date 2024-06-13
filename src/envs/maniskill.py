@@ -27,6 +27,7 @@ class ManiSkillEnv(BaseEnvironment):
     __RENDER_MODE: Final[str] = "human"
     __CONTROL_MODE: Final[str] = "pd_joint_pos"  # "pd_joint_pos", "pd_ee_delta_pose"
     __OBS_MODE: Final[str] = "sensor_data"  # "state", "state_dict", "none", "sensor_data", "rgb", "rgbd", "pointcloud"
+
     # -------------------------------------------------------------------------- #
     # Initialization
     # -------------------------------------------------------------------------- #
@@ -115,12 +116,12 @@ class ManiSkillEnv(BaseEnvironment):
         """
 
         if self.__CONTROL_MODE == "pd_joint_pos":
-            robot_raw_action = action.to_target_joint_position().get_raw_action()
+            robot_raw_action = action.to_target_joint_position().to_tensor()
         elif self.__CONTROL_MODE == "pd_ee_delta_pose":
             motion_info = self.get_robot_motion_info()
             robot_raw_action = action.to_delta_ee_pose(
                 self.__pinocchio_model, self.__end_effector_link_index, motion_info.current_ee_pose
-            ).get_raw_action()
+            ).to_tensor()
         else:
             raise NotImplementedError(f"Action for control mode {self.__CONTROL_MODE} not implemented")
 
@@ -171,4 +172,6 @@ class ManiSkillEnv(BaseEnvironment):
     # Create Scene Observation
     # -------------------------------------------------------------------------- #
     def convert_to_scene_observation(self, observation: dict) -> SceneObservation:
-        return SceneObservation(camera_observation=observation["sensor_data"], proprioceptive_obs=observation["agent"]["qpos"])
+        return SceneObservation(
+            camera_observation=observation["sensor_data"], proprioceptive_obs=observation["agent"]["qpos"]
+        )

@@ -1,9 +1,10 @@
+import torch
 from overrides import override
 from tensordict import tensorclass
 
 from envs.robotactions import GripperCommand
 from .goal import Goal
-from utils.pose import Pose
+from utils.pose import Pose, RotationRepresentation
 
 
 class MoveObjectToPosition(Goal):
@@ -14,6 +15,7 @@ class MoveObjectToPosition(Goal):
         __object_pose (Pose): The initial pose of the object.
         __target_pose (Pose): The target pose where the object needs to be moved to.
     """
+
     __object_pose: Pose
     __target_pose: Pose
 
@@ -32,7 +34,7 @@ class MoveObjectToPosition(Goal):
     def __str__(self):
         return f"MoveObjectToPosition from Pose {self.__object_pose} to {self.__target_pose}"
 
-    def __eq__(self, other: 'MoveObjectToPosition') -> bool:
+    def __eq__(self, other: "MoveObjectToPosition") -> bool:
         if not isinstance(other, MoveObjectToPosition):
             return False
         return self.__object_pose == other.__object_pose and self.__target_pose == other.__target_pose
@@ -62,3 +64,12 @@ class MoveObjectToPosition(Goal):
             (self.__target_pose, GripperCommand.OPEN),
             (pose_above_release_object, GripperCommand.OPEN),
         ]
+
+    @override
+    def to_tensor(self):
+        return torch.hstack(
+            [
+                self.__object_pose.to_tensor(RotationRepresentation.EULER),
+                self.__target_pose.to_tensor(RotationRepresentation.EULER),
+            ]
+        )

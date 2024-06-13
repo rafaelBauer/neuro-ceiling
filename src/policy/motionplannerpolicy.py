@@ -95,7 +95,9 @@ class MotionPlannerPolicy(PolicyBase):
         # At the current pose and with the gripper opened
         # The current qpos has the position of all joints (9 in total), the last 2 are the gripper joints, therefore
         # we only take the first 7
-        self.__last_action: RobotAction = TargetJointPositionAction(current_qpos[:7], gripper_command=self.gripper_command)
+        self.__last_action: RobotAction = TargetJointPositionAction(
+            current_qpos[:7], gripper_command=self.gripper_command
+        )
 
         initial_pose: Pose = Pose(p=np.array([0.615, 0.0, 0.2]), q=np.array([0, 1, 0, 0]))
         self.gripper_command = GripperCommand.OPEN

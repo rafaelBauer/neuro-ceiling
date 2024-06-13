@@ -4,6 +4,7 @@ from enum import Enum
 import mplib
 
 import numpy
+import torch
 
 import transforms3d
 
@@ -139,3 +140,6 @@ class Pose:
 
     def copy(self):
         return copy.copy(self)
+
+    def to_tensor(self, rotation_representation: RotationRepresentation):
+        return torch.from_numpy(self.get_raw_pose(rotation_representation))

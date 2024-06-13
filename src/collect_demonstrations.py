@@ -73,12 +73,7 @@ def create_config_from_args() -> Config:
 
 
 def post_step_function(
-    args: tuple[SceneObservation, float, bool, dict],
-    action: Tensor,
-    replay_buffer: TrajectoriesDataset,
-    episodes_count,
-    progress_bar,
-    keyboard_obs
+    args: TensorDict, action: Tensor, replay_buffer: TrajectoriesDataset, episodes_count, progress_bar, keyboard_obs
 ) -> None:
     """
     Post step function to save the data to the replay buffer.
@@ -153,13 +148,15 @@ def main() -> None:
 
         with tqdm(total=config.episodes, desc="Sampling Episodes") as progress_bar:
             high_level_controller.set_post_step_function(
-                lambda args, action: post_step_function(args, action, replay_buffer, episodes_count, progress_bar, keyboard_obs)
+                lambda args, action: post_step_function(
+                    args, action, replay_buffer, episodes_count, progress_bar, keyboard_obs
+                )
             )
             high_level_controller.start()
             while episodes_count < config.episodes:
                 # just need to sleep, since there is a thread in the controller doing the stepping and
                 # everything else
-                time.sleep(2)
+                time.sleep(1)
 
         high_level_controller.stop()
         file_name = "demos_" + str(config.episodes) + ".dat"

@@ -29,9 +29,7 @@ class GripperCommand(IntEnum):
 
 
 @tensorclass
-class RobotAction:  # (torch.Tensor):
-    # def __new__(cls, x, gripper_command, *args, **kwargs):
-    #     return super().__new__(cls, x, *args, **kwargs)
+class RobotAction:
     _gripper_command: Tensor
 
     def __init__(self, gripper_command: GripperCommand):
@@ -43,7 +41,7 @@ class RobotAction:  # (torch.Tensor):
         return GripperCommand(self._gripper_command.item())
 
     @abstractmethod
-    def get_raw_action(self) -> torch.Tensor:
+    def to_tensor(self) -> torch.Tensor:
         pass
 
     @abstractmethod
@@ -58,16 +56,11 @@ class RobotAction:  # (torch.Tensor):
 
 
 class PoseActionBase(RobotAction):
-    # def __new__(cls, x, pose, rotation_representation, gripper_command, *args, **kwargs):
-    #     return super().__new__(cls, x, gripper_command, *args, **kwargs)
-
     def __init__(
         self,
         pose: Pose,
         rotation_representation: RotationRepresentation,
         gripper_command: GripperCommand,
-        *args,
-        **kwargs,
     ):
         self.__pose: Pose = pose
         self.__rotation_representation: RotationRepresentation = rotation_representation
@@ -82,17 +75,12 @@ class PoseActionBase(RobotAction):
         return self.__rotation_representation
 
     @override
-    def get_raw_action(self) -> torch.Tensor:
+    def to_tensor(self) -> torch.Tensor:
         return torch.hstack([self.pose.get_raw_pose(self.rotation_representation), self._gripper_command])
 
 
 class DeltaEEPoseAction(PoseActionBase):
-    def __init__(
-        self,
-        pose: Pose,
-        rotation_representation: RotationRepresentation,
-        gripper_command: GripperCommand
-    ):
+    def __init__(self, pose: Pose, rotation_representation: RotationRepresentation, gripper_command: GripperCommand):
         if (numpy.abs(pose.p)).max() > 1:  # position clipping
             pose.p = numpy.clip(pose.p, -1, 1)
         super().__init__(pose, rotation_representation, gripper_command=gripper_command)
@@ -118,7 +106,7 @@ class TargetJointPositionAction(RobotAction):
         return self.__target_position
 
     @override
-    def get_raw_action(self) -> torch.Tensor:
+    def to_tensor(self) -> torch.Tensor:
         return torch.hstack([self.__target_position, self._gripper_command])
 
     @override
