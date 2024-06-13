@@ -87,17 +87,19 @@ def post_step_function(
         The replay buffer to save the data to.
     """
     step: TrajectoryData = TrajectoryData()
-    step.sceneObservation = controller_step.scene_observation
+    step.scene_observation = controller_step.scene_observation
     step.feedback = torch.Tensor([HumanFeedback.GOOD])
     step.action = controller_step.action
 
     # TODO: How to determine object poses??
+    # Get from ManiSkill
     # step.object_poses = TensorDict()
     # step.spots = TensorDict()
 
     replay_buffer.add(step)
 
     # TODO: How to determine if episode has finished?
+    # Put with keyboard
     if controller_step.episode_finished is True:
         episodes_count += 1
         progress_bar.update(1)
