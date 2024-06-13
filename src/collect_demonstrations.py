@@ -73,7 +73,8 @@ def create_config_from_args() -> Config:
     return config
 
 
-def post_step_function(controller_step: ControllerStep, replay_buffer: TrajectoriesDataset, episodes_count, progress_bar, keyboard_obs
+def post_step_function(
+    controller_step: ControllerStep, replay_buffer: TrajectoriesDataset, episodes_count, progress_bar, keyboard_obs
 ) -> None:
     """
     Post step function to save the data to the replay buffer.
