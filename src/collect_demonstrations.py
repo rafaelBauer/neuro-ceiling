@@ -12,6 +12,7 @@ from torch import Tensor
 from tqdm.auto import tqdm
 
 from controller import create_controller, ControllerBase, ControllerConfig
+from controller.controllerstep import ControllerStep
 from envs import BaseEnvironmentConfig, create_environment, BaseEnvironment
 from envs.object import Object, Spot
 from envs.scene import Scene
@@ -72,30 +73,31 @@ def create_config_from_args() -> Config:
     return config
 
 
-def post_step_function(
-    args: TensorDict, action: Tensor, replay_buffer: TrajectoriesDataset, episodes_count, progress_bar, keyboard_obs
+def post_step_function(controller_step: ControllerStep, replay_buffer: TrajectoriesDataset, episodes_count, progress_bar, keyboard_obs
 ) -> None:
     """
     Post step function to save the data to the replay buffer.
 
     Parameters
     ----------
-    args : tuple[dict, float, bool, dict]
+    controller_step :
         The arguments from the step function.
     replay_buffer : TrajectoriesDataset
         The replay buffer to save the data to.
     """
-    observation, reward, done, info = args
     step: TrajectoryData = TrajectoryData()
-    step.sceneObservation = observation
+    step.sceneObservation = controller_step.scene_observation
     step.feedback = torch.Tensor([HumanFeedback.GOOD])
-    step.action = action
+    step.action = controller_step.action
+
+    # TODO: How to determine object poses??
     # step.object_poses = TensorDict()
     # step.spots = TensorDict()
 
     replay_buffer.add(step)
 
-    if done is True:
+    # TODO: How to determine if episode has finished?
+    if controller_step.episode_finished is True:
         episodes_count += 1
         progress_bar.update(1)
 
@@ -148,8 +150,8 @@ def main() -> None:
 
         with tqdm(total=config.episodes, desc="Sampling Episodes") as progress_bar:
             high_level_controller.set_post_step_function(
-                lambda args, action: post_step_function(
-                    args, action, replay_buffer, episodes_count, progress_bar, keyboard_obs
+                lambda controller_step: post_step_function(
+                    controller_step, replay_buffer, episodes_count, progress_bar, keyboard_obs
                 )
             )
             high_level_controller.start()
