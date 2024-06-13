@@ -21,5 +21,5 @@ class ControllerStep:
     action: Tensor
     scene_observation: SceneObservation
     reward: Tensor
-    episode_finished: Tensor        # For now this is not used
+    episode_finished: Tensor  # For now this is not used
     extra_info: TensorDict

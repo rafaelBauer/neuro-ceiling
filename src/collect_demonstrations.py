@@ -6,8 +6,6 @@ from typing import Final
 import numpy as np
 import torch
 from omegaconf import OmegaConf, SCMode
-from tensordict import TensorDict
-from torch import Tensor
 
 from tqdm.auto import tqdm
 

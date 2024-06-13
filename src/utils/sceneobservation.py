@@ -17,7 +17,7 @@ class SceneObservation:
     def empty(cls, batch_size=None, device=None):
         if batch_size is None:
             batch_size = []
-        else :
+        else:
             batch_size = [batch_size]
         data = cls(
             camera_observation=TensorDict({}, batch_size=batch_size, device=device),
@@ -34,6 +34,7 @@ class SceneObservation:
     @property
     def proprioceptive_obs(self) -> Tensor:
         return self._proprioceptive_obs
+
     # @abstractmethod
     # def get_raw_observation(self) -> torch.Tensor:
     #     pass

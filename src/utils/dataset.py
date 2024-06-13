@@ -53,7 +53,7 @@ class TrajectoryData:
         return data
 
     @classmethod
-    def from_list(cls, source_list: list['TrajectoryData'], device=None):
+    def from_list(cls, source_list: list["TrajectoryData"], device=None):
         """
         Creates a TrajectoryData object from a list of TrajectoryData objects.
 
@@ -66,20 +66,26 @@ class TrajectoryData:
         """
         data = cls(
             scene_observation=SceneObservation.empty(len(source_list), device=device),
-            action=MemoryMappedTensor.empty((len(source_list),len(source_list[0].action)), dtype=torch.float, device=device),
-            feedback=MemoryMappedTensor.empty((len(source_list),len(source_list[0].feedback)), dtype=torch.float, device=device),
+            action=MemoryMappedTensor.empty(
+                (len(source_list), len(source_list[0].action)), dtype=torch.float, device=device
+            ),
+            feedback=MemoryMappedTensor.empty(
+                (len(source_list), len(source_list[0].feedback)), dtype=torch.float, device=device
+            ),
             object_poses=TensorDict({}, batch_size=[len(source_list)], device=device),
             spots=TensorDict({}, batch_size=[len(source_list)], device=device),
             batch_size=[len(source_list)],
             device=device,
         )
         for i, trajectory_data in enumerate(source_list):
-            data[i] = cls(scene_observation=trajectory_data.scene_observation,
-                          action=trajectory_data.action,
-                          feedback=trajectory_data.feedback,
-                          object_poses=trajectory_data.object_poses,
-                          spots=trajectory_data.spots,
-                          batch_size=[])
+            data[i] = cls(
+                scene_observation=trajectory_data.scene_observation,
+                action=trajectory_data.action,
+                feedback=trajectory_data.feedback,
+                object_poses=trajectory_data.object_poses,
+                spots=trajectory_data.spots,
+                batch_size=[],
+            )
         return data
 
 
