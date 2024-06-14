@@ -1,9 +1,11 @@
 from manual_robot_control import Config
 
+from task.stack_cubes_config import config as task_config
+
 # ====== ManiSkill environment ========
 from envs.maniskill import ManiSkillEnvironmentConfig
 
-env_config = ManiSkillEnvironmentConfig()
+env_config = ManiSkillEnvironmentConfig(task_config=task_config)
 
 # ====== Mock environment ========
 # from envs.mock import MockEnvironmentConfig

@@ -3,6 +3,7 @@ from typing import Final, final
 
 from envs.robotactions import RobotAction
 from envs.robotinfo import RobotInfo, RobotMotionInfo
+from envs.taskconfig import TaskConfig
 from utils.logging import log_constructor
 from utils.sceneobservation import SceneObservation
 
@@ -27,12 +28,17 @@ class BaseEnvironmentConfig:
         This is a property method that returns __ENV_TYPE.
     """
 
-    def __init__(self, env_type: str):
+    def __init__(self, env_type: str, task_config: TaskConfig):
         self.__ENV_TYPE: Final[str] = env_type
+        self._task_config: Final[TaskConfig] = task_config
 
     @property
     def env_type(self) -> str:
         return self.__ENV_TYPE
+
+    @property
+    def task_config(self) -> TaskConfig:
+        return self._task_config
 
 
 class BaseEnvironment(ABC):

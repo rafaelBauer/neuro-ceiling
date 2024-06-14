@@ -19,7 +19,7 @@ For a minimal implementation of a simple task, check out
 mani_skill /envs/tasks/push_cube.py which is annotated with comments to explain how it is implemented
 """
 
-from typing import Union, Any, Dict
+from typing import Union, Any, Dict, Final
 
 import numpy as np
 import torch
@@ -32,10 +32,15 @@ from mani_skill.utils import common, sapien_utils
 from mani_skill.utils.building import actors
 from mani_skill.utils.registration import register_env
 from mani_skill.utils.scene_builder.table import TableSceneBuilder
+from mani_skill.utils.structs import Actor
 from mani_skill.utils.structs.pose import Pose
 from mani_skill.utils.structs.types import GPUMemoryConfig, SimConfig
 
 __ENV_NAME__: str = "NeuroCeilingEnv-v0"
+
+from envs.taskconfig import TaskConfig
+from utils.pose import RotationRepresentation
+import utils.pose as pose_utils
 
 
 # register the environment by a unique ID and specify a max time limit. Now once this file is imported you can do
@@ -76,8 +81,19 @@ class NeuroCeilingEnv(BaseEnv):
 
     # in the __init__ function you can pick a default robot your task should use e.g. the panda robot by setting a default for robot_uids argument
     # note that if robot_uids is a list of robot uids, then we treat it as a multi-agent setup and load each robot separately.
-    def __init__(self, *args, robot_uids="panda_wristcam", robot_init_qpos_noise=0.02, **kwargs):
+    def __init__(
+        self,
+        *args,
+        robot_uids="panda_wristcam",
+        robot_init_qpos_noise=0.02,
+        task_config=TaskConfig(_target_objects_pose={}, _initial_objects={}, _available_spots_pose={}),
+        **kwargs,
+    ):
         self.robot_init_qpos_noise = robot_init_qpos_noise
+
+        # "task_config" is a custom field added, so _load_scene and _load_scene and _initialize_episode methods can
+        # create the objects at specific poses as well as be aware of the goal
+        self._task_config = task_config
         super().__init__(*args, robot_uids=robot_uids, **kwargs)
 
     # Specify default simulation/gpu memory configurations. Note that tasks need to tune their GPU memory configurations accordingly
@@ -105,9 +121,16 @@ class NeuroCeilingEnv(BaseEnv):
         # here you add various objects like actors and articulations. If your task was to push a ball, you may add a dynamic sphere object on the ground
         self.table_scene = TableSceneBuilder(self, robot_init_qpos_noise=self.robot_init_qpos_noise)
         self.table_scene.build()
-        self.cubeA = actors.build_cube(self.scene, half_size=self.cube_half_size, color=[1, 0, 0, 1], name="cubeA")
-        self.cubeB = actors.build_cube(self.scene, half_size=self.cube_half_size, color=[0, 1, 0, 1], name="cubeB")
-        self.cubeC = actors.build_cube(self.scene, half_size=self.cube_half_size, color=[0, 0, 1, 1], name="cubeC")
+
+        self.actors: {str, Actor} = {}
+
+        # Add the cubes
+        for name, obj in self._task_config.initial_objects.items():
+            self.actors[name] = actors.build_cube(self.scene, half_size=self.cube_half_size, color=obj.color, name=name)
+
+        # self.cubeA = actors.build_cube(self.scene, half_size=self.cube_half_size, color=[1, 0, 0, 1], name="cubeA")
+        # self.cubeB = actors.build_cube(self.scene, half_size=self.cube_half_size, color=[0, 1, 0, 1], name="cubeB")
+        # self.cubeC = actors.build_cube(self.scene, half_size=self.cube_half_size, color=[0, 0, 1, 1], name="cubeC")
 
         # self.goal_site = actors.build_sphere(
         #     self._scene,
@@ -162,22 +185,29 @@ class NeuroCeilingEnv(BaseEnv):
 
     def _initialize_episode(self, env_idx: torch.Tensor, options: dict):
         with torch.device(self.device):
-            b = len(env_idx)
             self.table_scene.initialize(env_idx)
-            xyz_cubeA = torch.zeros((b, 3))
-            xyz_cubeB = torch.zeros((b, 3))
-            xyz_cubeC = torch.zeros((b, 3))
 
-            xyz_cubeA[:, :2] = torch.tensor([[0, 0]])
-            xyz_cubeA[:, 2] = self.cube_half_size
-            xyz_cubeB[:, :2] = torch.tensor([[0, 0.2]])
-            xyz_cubeB[:, 2] = self.cube_half_size
-            xyz_cubeC[:, :2] = torch.tensor([[0, -0.2]])
-            xyz_cubeC[:, 2] = self.cube_half_size
-            qs = torch.Tensor([0, 0, 0, 1])
-            self.cubeA.set_pose(Pose.create_from_pq(xyz_cubeA, qs))
-            self.cubeB.set_pose(Pose.create_from_pq(xyz_cubeB, qs))
-            self.cubeC.set_pose(Pose.create_from_pq(xyz_cubeC, qs))
+            # robot_pose in w.r.t to the robot world frame
+            robot_pose: Final[pose_utils.Pose] = pose_utils.Pose(obj=self.agent.robot.pose.sp)
+            for name, obj in self._task_config.initial_objects.items():
+                obj_pose: pose_utils.Pose = pose_utils.Pose(obj=robot_pose * obj.pose)
+                self.actors[name].set_pose(
+                    Pose.create(obj_pose.to_tensor(rotation_representation=RotationRepresentation.QUATERNION))
+                )
+            # xyz_cubeA = torch.zeros((b, 3))
+            # xyz_cubeB = torch.zeros((b, 3))
+            # xyz_cubeC = torch.zeros((b, 3))
+            #
+            # xyz_cubeA[:, :2] = torch.tensor([[0, 0]])
+            # xyz_cubeA[:, 2] = self.cube_half_size
+            # xyz_cubeB[:, :2] = torch.tensor([[0, 0.2]])
+            # xyz_cubeB[:, 2] = self.cube_half_size
+            # xyz_cubeC[:, :2] = torch.tensor([[0, -0.2]])
+            # xyz_cubeC[:, 2] = self.cube_half_size
+            # qs = torch.Tensor([0, 0, 0, 1])
+            # self.cubeA.set_pose(Pose.create_from_pq(xyz_cubeA, qs))
+            # self.cubeB.set_pose(Pose.create_from_pq(xyz_cubeB, qs))
+            # self.cubeC.set_pose(Pose.create_from_pq(xyz_cubeC, qs))
 
             # goal_xyz = torch.zeros((b, 3))
             # goal_xyz[:, :2] = torch.rand((b, 2)) * 0.2 - 0.1

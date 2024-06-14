@@ -1,4 +1,4 @@
-from typing import List, Final
+from typing import List, Final, Optional
 
 from utils.pose import Pose
 
@@ -12,7 +12,7 @@ class Object:
         __height (float): The height of the object.
     """
 
-    def __init__(self, init_pose: Pose, height: float = 0.02):
+    def __init__(self, init_pose: Pose, height: float = 0.02, color: Optional[list[int]] = None):
         """
         The constructor for the Object class.
 
@@ -20,9 +20,11 @@ class Object:
             init_pose (Pose): The initial pose of the object.
             height (float): The height of the object. Default is 0.02.
         """
+        if color is None:
+            color = [1, 0, 0, 1]
         self.__pose = init_pose
         self.__height = height
-        pass
+        self.__color = color
 
     @property
     def pose(self) -> Pose:
@@ -53,6 +55,16 @@ class Object:
             float: The current height of the object.
         """
         return self.__height
+
+    @property
+    def color(self) -> list[int]:
+        """
+        The color property of the object.
+
+        Returns:
+            list[int]: The current color of the object.
+        """
+        return self.__color
 
 
 class Spot:

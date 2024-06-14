@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Final, final, Sequence
 
@@ -13,12 +13,15 @@ from .mani_skill.neuroceilingenv import __ENV_NAME__
 from .environment import BaseEnvironment, BaseEnvironmentConfig
 from .robotactions import RobotAction
 from .robotinfo import RobotInfo, RobotMotionInfo
+from .taskconfig import TaskConfig
 
 
 @dataclass
 class ManiSkillEnvironmentConfig(BaseEnvironmentConfig):
-    def __init__(self):
-        super().__init__("ManiSkill")
+    task_config: TaskConfig = field(init=True)
+
+    def __init__(self, task_config: TaskConfig):
+        super().__init__("ManiSkill", task_config)
         self.headless: bool = False
         self.render_sapien: bool = True
 
@@ -36,11 +39,13 @@ class ManiSkillEnv(BaseEnvironment):
         super().__init__(config)
         self.__HEADLESS: bool = config.headless
         self.__render_sapien: bool = config.render_sapien
+
         kwargs = {
             "control_mode": self.__CONTROL_MODE,
             "render_mode": self.__RENDER_MODE,
             "obs_mode": self.__OBS_MODE,
             "reward_mode": "sparse",
+            "task_config": config.task_config,
         }
         self.__env: Final[BaseEnv] = gym.make(__ENV_NAME__, **kwargs)
 
@@ -173,5 +178,6 @@ class ManiSkillEnv(BaseEnvironment):
     # -------------------------------------------------------------------------- #
     def convert_to_scene_observation(self, observation: dict) -> SceneObservation:
         return SceneObservation(
-            camera_observation=observation["sensor_data"], proprioceptive_obs=observation["agent"]["qpos"]
+            camera_observation=observation["sensor_data"]["hand_camera"],
+            proprioceptive_obs=observation["agent"]["qpos"],
         )

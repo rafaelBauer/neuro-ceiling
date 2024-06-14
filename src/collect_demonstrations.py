@@ -6,6 +6,7 @@ from typing import Final
 import numpy as np
 import torch
 from omegaconf import OmegaConf, SCMode
+from tensordict import TensorDict
 
 from tqdm.auto import tqdm
 
@@ -84,10 +85,13 @@ def post_step_function(
     replay_buffer : TrajectoriesDataset
         The replay buffer to save the data to.
     """
-    step: TrajectoryData = TrajectoryData()
-    step.scene_observation = controller_step.scene_observation
-    step.feedback = torch.Tensor([HumanFeedback.GOOD])
-    step.action = controller_step.action
+    step: TrajectoryData = TrajectoryData(
+        scene_observation=controller_step.scene_observation,
+        action=controller_step.action,
+        feedback=torch.Tensor([HumanFeedback.GOOD]),
+        object_poses=TensorDict({}, []),
+        spots=TensorDict({}, []),
+    )
 
     # TODO: How to determine object poses??
     # Get from ManiSkill

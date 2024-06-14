@@ -1,4 +1,5 @@
 import copy
+from dataclasses import dataclass, field
 from enum import Enum
 
 import mplib
@@ -24,7 +25,8 @@ class Pose:
     Internally it is stored as a mplib.Pose
     """
 
-    __pose: mplib.Pose
+    # only used for serialization
+    __pose: mplib.Pose = field(init=True)
 
     def __getstate__(self) -> tuple:
         """
@@ -44,6 +46,10 @@ class Pose:
         """
         Constructs a default Pose with p = (0,0,0) and q = (1,0,0,0)
         """
+        if "raw_pose" in kwargs:
+            kwargs["p"] = kwargs["raw_pose"][:3]
+            kwargs["q"] = kwargs["raw_pose"][3:]
+            del kwargs["raw_pose"]
         if "euler" in kwargs:
             kwargs["q"] = transforms3d.euler.euler2quat(kwargs["euler"][0], kwargs["euler"][1], kwargs["euler"][2])
             del kwargs["euler"]
@@ -73,6 +79,8 @@ class Pose:
         self.__init__(p=arg0[:3], q=arg0[3:])
 
     def __eq__(self, other):
+        if not isinstance(other, Pose):
+            return False
         return numpy.all(self.__pose.p == other.__pose.p) and numpy.all(self.__pose.q == other.__pose.q)
 
     @property
