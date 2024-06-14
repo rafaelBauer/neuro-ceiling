@@ -1,9 +1,11 @@
 import copy
+from dataclasses import dataclass, field
 from enum import Enum
 
 import mplib
 
 import numpy
+import torch
 
 import transforms3d
 
@@ -23,7 +25,8 @@ class Pose:
     Internally it is stored as a mplib.Pose
     """
 
-    __pose: mplib.Pose
+    # only used for serialization
+    __pose: mplib.Pose = field(init=True)
 
     def __getstate__(self) -> tuple:
         """
@@ -43,6 +46,10 @@ class Pose:
         """
         Constructs a default Pose with p = (0,0,0) and q = (1,0,0,0)
         """
+        if "raw_pose" in kwargs:
+            kwargs["p"] = kwargs["raw_pose"][:3]
+            kwargs["q"] = kwargs["raw_pose"][3:]
+            del kwargs["raw_pose"]
         if "euler" in kwargs:
             kwargs["q"] = transforms3d.euler.euler2quat(kwargs["euler"][0], kwargs["euler"][1], kwargs["euler"][2])
             del kwargs["euler"]
@@ -72,7 +79,16 @@ class Pose:
         self.__init__(p=arg0[:3], q=arg0[3:])
 
     def __eq__(self, other):
-        return self.__pose.p.all() == other.__pose.p.all() and self.__pose.q.all() == other.__pose.q.all()
+        if not isinstance(other, Pose):
+            return False
+        return numpy.all(self.__pose.p == other.__pose.p) and numpy.all(self.__pose.q == other.__pose.q)
+
+    def is_close(self, other, atol=1e-8) -> bool:
+        if not isinstance(other, Pose):
+            return False
+        return numpy.allclose(self.__pose.p, other.__pose.p, atol=atol) and numpy.allclose(
+            self.__pose.q, other.__pose.q, atol=atol
+        )
 
     @property
     def p(self) -> numpy.ndarray:
@@ -139,3 +155,6 @@ class Pose:
 
     def copy(self):
         return copy.copy(self)
+
+    def to_tensor(self, rotation_representation: RotationRepresentation):
+        return torch.from_numpy(self.get_raw_pose(rotation_representation))

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from typing import override
 
 import numpy as np
+from overrides import override
 
 from envs import BaseEnvironment, BaseEnvironmentConfig
 from utils.logging import logger, log_constructor

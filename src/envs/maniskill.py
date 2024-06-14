@@ -1,22 +1,27 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Final, override, final, Sequence
+from typing import Final, final, Sequence
 
 import gymnasium as gym
 from mani_skill.envs.sapien_env import BaseEnv
+from overrides import override
 
 from utils.logging import log_constructor, logger
 from utils.pose import Pose
+from utils.sceneobservation import SceneObservation
 from .mani_skill.neuroceilingenv import __ENV_NAME__
 from .environment import BaseEnvironment, BaseEnvironmentConfig
 from .robotactions import RobotAction
 from .robotinfo import RobotInfo, RobotMotionInfo
+from .taskconfig import TaskConfig
 
 
 @dataclass
 class ManiSkillEnvironmentConfig(BaseEnvironmentConfig):
-    def __init__(self):
-        super().__init__("ManiSkill")
+    task_config: TaskConfig = field(init=True)
+
+    def __init__(self, task_config: TaskConfig):
+        super().__init__("ManiSkill", task_config)
         self.headless: bool = False
         self.render_sapien: bool = True
 
@@ -24,6 +29,7 @@ class ManiSkillEnvironmentConfig(BaseEnvironmentConfig):
 class ManiSkillEnv(BaseEnvironment):
     __RENDER_MODE: Final[str] = "human"
     __CONTROL_MODE: Final[str] = "pd_joint_pos"  # "pd_joint_pos", "pd_ee_delta_pose"
+    __OBS_MODE: Final[str] = "sensor_data"  # "state", "state_dict", "none", "sensor_data", "rgb", "rgbd", "pointcloud"
 
     # -------------------------------------------------------------------------- #
     # Initialization
@@ -33,10 +39,13 @@ class ManiSkillEnv(BaseEnvironment):
         super().__init__(config)
         self.__HEADLESS: bool = config.headless
         self.__render_sapien: bool = config.render_sapien
+
         kwargs = {
             "control_mode": self.__CONTROL_MODE,
             "render_mode": self.__RENDER_MODE,
+            "obs_mode": self.__OBS_MODE,
             "reward_mode": "sparse",
+            "task_config": config.task_config,
         }
         self.__env: Final[BaseEnv] = gym.make(__ENV_NAME__, **kwargs)
 
@@ -72,9 +81,13 @@ class ManiSkillEnv(BaseEnvironment):
     # Reset
     # -------------------------------------------------------------------------- #
     @override
-    def reset(self):
+    def reset(self, **kwargs) -> SceneObservation:
         super().reset()
-        self.__env.reset()
+
+        # options = {"reconfigure": True}
+
+        observation, other = self.__env.reset()
+        return self.convert_to_scene_observation(observation)
 
     @override
     def reset_joint_pose(self) -> None:
@@ -96,7 +109,7 @@ class ManiSkillEnv(BaseEnvironment):
         postprocess: bool = True,
         delay_gripper: bool = True,
         scale_action: bool = True,
-    ) -> tuple[dict, float, bool, dict]:
+    ) -> tuple[SceneObservation, float, bool, dict]:
         """
         Perform a single step in the environment.
 
@@ -112,22 +125,21 @@ class ManiSkillEnv(BaseEnvironment):
         """
 
         if self.__CONTROL_MODE == "pd_joint_pos":
-            robot_raw_action = action.to_target_joint_position().get_raw_action()
+            robot_raw_action = action.to_target_joint_position().to_tensor()
         elif self.__CONTROL_MODE == "pd_ee_delta_pose":
             motion_info = self.get_robot_motion_info()
             robot_raw_action = action.to_delta_ee_pose(
                 self.__pinocchio_model, self.__end_effector_link_index, motion_info.current_ee_pose
-            ).get_raw_action()
+            ).to_tensor()
         else:
             raise NotImplementedError(f"Action for control mode {self.__CONTROL_MODE} not implemented")
 
         next_obs, reward, done, _, info = self.__env.step(robot_raw_action)
 
-        obs = next_obs
-
         self.__env.render()
 
-        return obs, reward, done, info
+        scene_observation = self.convert_to_scene_observation(next_obs)
+        return scene_observation, reward, done, info
 
     # -------------------------------------------------------------------------- #
     # Info
@@ -163,4 +175,15 @@ class ManiSkillEnv(BaseEnvironment):
         return RobotMotionInfo(
             current_qpos=self.__env.get_wrapper_attr("agent").robot.get_qpos().cpu()[0],
             current_ee_pose=Pose(obj=end_effector_pose_wrt_base),
+        )
+
+    # -------------------------------------------------------------------------- #
+    # Create Scene Observation
+    # -------------------------------------------------------------------------- #
+    def convert_to_scene_observation(self, observation: dict) -> SceneObservation:
+        return SceneObservation(
+            camera_observation=observation["sensor_data"]["hand_camera"],
+            proprioceptive_obs=observation["agent"]["qpos"],
+            objects=observation["extra"]["objects"],
+            spots=observation["extra"]["spots"],
         )

@@ -3,7 +3,9 @@ from typing import Final, final
 
 from envs.robotactions import RobotAction
 from envs.robotinfo import RobotInfo, RobotMotionInfo
+from envs.taskconfig import TaskConfig
 from utils.logging import log_constructor
+from utils.sceneobservation import SceneObservation
 
 
 class BaseEnvironmentConfig:
@@ -26,12 +28,17 @@ class BaseEnvironmentConfig:
         This is a property method that returns __ENV_TYPE.
     """
 
-    def __init__(self, env_type: str):
+    def __init__(self, env_type: str, task_config: TaskConfig):
         self.__ENV_TYPE: Final[str] = env_type
+        self._task_config: Final[TaskConfig] = task_config
 
     @property
     def env_type(self) -> str:
         return self.__ENV_TYPE
+
+    @property
+    def task_config(self) -> TaskConfig:
+        return self._task_config
 
 
 class BaseEnvironment(ABC):
@@ -78,7 +85,7 @@ class BaseEnvironment(ABC):
         """
         self.CONFIG: BaseEnvironmentConfig = config
 
-    def reset(self, **kwargs) -> None:
+    def reset(self, **kwargs) -> SceneObservation:
         """
         Resets the environment to a new episode. In the BaseEnvironment, this only resets the gripper plot.
 
@@ -87,29 +94,28 @@ class BaseEnvironment(ABC):
         kwargs : dict
             Additional keyword arguments. Not used in the base class.
         """
-        pass
 
     @final
-    def step(self, action: RobotAction) -> tuple[dict, float, bool, dict]:
+    def step(self, action: RobotAction) -> tuple[SceneObservation, float, bool, dict]:
         """
         Executes the action in the environment. Simple wrapper around _step, that allows us to perform extra actions
         before and after the step.
 
         Parameters
         ----------
-        action : np.ndarray[(7,), np.float32]
-           The raw action predicted by a policy. This should be a 7D vector consisting of the delta position (x, y, z),
-           delta rotation (rx, ry, rz), and gripper action.
+        action : RobotAction
+           The action predicted by a policy. This should be a RobotAction object.
 
         Returns
         -------
         tuple[dict, float, bool, dict]
             The observation, reward, done flag and info dict.
         """
+        assert isinstance(action, RobotAction), f"Action should be of type RobotAction, but got {type(action)}"
         return self._step(action)
 
     @abstractmethod
-    def _step(self, action: RobotAction) -> tuple[dict, float, bool, dict]:
+    def _step(self, action: RobotAction) -> tuple[SceneObservation, float, bool, dict]:
         """
         Executes the action in the environment. This method is abstract and should be implemented in child classes.
 

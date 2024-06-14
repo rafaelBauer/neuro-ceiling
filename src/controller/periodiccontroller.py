@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
-from typing import override, Final, Optional
+from typing import Optional
+
+from overrides import override
 
 from controller import ControllerConfig, ControllerBase
 from envs import BaseEnvironment
@@ -35,10 +37,8 @@ class PeriodicController(ControllerBase):
         self.__timer.stop()
 
     def _timer_callback(self):
-        action = self._policy(self._current_observation)
-
-        if action is not None:
-            with self._control_variables_lock:
-                (self._current_observation, self._current_reward, self._episode_finished, self._current_info) = (
-                    self._action_step_function(action)
-                )
+        with self._control_variables_lock:
+            # Lock it so the previous observation is not changed while we are using it
+            next_action = self._policy(self._previous_observation)
+        if next_action is not None:
+            self._step(next_action)

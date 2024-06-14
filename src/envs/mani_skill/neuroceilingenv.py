@@ -19,23 +19,28 @@ For a minimal implementation of a simple task, check out
 mani_skill /envs/tasks/push_cube.py which is annotated with comments to explain how it is implemented
 """
 
-from typing import Union, Any, Dict
+from typing import Union, Any, Dict, Final
 
 import numpy as np
 import torch
 
 import mani_skill.envs.utils.randomization as randomization
-from mani_skill.agents.robots import Fetch, Panda
+from mani_skill.agents.robots import Fetch, Panda, PandaWristCam
 from mani_skill.envs.sapien_env import BaseEnv
 from mani_skill.sensors.camera import CameraConfig
 from mani_skill.utils import common, sapien_utils
 from mani_skill.utils.building import actors
 from mani_skill.utils.registration import register_env
 from mani_skill.utils.scene_builder.table import TableSceneBuilder
+from mani_skill.utils.structs import Actor
 from mani_skill.utils.structs.pose import Pose
 from mani_skill.utils.structs.types import GPUMemoryConfig, SimConfig
 
 __ENV_NAME__: str = "NeuroCeilingEnv-v0"
+
+from envs.taskconfig import TaskConfig
+from utils.pose import RotationRepresentation
+import utils.pose as pose_utils
 
 
 # register the environment by a unique ID and specify a max time limit. Now once this file is imported you can do
@@ -61,23 +66,34 @@ class NeuroCeilingEnv(BaseEnv):
 
     # here you can define a list of robots that this task is built to support and be solved by. This is so that
     # users won't be permitted to use robots not predefined here. If SUPPORTED_ROBOTS is not defined then users can do anything
-    SUPPORTED_ROBOTS = ["panda", "fetch"]
+    SUPPORTED_ROBOTS = ["panda", "panda_wristcam", "fetch"]
     # if you want to say you support multiple robots you can use SUPPORTED_ROBOTS = [["panda", "panda"], ["panda", "fetch"]] etc.
 
     # to help with programming, you can assert what type of agents are supported like below, and any shared properties of self.agent
     # become available to typecheckers and auto-completion. E.g. Panda and Fetch both share a property called .tcp (tool center point).
-    agent: Union[Panda, Fetch]
+    agent: Union[Panda, PandaWristCam, Fetch]
 
     # if you want to do typing for multi-agent setups, use this below and specify what possible tuples of robots are permitted by typing
     # this will then populate agent.agents (list of the instantiated agents) with the right typing
     # agent: MultiAgent[Union[Tuple[Panda, Panda], Tuple[Panda, Panda, Panda]]]
     cube_half_size = 0.02
-    goal_thresh = 0.025
+    goal_thresh = 0.01
 
     # in the __init__ function you can pick a default robot your task should use e.g. the panda robot by setting a default for robot_uids argument
     # note that if robot_uids is a list of robot uids, then we treat it as a multi-agent setup and load each robot separately.
-    def __init__(self, *args, robot_uids="panda", robot_init_qpos_noise=0.02, **kwargs):
+    def __init__(
+        self,
+        *args,
+        robot_uids="panda_wristcam",
+        robot_init_qpos_noise=0.02,
+        task_config=TaskConfig(_target_objects_pose={}, _initial_objects={}, _available_spots_pose={}),
+        **kwargs,
+    ):
         self.robot_init_qpos_noise = robot_init_qpos_noise
+
+        # "task_config" is a custom field added, so _load_scene and _load_scene and _initialize_episode methods can
+        # create the objects at specific poses as well as be aware of the goal
+        self._task_config = task_config
         super().__init__(*args, robot_uids=robot_uids, **kwargs)
 
     # Specify default simulation/gpu memory configurations. Note that tasks need to tune their GPU memory configurations accordingly
@@ -105,19 +121,25 @@ class NeuroCeilingEnv(BaseEnv):
         # here you add various objects like actors and articulations. If your task was to push a ball, you may add a dynamic sphere object on the ground
         self.table_scene = TableSceneBuilder(self, robot_init_qpos_noise=self.robot_init_qpos_noise)
         self.table_scene.build()
-        self.cubeA = actors.build_cube(self.scene, half_size=self.cube_half_size, color=[1, 0, 0, 1], name="cubeA")
-        self.cubeB = actors.build_cube(self.scene, half_size=self.cube_half_size, color=[0, 1, 0, 1], name="cubeB")
-        self.cubeC = actors.build_cube(self.scene, half_size=self.cube_half_size, color=[0, 0, 1, 1], name="cubeC")
 
-        # self.goal_site = actors.build_sphere(
-        #     self._scene,
-        #     radius=self.goal_thresh,
-        #     color=[0, 1, 0, 1],
-        #     name="goal_site",
-        #     body_type="kinematic",
-        #     add_collision=False,
-        # )
-        # self._hidden_objects.append(self.goal_site)
+        self.actors: {str, Actor} = {}
+        self.spots: {str, Actor} = {}
+
+        # Add the cubes
+        for number, (name, obj) in enumerate(self._task_config.initial_objects.items()):
+            self.actors[name] = actors.build_cube(self.scene, half_size=self.cube_half_size, color=obj.color, name=name)
+            spot_name = "Spot " + str(number)
+            spot_color = obj.color.copy()
+            spot_color[-1] = 0
+            self.spots[spot_name] = actors.build_cube(
+                self.scene,
+                half_size=self.cube_half_size,
+                color=spot_color,
+                name=spot_name,
+                body_type="kinematic",
+                add_collision=False,
+            )
+            self._hidden_objects.append(self.spots[spot_name])
 
     @property
     def _default_sensor_configs(self):
@@ -162,27 +184,19 @@ class NeuroCeilingEnv(BaseEnv):
 
     def _initialize_episode(self, env_idx: torch.Tensor, options: dict):
         with torch.device(self.device):
-            b = len(env_idx)
             self.table_scene.initialize(env_idx)
-            xyz_cubeA = torch.zeros((b, 3))
-            xyz_cubeB = torch.zeros((b, 3))
-            xyz_cubeC = torch.zeros((b, 3))
 
-            xyz_cubeA[:, :2] = torch.tensor([[0, 0]])
-            xyz_cubeA[:, 2] = self.cube_half_size
-            xyz_cubeB[:, :2] = torch.tensor([[0, 0.2]])
-            xyz_cubeB[:, 2] = self.cube_half_size
-            xyz_cubeC[:, :2] = torch.tensor([[0, -0.2]])
-            xyz_cubeC[:, 2] = self.cube_half_size
-            qs = torch.Tensor([0, 0, 0, 1])
-            self.cubeA.set_pose(Pose.create_from_pq(xyz_cubeA, qs))
-            self.cubeB.set_pose(Pose.create_from_pq(xyz_cubeB, qs))
-            self.cubeC.set_pose(Pose.create_from_pq(xyz_cubeC, qs))
-
-            # goal_xyz = torch.zeros((b, 3))
-            # goal_xyz[:, :2] = torch.rand((b, 2)) * 0.2 - 0.1
-            # goal_xyz[:, 2] = torch.rand((b)) * 0.3 + xyz[:, 2]
-            # self.goal_site.set_pose(Pose.create_from_pq(goal_xyz))
+            # robot_pose in w.r.t to the robot world frame
+            robot_pose: Final[pose_utils.Pose] = pose_utils.Pose(obj=self.agent.robot.pose.sp)
+            for number, (name, obj) in enumerate(self._task_config.initial_objects.items()):
+                obj_pose: pose_utils.Pose = pose_utils.Pose(obj=robot_pose * obj.pose)
+                self.actors[name].set_pose(
+                    Pose.create(obj_pose.to_tensor(rotation_representation=RotationRepresentation.QUATERNION))
+                )
+                spot_name = "Spot " + str(number)
+                self.spots[spot_name].set_pose(
+                    Pose.create(obj_pose.to_tensor(rotation_representation=RotationRepresentation.QUATERNION))
+                )
 
     """
     Modifying observations, goal parameterization, and success conditions for your task
@@ -198,17 +212,47 @@ class NeuroCeilingEnv(BaseEnv):
         # You may also include additional keys which will populate the info object returned by self.step and that will be given to
         # `_get_obs_extra` and `_compute_dense_reward`. Note that as everything is batched, you must return a batched array of
         # `self.num_envs` booleans (or 0/1 values) for success an dfail as done in the example below
+
+        robot_pose: Final[pose_utils.Pose] = pose_utils.Pose(obj=self.agent.robot.pose.sp)
+        target_positions = torch.zeros(len(self._task_config.target_objects_pose), device=self.device, dtype=bool)
+
+        for i, (name, target_pose) in enumerate(self._task_config.target_objects_pose.items()):
+            actor_pose: pose_utils.Pose = pose_utils.Pose(
+                obj=(robot_pose.inv() * pose_utils.Pose(obj=self.actors[name].pose.sp))
+            )
+            # Make sure that the actor is close to the target pose
+            target_positions[i] = target_pose.is_close(actor_pose, atol=self.goal_thresh)
         return {
-            "success": torch.zeros(self.num_envs, device=self.device, dtype=bool),
+            "success": target_positions.all(),
             "fail": torch.zeros(self.num_envs, device=self.device, dtype=bool),
         }
 
     def _get_obs_extra(self, info: Dict):
-        # should return an dict of additional observation data for your tasks
+        # should return a dict of additional observation data for your tasks
         # this will be included as part of the observation in the "extra" key when obs_mode="state_dict" or any of the visual obs_modes
         # and included as part of a flattened observation when obs_mode="state". Moreover, you have access to the info object
         # which is generated by the `evaluate` function above
-        return dict()
+
+        objects = {}
+        spots = {}
+        robot_pose: Final[pose_utils.Pose] = pose_utils.Pose(obj=self.agent.robot.pose.sp)
+
+        for name, obj in self._task_config.initial_objects.items():
+            actor_pose: pose_utils.Pose = pose_utils.Pose(
+                obj=(robot_pose.inv() * pose_utils.Pose(obj=self.actors[name].pose.sp))
+            )
+            objects[name] = actor_pose.to_tensor(rotation_representation=RotationRepresentation.EULER)
+
+        for name, spot in self.spots.items():
+            spot_pose: pose_utils.Pose = pose_utils.Pose(
+                obj=(robot_pose.inv() * pose_utils.Pose(obj=self.spots[name].pose.sp))
+            )
+            spots[name] = spot_pose.to_tensor(rotation_representation=RotationRepresentation.EULER)
+
+        return {
+            "objects": objects,
+            "spots": spots,
+        }
 
     def compute_dense_reward(self, obs: Any, action: torch.Tensor, info: Dict):
         # you can optionally provide a dense reward function by returning a scalar value here. This is used when reward_mode="dense"

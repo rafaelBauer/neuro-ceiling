@@ -4,7 +4,7 @@ This project...
 # Dependencies
 
 This project depends on the following software packages:
-- Python >= 3.10
+- Python >= 3.11
 - ManiSkill2
 - Pinnochio
 - 

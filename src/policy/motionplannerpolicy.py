@@ -1,8 +1,9 @@
 import threading
 from dataclasses import dataclass, field
-from typing import override, Final
+from typing import Final
 
 import numpy as np
+from overrides import override
 from torch import Tensor
 from mplib import Planner
 
@@ -94,14 +95,16 @@ class MotionPlannerPolicy(PolicyBase):
         # At the current pose and with the gripper opened
         # The current qpos has the position of all joints (9 in total), the last 2 are the gripper joints, therefore
         # we only take the first 7
-        self.__last_action: RobotAction = TargetJointPositionAction(current_qpos[:7], self.gripper_command)
+        self.__last_action: RobotAction = TargetJointPositionAction(
+            current_qpos[:7], gripper_command=self.gripper_command
+        )
 
-        initial_pose: Pose = Pose(p=np.array([0.615, 0.0, 0.2]), q=np.array([0, 1, 0, 0]))
+        self.__initial_pose: Final[Pose] = Pose(p=np.array([0.615, 0.0, 0.2]), q=np.array([0, 1, 0, 0]))
         self.gripper_command = GripperCommand.OPEN
-        self.__current_path: list[np.ndarray] = self.__plan_to_pose(current_qpos, initial_pose)
+        self.__current_path: list[np.ndarray] = self.__plan_to_pose(current_qpos, self.__initial_pose)
         logger.info(
             "Initialized planner to initial pose {} with gripper {}",
-            initial_pose,
+            self.__initial_pose,
             self.gripper_command.name,
         )
         self.__forward_lock: threading.Lock = threading.Lock()
@@ -132,7 +135,7 @@ class MotionPlannerPolicy(PolicyBase):
             # If there is still a path, keep sampling from it.
             if self.__current_path:
                 action: TargetJointPositionAction = TargetJointPositionAction(
-                    self.__current_path.pop(0), self.gripper_command
+                    np.array(self.__current_path.pop(0)), self.gripper_command
                 )
                 self.__last_action = action
             else:
@@ -151,6 +154,11 @@ class MotionPlannerPolicy(PolicyBase):
             goal (Goal): The goal that has to be executed.
         """
         with self.__goal_lock:
+            if not goal.get_action_sequence():
+                self.__target_sequence = [(self.__initial_pose, GripperCommand.OPEN)]
+                self.__update_path_to_next_target()
+                return
+
             self.__target_sequence = goal.get_action_sequence()
             robot_motion_info = self.__get_robot_motion_info()
 

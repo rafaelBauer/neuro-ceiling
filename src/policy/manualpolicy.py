@@ -1,8 +1,9 @@
 from abc import abstractmethod
 from dataclasses import dataclass, field
-from typing import Final, override
+from typing import Final
 
 import numpy
+from overrides import override
 from torch import Tensor
 
 from goal.goal import Goal

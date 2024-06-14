@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
-from typing import override
 
 import numpy
+from overrides import override
 from torch import Tensor
 
 from envs.robotactions import GripperCommand, DeltaEEPoseAction
