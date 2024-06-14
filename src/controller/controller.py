@@ -91,6 +91,10 @@ class ControllerBase:
             Callable[[Goal | RobotAction], tuple[SceneObservation, Tensor, Tensor, TensorDict]]
         ] = (self._environment.step if self._child_controller is None else self._child_controller.set_goal)
 
+        self.__reset_function: Final[Callable] = (
+            self._environment.reset if self._child_controller is None else self._child_controller.reset
+        )
+
     def start(self):
         """
         Starts the controller. If the controller has a child controller, it will first start the child, and then
@@ -157,6 +161,11 @@ class ControllerBase:
         Raises:
             AssertionError: If the action is not of type RobotAction or Goal.
         """
+
+        with self._control_variables_lock:
+            if self.__last_controller_step.episode_finished:
+                return
+
         assert isinstance(
             action, Goal | RobotAction
         ), f"Action should be of type RobotAction or Goal, but got {type(action)}"
@@ -177,8 +186,23 @@ class ControllerBase:
             )
             self._previous_observation = next_scene_observation
             self._previous_reward = next_reward
-            if self.__post_step_function is not None:
-                self.__post_step_function(self.__last_controller_step)
+        if self.__post_step_function is not None:
+            self.__post_step_function(self.__last_controller_step)
+
+    def reset(self) -> SceneObservation:
+        self.set_goal(Goal())
+        with self._control_variables_lock:
+            self._previous_reward = torch.tensor(0.0)
+            self._previous_observation = self.__reset_function()
+            self.__last_controller_step: ControllerStep = ControllerStep(
+                action=Tensor(),
+                scene_observation=self._previous_observation,
+                reward=self._previous_reward,
+                episode_finished=False,
+                extra_info={},
+            )
+            return_val = self._previous_observation.copy()
+        return return_val
 
     def set_post_step_function(self, post_step_function):
         """

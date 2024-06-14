@@ -81,9 +81,13 @@ class ManiSkillEnv(BaseEnvironment):
     # Reset
     # -------------------------------------------------------------------------- #
     @override
-    def reset(self, **kwargs):
+    def reset(self, **kwargs) -> SceneObservation:
         super().reset()
-        self.__env.reset()
+
+        # options = {"reconfigure": True}
+
+        observation, other = self.__env.reset()
+        return self.convert_to_scene_observation(observation)
 
     @override
     def reset_joint_pose(self) -> None:

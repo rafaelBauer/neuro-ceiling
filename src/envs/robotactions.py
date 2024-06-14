@@ -98,7 +98,7 @@ class DeltaEEPoseAction(PoseActionBase):
 
 class TargetJointPositionAction(RobotAction):
     def __init__(self, target_position: numpy.ndarray, gripper_command: GripperCommand):
-        self.__target_position: Tensor = torch.from_numpy(target_position)
+        self.__target_position: Tensor = torch.from_numpy(target_position).float()
         super().__init__(gripper_command=gripper_command)
 
     @property

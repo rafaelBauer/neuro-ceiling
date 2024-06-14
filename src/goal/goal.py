@@ -34,6 +34,7 @@ class Goal:
         Raises:
             NotImplementedError: If the method is not implemented in a subclass.
         """
+        return []
 
     @abstractmethod
     def to_tensor(self):

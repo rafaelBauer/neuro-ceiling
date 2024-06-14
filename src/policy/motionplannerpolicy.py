@@ -99,12 +99,12 @@ class MotionPlannerPolicy(PolicyBase):
             current_qpos[:7], gripper_command=self.gripper_command
         )
 
-        initial_pose: Pose = Pose(p=np.array([0.615, 0.0, 0.2]), q=np.array([0, 1, 0, 0]))
+        self.__initial_pose: Final[Pose] = Pose(p=np.array([0.615, 0.0, 0.2]), q=np.array([0, 1, 0, 0]))
         self.gripper_command = GripperCommand.OPEN
-        self.__current_path: list[np.ndarray] = self.__plan_to_pose(current_qpos, initial_pose)
+        self.__current_path: list[np.ndarray] = self.__plan_to_pose(current_qpos, self.__initial_pose)
         logger.info(
             "Initialized planner to initial pose {} with gripper {}",
-            initial_pose,
+            self.__initial_pose,
             self.gripper_command.name,
         )
         self.__forward_lock: threading.Lock = threading.Lock()
@@ -154,6 +154,11 @@ class MotionPlannerPolicy(PolicyBase):
             goal (Goal): The goal that has to be executed.
         """
         with self.__goal_lock:
+            if not goal.get_action_sequence():
+                self.__target_sequence = [(self.__initial_pose, GripperCommand.OPEN)]
+                self.__update_path_to_next_target()
+                return
+
             self.__target_sequence = goal.get_action_sequence()
             robot_motion_info = self.__get_robot_motion_info()
 

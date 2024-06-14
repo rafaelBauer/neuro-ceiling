@@ -77,7 +77,7 @@ class NeuroCeilingEnv(BaseEnv):
     # this will then populate agent.agents (list of the instantiated agents) with the right typing
     # agent: MultiAgent[Union[Tuple[Panda, Panda], Tuple[Panda, Panda, Panda]]]
     cube_half_size = 0.02
-    goal_thresh = 0.025
+    goal_thresh = 0.01
 
     # in the __init__ function you can pick a default robot your task should use e.g. the panda robot by setting a default for robot_uids argument
     # note that if robot_uids is a list of robot uids, then we treat it as a multi-agent setup and load each robot separately.
@@ -194,25 +194,6 @@ class NeuroCeilingEnv(BaseEnv):
                 self.actors[name].set_pose(
                     Pose.create(obj_pose.to_tensor(rotation_representation=RotationRepresentation.QUATERNION))
                 )
-            # xyz_cubeA = torch.zeros((b, 3))
-            # xyz_cubeB = torch.zeros((b, 3))
-            # xyz_cubeC = torch.zeros((b, 3))
-            #
-            # xyz_cubeA[:, :2] = torch.tensor([[0, 0]])
-            # xyz_cubeA[:, 2] = self.cube_half_size
-            # xyz_cubeB[:, :2] = torch.tensor([[0, 0.2]])
-            # xyz_cubeB[:, 2] = self.cube_half_size
-            # xyz_cubeC[:, :2] = torch.tensor([[0, -0.2]])
-            # xyz_cubeC[:, 2] = self.cube_half_size
-            # qs = torch.Tensor([0, 0, 0, 1])
-            # self.cubeA.set_pose(Pose.create_from_pq(xyz_cubeA, qs))
-            # self.cubeB.set_pose(Pose.create_from_pq(xyz_cubeB, qs))
-            # self.cubeC.set_pose(Pose.create_from_pq(xyz_cubeC, qs))
-
-            # goal_xyz = torch.zeros((b, 3))
-            # goal_xyz[:, :2] = torch.rand((b, 2)) * 0.2 - 0.1
-            # goal_xyz[:, 2] = torch.rand((b)) * 0.3 + xyz[:, 2]
-            # self.goal_site.set_pose(Pose.create_from_pq(goal_xyz))
 
     """
     Modifying observations, goal parameterization, and success conditions for your task
@@ -228,8 +209,18 @@ class NeuroCeilingEnv(BaseEnv):
         # You may also include additional keys which will populate the info object returned by self.step and that will be given to
         # `_get_obs_extra` and `_compute_dense_reward`. Note that as everything is batched, you must return a batched array of
         # `self.num_envs` booleans (or 0/1 values) for success an dfail as done in the example below
+
+        robot_pose: Final[pose_utils.Pose] = pose_utils.Pose(obj=self.agent.robot.pose.sp)
+        target_positions = torch.zeros(len(self._task_config.target_objects_pose), device=self.device, dtype=bool)
+
+        for i, (name, target_pose) in enumerate(self._task_config.target_objects_pose.items()):
+            actor_pose: pose_utils.Pose = pose_utils.Pose(
+                obj=(robot_pose.inv() * pose_utils.Pose(obj=self.actors[name].pose.sp))
+            )
+            # Make sure that the actor is close to the target pose
+            target_positions[i] = target_pose.is_close(actor_pose, atol=self.goal_thresh)
         return {
-            "success": torch.zeros(self.num_envs, device=self.device, dtype=bool),
+            "success": target_positions.all(),
             "fail": torch.zeros(self.num_envs, device=self.device, dtype=bool),
         }
 

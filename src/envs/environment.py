@@ -85,7 +85,7 @@ class BaseEnvironment(ABC):
         """
         self.CONFIG: BaseEnvironmentConfig = config
 
-    def reset(self, **kwargs) -> None:
+    def reset(self, **kwargs) -> SceneObservation:
         """
         Resets the environment to a new episode. In the BaseEnvironment, this only resets the gripper plot.
 
@@ -94,7 +94,6 @@ class BaseEnvironment(ABC):
         kwargs : dict
             Additional keyword arguments. Not used in the base class.
         """
-        pass
 
     @final
     def step(self, action: RobotAction) -> tuple[SceneObservation, float, bool, dict]:

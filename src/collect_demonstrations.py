@@ -56,24 +56,21 @@ def create_config_from_args() -> Config:
             "action": "store_true",
             "help": "Whether the data is for pretraining. Used to name the dataset.",
         },
-        {
-            "name": "--episodes",
-            "action": "store_true",
-            "default": 10,
-            "help": "How many episodes to collect.",
-        },
     )
     args, dict_config = get_config_from_args(
         "Program meant to be used to manually control the robot", data_load=False, extra_args=extra_args
     )
 
     config: Config = OmegaConf.to_container(dict_config, resolve=True, structured_config_mode=SCMode.INSTANTIATE)
-    config.episodes = args.episodes
     return config
 
 
 def post_step_function(
-    controller_step: ControllerStep, replay_buffer: TrajectoriesDataset, episodes_count, progress_bar, keyboard_obs
+    controller_step: ControllerStep,
+    replay_buffer: TrajectoriesDataset,
+    episodes_count: list[int],
+    progress_bar,
+    controller: ControllerBase,
 ) -> None:
     """
     Post step function to save the data to the replay buffer.
@@ -100,11 +97,11 @@ def post_step_function(
 
     replay_buffer.add(step)
 
-    # TODO: How to determine if episode has finished?
-    # Put with keyboard
-    if controller_step.episode_finished is True:
-        episodes_count += 1
+    if controller_step.episode_finished:
+        episodes_count[0] = episodes_count[0] + 1
         progress_bar.update(1)
+        replay_buffer.save_current_traj()
+        controller.reset()
 
 
 def main() -> None:
@@ -151,24 +148,30 @@ def main() -> None:
 
     logger.info("Go!")
     try:
-        episodes_count = 0
+        # Have to make as a list to be able to modify it in the post_step_function.
+        # In python, immutable objects are passed by value whereas mutable objects are passed by reference.
+        episodes_count: list[int] = [0]
 
         with tqdm(total=config.episodes, desc="Sampling Episodes") as progress_bar:
             high_level_controller.set_post_step_function(
                 lambda controller_step: post_step_function(
-                    controller_step, replay_buffer, episodes_count, progress_bar, keyboard_obs
+                    controller_step, replay_buffer, episodes_count, progress_bar, high_level_controller
                 )
             )
             high_level_controller.start()
-            while episodes_count < config.episodes:
+            while episodes_count[0] < config.episodes:
                 # just need to sleep, since there is a thread in the controller doing the stepping and
                 # everything else
                 time.sleep(1)
 
         high_level_controller.stop()
+        environment.stop()
+        keyboard_obs.stop()
         file_name = "demos_" + str(config.episodes) + ".dat"
         if config.save_demos:
             torch.save(replay_buffer, save_path + file_name)
+        logger.info("Successfully finished to sample {} episodes", episodes_count[0])
+
     except KeyboardInterrupt:
         logger.info("Keyboard interrupt. Attempting graceful env shutdown ...")
         high_level_controller.stop()

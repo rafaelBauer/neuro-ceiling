@@ -1,5 +1,4 @@
 from envs.taskconfig import TaskConfig
-from utils.pose import Pose, RotationRepresentation
 
 # Poses must be a pose using quaternion and w.r.t to the robot base frame
 _initial_objects = {
@@ -17,7 +16,7 @@ _available_spots_pose = {
 _target_objects_pose = {
     "Cube A": [0.615, -0.2, 0.02, 0, 1, 0, 0],
     "Cube B": [0.615, -0.2, 0.06, 0, 1, 0, 0],
-    "Cube C": [0.615, -0.2, 0.1, 0, 1, 0, 0],
+    # "Cube C": [0.615, -0.2, 0.1, 0, 1, 0, 0],
 }
 
 config = TaskConfig(

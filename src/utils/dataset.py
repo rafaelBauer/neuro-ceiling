@@ -64,8 +64,9 @@ class TrajectoryData:
         Returns:
             TrajectoryData: A TrajectoryData object that contains the data from the source list.
         """
+        scene_observation_list = [trajectory_data.scene_observation for trajectory_data in source_list]
         data = cls(
-            scene_observation=SceneObservation.empty(len(source_list), device=device),
+            scene_observation=SceneObservation.from_list(scene_observation_list, device=device),
             action=MemoryMappedTensor.empty(
                 (len(source_list), len(source_list[0].action)), dtype=torch.float, device=device
             ),
@@ -149,6 +150,9 @@ class TrajectoriesDataset(Dataset):
         Args:
            step (TrajectoryData): The step to add.
         """
+        if step.action.size(0) == 0 or step.scene_observation.proprioceptive_obs.size(0) == 0:
+            return
+
         self.__current_trajectory.append(step)
 
         assert isinstance(step.feedback, Tensor), f"Expected feedback to be a tensor, got {type(step.feedback)}"
@@ -169,9 +173,9 @@ class TrajectoriesDataset(Dataset):
         current_trajectory = TrajectoryData.from_list(self.__current_trajectory)
         # If it is empty, then it is the first trajectory
         if self.__trajectories.batch_size == torch.Size([]):
-            self.__trajectories = current_trajectory
+            self.__trajectories = current_trajectory.unsqueeze(0)
         else:
-            self.__trajectories = torch.stack([self.__trajectories, current_trajectory])
+            self.__trajectories = torch.cat([self.__trajectories, current_trajectory.unsqueeze(0)])
         self.reset_current_traj()
         return
 

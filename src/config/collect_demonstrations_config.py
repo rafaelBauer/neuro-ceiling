@@ -40,4 +40,6 @@ config = Config(
     high_level_policy_config=high_level_policy_config,
     high_level_controller_config=high_level_controller_config,
     environment_config=env_config,
+    episodes=2,
+    trajectory_size=150,
 )
