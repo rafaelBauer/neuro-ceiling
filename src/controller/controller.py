@@ -71,7 +71,7 @@ class ControllerBase:
 
         # Control variables for learning
         self._previous_observation: SceneObservation = SceneObservation(
-            camera_observation={}, proprioceptive_obs=torch.tensor([])
+            camera_observation={}, proprioceptive_obs=torch.tensor([]), objects={}, spots={}
         )
         self._previous_reward: Tensor = torch.tensor(0.0)
         self.__last_controller_step: ControllerStep = ControllerStep(

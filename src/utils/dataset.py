@@ -27,8 +27,6 @@ class TrajectoryData:
     scene_observation: SceneObservation
     action: Tensor
     feedback: Tensor
-    object_poses: TensorDict
-    spots: TensorDict
 
     @classmethod
     def empty(cls, device=None):
@@ -45,8 +43,6 @@ class TrajectoryData:
             scene_observation=SceneObservation.empty(device=device),
             action=torch.tensor([], device=device),
             feedback=torch.tensor([], device=device),
-            object_poses=TensorDict({}, batch_size=[], device=device),
-            spots=TensorDict({}, batch_size=[], device=device),
             batch_size=[],
             device=device,
         )
@@ -73,8 +69,6 @@ class TrajectoryData:
             feedback=MemoryMappedTensor.empty(
                 (len(source_list), len(source_list[0].feedback)), dtype=torch.float, device=device
             ),
-            object_poses=TensorDict({}, batch_size=[len(source_list)], device=device),
-            spots=TensorDict({}, batch_size=[len(source_list)], device=device),
             batch_size=[len(source_list)],
             device=device,
         )
@@ -83,8 +77,6 @@ class TrajectoryData:
                 scene_observation=trajectory_data.scene_observation,
                 action=trajectory_data.action,
                 feedback=trajectory_data.feedback,
-                object_poses=trajectory_data.object_poses,
-                spots=trajectory_data.spots,
                 batch_size=[],
             )
         return data

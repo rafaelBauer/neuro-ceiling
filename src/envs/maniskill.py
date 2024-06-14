@@ -184,4 +184,6 @@ class ManiSkillEnv(BaseEnvironment):
         return SceneObservation(
             camera_observation=observation["sensor_data"]["hand_camera"],
             proprioceptive_obs=observation["agent"]["qpos"],
+            objects=observation["extra"]["objects"],
+            spots=observation["extra"]["spots"],
         )

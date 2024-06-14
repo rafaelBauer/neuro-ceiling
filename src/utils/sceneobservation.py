@@ -8,10 +8,14 @@ from torch import Tensor
 class SceneObservation:
     _camera_observation: TensorDict
     _proprioceptive_obs: Tensor
+    _objects: TensorDict
+    _spots: TensorDict
 
-    def __init__(self, camera_observation: dict, proprioceptive_obs: Tensor):
+    def __init__(self, camera_observation: dict, proprioceptive_obs: Tensor, objects: dict, spots: dict):
         self._camera_observation: TensorDict = TensorDict(camera_observation)
         self._proprioceptive_obs: Tensor = proprioceptive_obs
+        self._objects: TensorDict = TensorDict(objects)
+        self._spots: TensorDict = TensorDict(spots)
 
     @classmethod
     def empty(cls, batch_size=None, device=None):
@@ -22,6 +26,8 @@ class SceneObservation:
         data = cls(
             camera_observation=TensorDict({}, batch_size=batch_size, device=device),
             proprioceptive_obs=MemoryMappedTensor.empty(batch_size, dtype=torch.float, device=device),
+            objects=TensorDict({}, batch_size=batch_size, device=device),
+            spots=TensorDict({}, batch_size=batch_size, device=device),
             batch_size=batch_size,
             device=device,
         )
@@ -44,6 +50,8 @@ class SceneObservation:
             proprioceptive_obs=MemoryMappedTensor.empty(
                 (len(source_list), len(source_list[0].proprioceptive_obs.squeeze())), dtype=torch.float, device=device
             ),
+            objects=TensorDict({}, batch_size=[len(source_list)], device=device),
+            spots=TensorDict({}, batch_size=[len(source_list)], device=device),
             batch_size=[len(source_list)],
             device=device,
         )
@@ -51,6 +59,8 @@ class SceneObservation:
             data[i] = cls(
                 camera_observation=scene_observation.camera_observation,
                 proprioceptive_obs=scene_observation.proprioceptive_obs.squeeze(),
+                objects=scene_observation.objects,
+                spots=scene_observation.spots,
                 batch_size=[],
             )
         return data
@@ -63,14 +73,10 @@ class SceneObservation:
     def proprioceptive_obs(self) -> Tensor:
         return self._proprioceptive_obs
 
-    # @abstractmethod
-    # def get_raw_observation(self) -> torch.Tensor:
-    #     pass
-    #
-    # @abstractmethod
-    # def to_pose(self) -> Pose:
-    #     pass
-    #
-    # @abstractmethod
-    # def to_joint_position(self) -> JointPosition:
-    #     pass
+    @property
+    def objects(self) -> TensorDict:
+        return self._objects
+
+    @property
+    def spots(self) -> TensorDict:
+        return self._spots
