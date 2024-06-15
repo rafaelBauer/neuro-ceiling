@@ -50,6 +50,11 @@ class Pose:
             kwargs["p"] = kwargs["raw_pose"][:3]
             kwargs["q"] = kwargs["raw_pose"][3:]
             del kwargs["raw_pose"]
+        if "raw_euler_pose" in kwargs:
+            kwargs["p"] = kwargs["raw_euler_pose"][:3]
+            kwargs["euler"] = kwargs["raw_euler_pose"][3:]
+            del kwargs["raw_euler_pose"]
+
         if "euler" in kwargs:
             kwargs["q"] = transforms3d.euler.euler2quat(kwargs["euler"][0], kwargs["euler"][1], kwargs["euler"][2])
             del kwargs["euler"]

@@ -7,7 +7,7 @@ from mani_skill.envs.sapien_env import BaseEnv
 from overrides import override
 
 from utils.logging import log_constructor, logger
-from utils.pose import Pose
+from utils.pose import Pose, RotationRepresentation
 from utils.sceneobservation import SceneObservation
 from .mani_skill.neuroceilingenv import __ENV_NAME__
 from .environment import BaseEnvironment, BaseEnvironmentConfig
@@ -181,9 +181,15 @@ class ManiSkillEnv(BaseEnvironment):
     # Create Scene Observation
     # -------------------------------------------------------------------------- #
     def convert_to_scene_observation(self, observation: dict) -> SceneObservation:
+        end_effector_pose = (
+            self.__env.get_wrapper_attr("agent").robot.get_links()[self.__end_effector_link_index].pose.sp
+        )  # W.R.T what??
+        robot_pose = self.__env.get_wrapper_attr("agent").robot.pose.sp
+        end_effector_pose_wrt_base: Pose = Pose(obj=(robot_pose.inv() * end_effector_pose))
         return SceneObservation(
             camera_observation=observation["sensor_data"]["hand_camera"],
             proprioceptive_obs=observation["agent"]["qpos"],
+            end_effector_pose=end_effector_pose_wrt_base.to_tensor(RotationRepresentation.EULER),
             objects=observation["extra"]["objects"],
             spots=observation["extra"]["spots"],
         )

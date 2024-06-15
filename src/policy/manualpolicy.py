@@ -10,6 +10,7 @@ from goal.goal import Goal
 from policy.policy import PolicyBase, PolicyBaseConfig
 from utils.keyboard_observer import KeyboardObserver
 from utils.logging import log_constructor
+from utils.sceneobservation import SceneObservation
 
 
 @dataclass(kw_only=True)
@@ -47,7 +48,8 @@ class ManualPolicy(PolicyBase):
         # gripper = numpy.array([0.0])
         action = self._keyboard_observer.get_ee_action()
         gripper = numpy.array([self._keyboard_observer.gripper])
-        return self.specific_forward(numpy.concatenate((action, gripper)))
+        assert isinstance(states, SceneObservation), "states should be of type SceneObservation"
+        return self.specific_forward(numpy.concatenate((action, gripper)), states)
 
     @override
     def update(self):
@@ -56,7 +58,7 @@ class ManualPolicy(PolicyBase):
         """
 
     @override
-    def task_to_be_executed(self, goal: Goal):
+    def goal_to_be_achieved(self, goal: Goal):
         """
         Method to be executed when a task is to be executed. This method is currently not implemented.
 
@@ -65,12 +67,13 @@ class ManualPolicy(PolicyBase):
         """
 
     @abstractmethod
-    def specific_forward(self, action: numpy.array):
+    def specific_forward(self, action: numpy.array, current_observation: SceneObservation) -> Tensor:
         """
         Abstract method for the specific forward pass of the policy.
 
         Parameters:
             action (numpy.array): representing the action to be taken.
+            current_observation (SceneObservation): representing the current observation.
 
         Returns:
             Tensor: representing the output of the forward pass.
