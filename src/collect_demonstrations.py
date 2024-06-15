@@ -33,10 +33,8 @@ class Config(ConfigBase):
     Configuration class for the collect demonstrations program.
     """
 
-    low_level_controller_config: ControllerConfig
-    low_level_policy_config: PolicyBaseConfig
-    high_level_controller_config: ControllerConfig
-    high_level_policy_config: PolicyBaseConfig
+    controllers: list[ControllerConfig]
+    policies: list[PolicyBaseConfig]
     environment_config: BaseEnvironmentConfig
     episodes: int = 5
     trajectory_size: int = 150
@@ -72,6 +70,10 @@ def main() -> None:
     np.set_printoptions(suppress=True, precision=3)
     config: Config = create_config_from_args()
 
+    assert len(config.controllers) == len(
+        config.policies
+    ), "The number of configured controllers and policies must be the same."
+
     save_path = os.path.join("data/")
     os.makedirs(save_path, exist_ok=True)
 
@@ -88,19 +90,25 @@ def main() -> None:
     keyboard_obs = KeyboardObserver()
 
     environment: Final[BaseEnvironment] = create_environment(config.environment_config)
-    low_level_policy: Final[PolicyBase] = create_policy(
-        config.low_level_policy_config, keyboard_observer=keyboard_obs, environment=environment
-    )
-    low_level_controller: Final[ControllerBase] = create_controller(
-        config.low_level_controller_config, environment, low_level_policy
-    )
 
-    high_level_policy: Final[PolicyBase] = create_policy(
-        config.high_level_policy_config, keyboard_observer=keyboard_obs, environment=environment, scene=scene
-    )
-    high_level_controller: Final[ControllerBase] = create_controller(
-        config.high_level_controller_config, environment, high_level_policy, low_level_controller
-    )
+    policies: list[PolicyBase] = []
+    controllers: list[ControllerBase] = []
+
+    for policy_config in config.policies:
+        policy: PolicyBase = create_policy(
+            policy_config, keyboard_observer=keyboard_obs, environment=environment, scene=scene
+        )
+        policies.append(policy)
+
+    # Traverse controllers in reverse order to create the controller hierarchy
+    for i, (controller_config) in reversed(list(enumerate(config.controllers))):
+        if i == len(config.controllers) - 1:
+            controller: ControllerBase = create_controller(controller_config, environment, policies[i])
+        else:
+            # Always the lower level controller is the child of the higher level controller
+            # It will always be in the first position of the list since it was the previously inserted at the index 0
+            controller: ControllerBase = create_controller(controller_config, environment, policies[i], controllers[0])
+        controllers.insert(0, controller)
 
     replay_buffer = TrajectoriesDataset(config.trajectory_size)
     environment.start()
@@ -109,7 +117,7 @@ def main() -> None:
 
     def reset_episode():
         replay_buffer.reset_current_traj()
-        high_level_controller.reset()
+        controllers[0].reset()
 
     keyboard_obs.subscribe_callback_to_reset(reset_episode)
 
@@ -141,18 +149,18 @@ def main() -> None:
                 if controller_step.episode_finished:
                     progress_bar.update(1)
                     replay_buffer.save_current_traj()
-                    high_level_controller.reset()
+                    controllers[0].reset()
                     episodes_count[0] = episodes_count[0] + 1
 
-            high_level_controller.set_post_step_function(post_step)
-            high_level_controller.start()
+            controllers[0].set_post_step_function(post_step)
+            controllers[0].start()
 
             while episodes_count[0] < config.episodes:
                 # just need to sleep, since there is a thread in the controller doing the stepping and
                 # everything else
                 time.sleep(1)
 
-        high_level_controller.stop()
+        controllers[0].stop()
         environment.stop()
         keyboard_obs.stop()
         file_name = "demos_" + str(config.episodes) + ".dat"
@@ -162,7 +170,7 @@ def main() -> None:
 
     except KeyboardInterrupt:
         logger.info("Keyboard interrupt. Attempting graceful env shutdown ...")
-        high_level_controller.stop()
+        controllers[0].stop()
         environment.stop()
         keyboard_obs.stop()
 

@@ -74,6 +74,7 @@ def main() -> None:
     keyboard_obs = KeyboardObserver()
 
     environment: Final[BaseEnvironment] = create_environment(config.environment_config)
+
     low_level_policy: Final[PolicyBase] = create_policy(
         config.low_level_policy_config, keyboard_observer=keyboard_obs, environment=environment
     )
