@@ -167,29 +167,26 @@ class ManiSkillEnv(BaseEnvironment):
     @override
     def get_robot_motion_info(self) -> final(RobotMotionInfo):
         # Take index 0 because it is of shape (1,9), and we want a dim0  array.
-        end_effector_pose = (
-            self.__env.get_wrapper_attr("agent").robot.get_links()[self.__end_effector_link_index].pose.sp
-        )  # W.R.T what??
-        robot_pose = self.__env.get_wrapper_attr("agent").robot.pose.sp
-        end_effector_pose_wrt_base = robot_pose.inv() * end_effector_pose
         return RobotMotionInfo(
             current_qpos=self.__env.get_wrapper_attr("agent").robot.get_qpos().cpu()[0],
-            current_ee_pose=Pose(obj=end_effector_pose_wrt_base),
+            current_ee_pose=self.__current_end_effector_pose(),
         )
 
     # -------------------------------------------------------------------------- #
     # Create Scene Observation
     # -------------------------------------------------------------------------- #
     def convert_to_scene_observation(self, observation: dict) -> SceneObservation:
+        return SceneObservation(
+            camera_observation=observation["sensor_data"]["hand_camera"],
+            proprioceptive_obs=observation["agent"]["qpos"],
+            end_effector_pose=self.__current_end_effector_pose().to_tensor(RotationRepresentation.EULER),
+            objects=observation["extra"]["objects"],
+            spots=observation["extra"]["spots"],
+        )
+
+    def __current_end_effector_pose(self) -> Pose:
         end_effector_pose = (
             self.__env.get_wrapper_attr("agent").robot.get_links()[self.__end_effector_link_index].pose.sp
         )  # W.R.T what??
         robot_pose = self.__env.get_wrapper_attr("agent").robot.pose.sp
-        end_effector_pose_wrt_base: Pose = Pose(obj=(robot_pose.inv() * end_effector_pose))
-        return SceneObservation(
-            camera_observation=observation["sensor_data"]["hand_camera"],
-            proprioceptive_obs=observation["agent"]["qpos"],
-            end_effector_pose=end_effector_pose_wrt_base.to_tensor(RotationRepresentation.EULER),
-            objects=observation["extra"]["objects"],
-            spots=observation["extra"]["spots"],
-        )
+        return Pose(obj=(robot_pose.inv() * end_effector_pose))

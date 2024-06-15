@@ -8,6 +8,17 @@ from .gripperstate import GripperState
 
 @tensorclass
 class SceneObservation:
+    """
+    The SceneObservation class represents an observation of a scene.
+
+    Attributes:
+        _camera_observation (TensorDict): A dictionary of tensors representing the camera observation.
+        _proprioceptive_obs (Tensor): A tensor representing the proprioceptive observation.
+        _end_effector_pose (Tensor): A tensor representing the end effector pose.
+        _objects (TensorDict): A dictionary of tensors representing the objects in the scene.
+        _spots (TensorDict): A dictionary of tensors representing the spots in the scene.
+    """
+
     _camera_observation: TensorDict
     _proprioceptive_obs: Tensor
     _end_effector_pose: Tensor
@@ -22,6 +33,16 @@ class SceneObservation:
         objects: dict,
         spots: dict,
     ):
+        """
+        The constructor for the SceneObservation class.
+
+        Args:
+            camera_observation (dict): A dictionary representing the camera observation.
+            proprioceptive_obs (Tensor): A tensor representing the proprioceptive observation.
+            end_effector_pose (Tensor): A tensor representing the end effector pose.
+            objects (dict): A dictionary representing the objects in the scene.
+            spots (dict): A dictionary representing the spots in the scene.
+        """
         self._camera_observation: TensorDict = TensorDict(camera_observation)
         self._proprioceptive_obs: Tensor = proprioceptive_obs
         self._end_effector_pose: Tensor = end_effector_pose
@@ -30,6 +51,16 @@ class SceneObservation:
 
     @classmethod
     def empty(cls, batch_size=None, device=None):
+        """
+        Creates an empty SceneObservation object.
+
+        Args:
+            batch_size (int, optional): The batch size for the tensors. Defaults to None.
+            device (str, optional): The device on which the tensors should be allocated. Defaults to None.
+
+        Returns:
+            SceneObservation: An empty SceneObservation object.
+        """
         if batch_size is None:
             batch_size = []
         else:
@@ -74,6 +105,7 @@ class SceneObservation:
             data[i] = cls(
                 camera_observation=scene_observation.camera_observation,
                 proprioceptive_obs=scene_observation.proprioceptive_obs.squeeze(),
+                end_effector_pose=scene_observation.end_effector_pose.squeeze(),
                 objects=scene_observation.objects,
                 spots=scene_observation.spots,
                 batch_size=[],
@@ -105,7 +137,7 @@ class SceneObservation:
         if self._proprioceptive_obs.size(0) < 0:
             return GripperState.OPENED
 
-        # 0.02 is the "closed" threshold for the gripper.
-        if self._proprioceptive_obs.squeeze()[-1] > 0.025:
+        # 0.03 is the "closed" threshold for the gripper.
+        if self._proprioceptive_obs.squeeze()[-1] > 0.03:
             return GripperState.OPENED
         return GripperState.CLOSED

@@ -154,7 +154,8 @@ class MotionPlannerPolicy(PolicyBase):
         """
         with self.__target_sequence_lock:
             self.__target_sequence = goal.get_action_sequence()
-            self.__update_path_to_next_target()
+            if not self.__update_path_to_next_target():
+                self.__current_path = []
 
     @property
     def gripper_command(self) -> GripperCommand:

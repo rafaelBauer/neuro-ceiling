@@ -159,7 +159,35 @@ class Pose:
         return self.__pose.inv()
 
     def copy(self):
+        """
+        Creates a copy of the Pose object.
+
+        Returns:
+            Pose: A copy of the Pose object.
+        """
         return copy.copy(self)
 
     def to_tensor(self, rotation_representation: RotationRepresentation):
+        """
+        Converts the Pose object to a tensor.
+
+        Args:
+            rotation_representation (RotationRepresentation): The rotation representation to use for the conversion.
+
+        Returns:
+            torch.Tensor: A tensor representing the Pose object.
+        """
         return torch.from_numpy(self.get_raw_pose(rotation_representation))
+
+    def is_same_xy_position(self, other, atol=1e-8):
+        """
+        Checks if the X and Y positions of the Pose object are the same as those of another Pose object.
+
+        Args:
+            other (Pose): The other Pose object to compare with.
+            atol (float, optional): The absolute tolerance parameter for the numpy allclose function. Defaults to 1e-8.
+
+        Returns:
+            bool: True if the X and Y positions are the same, False otherwise.
+        """
+        return numpy.allclose(self.__pose.p[:2], other.__pose.p[:2], atol=atol)
