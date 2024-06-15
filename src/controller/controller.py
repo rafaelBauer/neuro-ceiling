@@ -140,7 +140,7 @@ class ControllerBase:
         """
         if not (self._goal == goal):
             self._goal = goal
-            logger.debug("Setting goal to policy: {}", self._goal)
+            logger.debug("Setting goal {} to policy", self._goal)
             self._policy.task_to_be_executed(self._goal)
         with self._control_variables_lock:
             return (
@@ -202,6 +202,7 @@ class ControllerBase:
                 extra_info={},
             )
             return_val = self._previous_observation.copy()
+
         return return_val
 
     def set_post_step_function(self, post_step_function):
