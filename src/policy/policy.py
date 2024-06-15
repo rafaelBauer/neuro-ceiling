@@ -76,7 +76,7 @@ class PolicyBase(nn.Module):
         raise NotImplementedError("The forward method must be implemented in a subclass.")
 
     @abstractmethod
-    def task_to_be_executed(self, goal: Goal):
+    def goal_to_be_achieved(self, goal: Goal):
         """
         Method that will cause the policy to know which goal the has to be executed by the controller. It might
         use this information to adjust itself, or simply ignore this information.
@@ -91,3 +91,11 @@ class PolicyBase(nn.Module):
             NotImplementedError: If the method is not implemented in a subclass.
         """
         raise NotImplementedError("The task_to_be_executed method must be implemented in a subclass.")
+
+    @abstractmethod
+    def episode_finished(self):
+        """
+        Method that will cause the policy to know that the episode has finished. It might
+        use this information to adjust itself, or simply ignore this information.
+        """
+        raise NotImplementedError("The episode_finished method must be implemented in a subclass.")

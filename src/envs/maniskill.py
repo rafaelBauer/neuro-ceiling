@@ -7,7 +7,7 @@ from mani_skill.envs.sapien_env import BaseEnv
 from overrides import override
 
 from utils.logging import log_constructor, logger
-from utils.pose import Pose
+from utils.pose import Pose, RotationRepresentation
 from utils.sceneobservation import SceneObservation
 from .mani_skill.neuroceilingenv import __ENV_NAME__
 from .environment import BaseEnvironment, BaseEnvironmentConfig
@@ -167,14 +167,9 @@ class ManiSkillEnv(BaseEnvironment):
     @override
     def get_robot_motion_info(self) -> final(RobotMotionInfo):
         # Take index 0 because it is of shape (1,9), and we want a dim0  array.
-        end_effector_pose = (
-            self.__env.get_wrapper_attr("agent").robot.get_links()[self.__end_effector_link_index].pose.sp
-        )  # W.R.T what??
-        robot_pose = self.__env.get_wrapper_attr("agent").robot.pose.sp
-        end_effector_pose_wrt_base = robot_pose.inv() * end_effector_pose
         return RobotMotionInfo(
             current_qpos=self.__env.get_wrapper_attr("agent").robot.get_qpos().cpu()[0],
-            current_ee_pose=Pose(obj=end_effector_pose_wrt_base),
+            current_ee_pose=self.__current_end_effector_pose(),
         )
 
     # -------------------------------------------------------------------------- #
@@ -184,6 +179,14 @@ class ManiSkillEnv(BaseEnvironment):
         return SceneObservation(
             camera_observation=observation["sensor_data"]["hand_camera"],
             proprioceptive_obs=observation["agent"]["qpos"],
+            end_effector_pose=self.__current_end_effector_pose().to_tensor(RotationRepresentation.EULER),
             objects=observation["extra"]["objects"],
             spots=observation["extra"]["spots"],
         )
+
+    def __current_end_effector_pose(self) -> Pose:
+        end_effector_pose = (
+            self.__env.get_wrapper_attr("agent").robot.get_links()[self.__end_effector_link_index].pose.sp
+        )  # W.R.T what??
+        robot_pose = self.__env.get_wrapper_attr("agent").robot.pose.sp
+        return Pose(obj=(robot_pose.inv() * end_effector_pose))

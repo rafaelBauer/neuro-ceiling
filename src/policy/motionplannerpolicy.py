@@ -107,8 +107,7 @@ class MotionPlannerPolicy(PolicyBase):
             self.__initial_pose,
             self.gripper_command.name,
         )
-        self.__forward_lock: threading.Lock = threading.Lock()
-        self.__goal_lock: threading.Lock = threading.Lock()
+        self.__target_sequence_lock: threading.Lock = threading.Lock()
 
     @override
     def update(self):
@@ -131,7 +130,7 @@ class MotionPlannerPolicy(PolicyBase):
         Tensor
             The action to be taken by the robot.
         """
-        with self.__forward_lock:
+        with self.__target_sequence_lock:
             # If there is still a path, keep sampling from it.
             if self.__current_path:
                 action: TargetJointPositionAction = TargetJointPositionAction(
@@ -144,7 +143,7 @@ class MotionPlannerPolicy(PolicyBase):
         return self.__last_action
 
     @override
-    def task_to_be_executed(self, goal: Goal):
+    def goal_to_be_achieved(self, goal: Goal):
         """
         Method called by the controller to inform which goal has to be executed by it.
         In the case of this policy, since it is a deterministic policy, it is responsible for getting a sequence of
@@ -153,22 +152,10 @@ class MotionPlannerPolicy(PolicyBase):
         Parameters:
             goal (Goal): The goal that has to be executed.
         """
-        with self.__goal_lock:
-            if not goal.get_action_sequence():
-                self.__target_sequence = [(self.__initial_pose, GripperCommand.OPEN)]
-                self.__update_path_to_next_target()
-                return
-
+        with self.__target_sequence_lock:
             self.__target_sequence = goal.get_action_sequence()
-            robot_motion_info = self.__get_robot_motion_info()
-
-            # Ensure that end effector is not too low, so it doesn't hit the objects.
-            if robot_motion_info.current_ee_pose.p[2] < self.__config.minimum_z_height_between_paths:
-                new_ee_pose = robot_motion_info.current_ee_pose.copy()
-                new_ee_pose.p = [new_ee_pose.p[0], new_ee_pose.p[1], self.__config.minimum_z_height_between_paths]
-                self.__current_path = self.__plan_to_pose(robot_motion_info.current_qpos.numpy(), new_ee_pose)
-            else:
-                self.__update_path_to_next_target()
+            if not self.__update_path_to_next_target():
+                self.__current_path = []
 
     @property
     def gripper_command(self) -> GripperCommand:
@@ -249,3 +236,9 @@ class MotionPlannerPolicy(PolicyBase):
                 logger.error("Could not plan path. Current pose {} -> Target pose {}", current_qpos, target_pose)
                 return []
         return plan.pop("position").tolist()
+
+    @override
+    def episode_finished(self):
+        with self.__target_sequence_lock:
+            self.__target_sequence = [(self.__initial_pose, GripperCommand.OPEN)]
+            self.__update_path_to_next_target()

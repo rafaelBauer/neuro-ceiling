@@ -188,5 +188,8 @@ class KeyboardObserver:
     @classmethod
     def __call_callbacks(cls, callbacks, value) -> None:
         if len(callbacks) != 0:
+            # Copy the value to avoid any modification from the callback
+            # as well as if the callback uses it, in change by the KeyboardObserver the callback won't get affected
+            value = value.copy()
             for callback in callbacks:
                 callback(value)

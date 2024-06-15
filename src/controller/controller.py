@@ -71,7 +71,11 @@ class ControllerBase:
 
         # Control variables for learning
         self._previous_observation: SceneObservation = SceneObservation(
-            camera_observation={}, proprioceptive_obs=torch.tensor([]), objects={}, spots={}
+            camera_observation={},
+            proprioceptive_obs=torch.tensor([]),
+            end_effector_pose=torch.tensor([]),
+            objects={},
+            spots={},
         )
         self._previous_reward: Tensor = torch.tensor(0.0)
         self.__last_controller_step: ControllerStep = ControllerStep(
@@ -141,7 +145,7 @@ class ControllerBase:
         if not (self._goal == goal):
             self._goal = goal
             logger.debug("Setting goal {} to policy", self._goal)
-            self._policy.task_to_be_executed(self._goal)
+            self._policy.goal_to_be_achieved(self._goal)
         with self._control_variables_lock:
             return (
                 self.__last_controller_step.scene_observation,
@@ -191,6 +195,7 @@ class ControllerBase:
 
     def reset(self) -> SceneObservation:
         self.set_goal(Goal())
+        self._policy.episode_finished()
         with self._control_variables_lock:
             self._previous_reward = torch.tensor(0.0)
             self._previous_observation = self.__reset_function()
@@ -202,7 +207,6 @@ class ControllerBase:
                 extra_info={},
             )
             return_val = self._previous_observation.copy()
-
         return return_val
 
     def set_post_step_function(self, post_step_function):

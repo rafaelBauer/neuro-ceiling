@@ -8,6 +8,7 @@ from envs.robotactions import GripperCommand, DeltaEEPoseAction
 from policy.manualpolicy import ManualPolicyConfig, ManualPolicy
 from utils.keyboard_observer import KeyboardObserver
 from utils.pose import Pose, RotationRepresentation
+from utils.sceneobservation import SceneObservation
 
 
 @dataclass(kw_only=True)
@@ -33,7 +34,7 @@ class ManualRobotActionPolicy(ManualPolicy):
         super().__init__(config, keyboard_observer, **kwargs)
 
     @override
-    def specific_forward(self, action: numpy.array) -> Tensor:
+    def specific_forward(self, action: numpy.array, current_observation: SceneObservation) -> Tensor:
         if action[-1] < 0:
             gripper_command = GripperCommand.CLOSE
         else:
@@ -42,3 +43,7 @@ class ManualRobotActionPolicy(ManualPolicy):
         return DeltaEEPoseAction(
             delta_pose, rotation_representation=RotationRepresentation.EULER, gripper_command=gripper_command
         )
+
+    @override
+    def episode_finished(self):
+        pass

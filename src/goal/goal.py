@@ -1,7 +1,6 @@
 from abc import abstractmethod
 
 import torch
-from tensordict import tensorclass
 
 
 class Goal:
@@ -16,11 +15,14 @@ class Goal:
         of actions to perform the goal.
     """
 
-    def __init__(self):
+    def __init__(self, length: int = 0):
         """
         The constructor for goal class. It doesn't take any parameters.
+
+        Args:
+            length (int): The length of the tensor representing the goal. Defaults to 0.
         """
-        empty: torch.Tensor = torch.Tensor(0)
+        self.__zeros: torch.Tensor = torch.zeros(length)
 
     @abstractmethod
     def __eq__(self, other) -> bool:
@@ -29,6 +31,12 @@ class Goal:
         is equal to another goal.
 
         In this case, since it's a "Null Object", it checks if it's the same instance by verifying the address.
+
+        Args:
+            other (Goal): Another Goal instance to compare with.
+
+        Returns:
+            bool: True if the two Goal instances are the same, False otherwise.
         """
         return id(self) == id(other)
 
@@ -50,4 +58,4 @@ class Goal:
         Returns:
             torch.Tensor: A tensor representing the goal.
         """
-        return torch.tensor([])
+        return self.__zeros
