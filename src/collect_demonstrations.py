@@ -65,38 +65,6 @@ def create_config_from_args() -> Config:
     return config
 
 
-def post_step_function(
-    controller_step: ControllerStep,
-    replay_buffer: TrajectoriesDataset,
-    episodes_count: list[int],
-    progress_bar,
-    controller: ControllerBase,
-) -> None:
-    """
-    Post step function to save the data to the replay buffer.
-
-    Parameters
-    ----------
-    controller_step :
-        The arguments from the step function.
-    replay_buffer : TrajectoriesDataset
-        The replay buffer to save the data to.
-    """
-    step: TrajectoryData = TrajectoryData(
-        scene_observation=controller_step.scene_observation,
-        action=controller_step.action,
-        feedback=torch.Tensor([HumanFeedback.GOOD]),
-    )
-
-    replay_buffer.add(step)
-
-    if controller_step.episode_finished:
-        episodes_count[0] = episodes_count[0] + 1
-        progress_bar.update(1)
-        replay_buffer.save_current_traj()
-        controller.reset()
-
-
 def main() -> None:
     """
     Main method for the manual robot control program.
@@ -139,6 +107,12 @@ def main() -> None:
     time.sleep(5)
     keyboard_obs.start()
 
+    def reset_episode():
+        replay_buffer.reset_current_traj()
+        high_level_controller.reset()
+
+    keyboard_obs.subscribe_callback_to_reset(reset_episode)
+
     logger.info("Go!")
     try:
         # Have to make as a list to be able to modify it in the post_step_function.
@@ -146,12 +120,33 @@ def main() -> None:
         episodes_count: list[int] = [0]
 
         with tqdm(total=config.episodes, desc="Sampling Episodes") as progress_bar:
-            high_level_controller.set_post_step_function(
-                lambda controller_step: post_step_function(
-                    controller_step, replay_buffer, episodes_count, progress_bar, high_level_controller
+
+            def post_step(controller_step: ControllerStep):
+                """
+                Post step function to save the data to the replay buffer.
+
+                Parameters
+                ----------
+                controller_step :
+                    The arguments from the step function.
+                """
+                step: TrajectoryData = TrajectoryData(
+                    scene_observation=controller_step.scene_observation,
+                    action=controller_step.action,
+                    feedback=torch.Tensor([HumanFeedback.GOOD]),
                 )
-            )
+
+                replay_buffer.add(step)
+
+                if controller_step.episode_finished:
+                    progress_bar.update(1)
+                    replay_buffer.save_current_traj()
+                    high_level_controller.reset()
+                    episodes_count[0] = episodes_count[0] + 1
+
+            high_level_controller.set_post_step_function(post_step)
             high_level_controller.start()
+
             while episodes_count[0] < config.episodes:
                 # just need to sleep, since there is a thread in the controller doing the stepping and
                 # everything else

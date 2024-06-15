@@ -164,10 +164,9 @@ class MotionPlannerPolicy(PolicyBase):
 
             # Ensure that end effector is not too low, so it doesn't hit the objects.
             if robot_motion_info.current_ee_pose.p[2] < self.__config.minimum_z_height_between_paths:
-                robot_motion_info.current_ee_pose.p[2] = self.__config.minimum_z_height_between_paths
-                self.__current_path = self.__plan_to_pose(
-                    robot_motion_info.current_qpos.numpy(), robot_motion_info.current_ee_pose[0]
-                )
+                new_ee_pose = robot_motion_info.current_ee_pose.copy()
+                new_ee_pose.p = [new_ee_pose.p[0], new_ee_pose.p[1], self.__config.minimum_z_height_between_paths]
+                self.__current_path = self.__plan_to_pose(robot_motion_info.current_qpos.numpy(), new_ee_pose)
             else:
                 self.__update_path_to_next_target()
 

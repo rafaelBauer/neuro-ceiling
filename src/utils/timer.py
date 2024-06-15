@@ -1,12 +1,12 @@
 import threading
 import time
 from collections.abc import Callable
-from typing import Final
+from typing import Final, Optional
 
 from utils.logging import logger
 
 
-class Timer(threading.Thread):
+class Timer:
     """
     A Timer class that extends the threading.Thread class.
 
@@ -27,8 +27,10 @@ class Timer(threading.Thread):
             period_s (float): The period in seconds between each execution of the function.
         """
         self.__timer_runs = threading.Event()
+        self.__timer_runs.clear()
         self.__function: Final[Callable[[], None]] = function
         self.__period: Final[float] = period_s
+        self.__current_thread: Optional[threading.Thread] = None
         super().__init__()
 
     def start(self):
@@ -37,8 +39,10 @@ class Timer(threading.Thread):
 
         This method sets the event that controls the running of the timer and starts the thread.
         """
-        self.__timer_runs.set()
-        super().start()
+        if not self.__timer_runs.is_set():
+            self.__timer_runs.set()
+            self.__current_thread = threading.Thread(target=self.run)
+            self.__current_thread.start()
 
     def stop(self):
         """
@@ -48,7 +52,8 @@ class Timer(threading.Thread):
         """
         if self.__timer_runs.is_set():
             self.__timer_runs.clear()
-            self.join()
+            self.__current_thread.join()
+            self.__current_thread = None
 
     def run(self):
         """
