@@ -25,7 +25,7 @@ from controller.periodiccontroller import PeriodicControllerConfig
 # The controller at index N-1 will interact with the environment, while the others will interact with the controller
 # at the next index.
 controllers = [
-    PeriodicControllerConfig(polling_period_s=0.5, learn_algorithm_config=learn_algorithm_config),
+    PeriodicControllerConfig(polling_period_s=5, learn_algorithm_config=learn_algorithm_config),
     PeriodicControllerConfig(polling_period_s=0.05, learn_algorithm_config=learn_algorithm_config),
 ]
 
