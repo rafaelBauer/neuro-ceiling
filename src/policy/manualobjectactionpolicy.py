@@ -39,9 +39,7 @@ class ManualObjectActionPolicy(ManualPolicy):
         __last_goal (Goal): The last goal that was set.
     """
 
-    def __init__(
-        self, config: ManualObjectActionPolicyConfig, keyboard_observer: KeyboardObserver, **kwargs
-    ):
+    def __init__(self, config: ManualObjectActionPolicyConfig, keyboard_observer: KeyboardObserver, **kwargs):
         self.__last_goal: Goal = Goal()
         super().__init__(config, keyboard_observer, **kwargs)
         self._keyboard_observer.subscribe_callback_to_direction(self.__key_pressed_callback)

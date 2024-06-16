@@ -6,14 +6,12 @@ from typing import Final
 import numpy as np
 import torch
 from omegaconf import OmegaConf, SCMode
-from tensordict import TensorDict
 
 from tqdm.auto import tqdm
 
 from controller import create_controller, ControllerBase, ControllerConfig
 from controller.controllerstep import ControllerStep
 from envs import BaseEnvironmentConfig, create_environment, BaseEnvironment
-from envs.object import Object, Spot
 from policy import PolicyBaseConfig, PolicyBase, create_policy
 from utils.argparse import get_config_from_args
 from utils.config import ConfigBase
@@ -21,8 +19,6 @@ from utils.dataset import TrajectoriesDataset, TrajectoryData
 from utils.human_feedback import HumanFeedback
 from utils.keyboard_observer import KeyboardObserver
 from utils.logging import logger
-from utils.pose import Pose
-from utils.sceneobservation import SceneObservation
 
 
 @dataclass
@@ -36,7 +32,9 @@ class Config(ConfigBase):
     environment_config: BaseEnvironmentConfig
     episodes: int = 5
     trajectory_size: int = 150
-    save_demos: bool = True
+    feedback_type: str = ""  # This might be overwritten by the command line argument
+    save_demos: bool = True  # This might be overwritten by the command line argument
+    task: str = ""  # This will be overwritten by the command line argument
 
 
 def create_config_from_args() -> Config:
@@ -48,9 +46,10 @@ def create_config_from_args() -> Config:
     """
     extra_args = (
         {
-            "name": "--pretraining",
-            "action": "store_true",
-            "help": "Whether the data is for pretraining. Used to name the dataset.",
+            "flag": "-e",
+            "name": "--episodes",
+            "type": int,
+            "help": "Define number of episodes to be executed.",
         },
     )
     args, dict_config = get_config_from_args(
@@ -58,6 +57,12 @@ def create_config_from_args() -> Config:
     )
 
     config: Config = OmegaConf.to_container(dict_config, resolve=True, structured_config_mode=SCMode.INSTANTIATE)
+    if args.episodes:
+        config.episodes = args.episodes
+        config.save_demos = True
+    if args.task:
+        config.task = args.task
+    config.feedback_type = args.feedback_type
     return config
 
 
@@ -73,6 +78,11 @@ def main() -> None:
     ), "The number of configured controllers and policies must be the same."
 
     save_path = os.path.join("data/")
+    if config.feedback_type:
+        save_path = os.path.join(save_path, config.feedback_type + "/")
+    if config.task:
+        save_path = os.path.join(save_path, config.task + "/")
+
     os.makedirs(save_path, exist_ok=True)
 
     keyboard_obs = KeyboardObserver()
@@ -83,9 +93,7 @@ def main() -> None:
     controllers: list[ControllerBase] = []
 
     for policy_config in config.policies:
-        policy: PolicyBase = create_policy(
-            policy_config, keyboard_observer=keyboard_obs, environment=environment
-        )
+        policy: PolicyBase = create_policy(policy_config, keyboard_observer=keyboard_obs, environment=environment)
         policies.append(policy)
 
     # Traverse controllers in reverse order to create the controller hierarchy

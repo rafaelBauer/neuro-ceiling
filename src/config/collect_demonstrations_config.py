@@ -40,16 +40,13 @@ policy0 = ManualObjectActionPolicyConfig()
 policy1 = MotionPlannerPolicyConfig()
 
 # The policy at index 0 is added to controllers[0], the policy at index N-1 is added to controllers[N-1]
-policies = [
-    policy0,
-    policy1
-]
+policies = [policy0, policy1]
 
 
 config = Config(
     controllers=controllers,
     policies=policies,
     environment_config=env_config,
-    episodes=2,
-    trajectory_size=150,
+    episodes=10,
+    trajectory_size=200,
 )

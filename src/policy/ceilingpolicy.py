@@ -26,18 +26,19 @@ class CeilingPolicy(PolicyBase):
     @log_constructor
     def __init__(self, config: CeilingPolicyConfig, **kwargs):
         super().__init__(config, **kwargs)
-        self.__visual_encoding_net = nn.Sequential(nn.Conv2d(in_channels=3, out_channels=2, kernel_size=3, stride=2, padding=1),
-                                                   nn.ELU(),
-                                                   nn.Conv2d(in_channels=2, out_channels=1, kernel_size=3, stride=2, padding=1),
-                                                   nn.ELU(),
-                                                   nn.Conv2d(in_channels=1, out_channels=1, kernel_size=3, stride=2, padding=1),
-                                                   nn.ELU(),
-                                                   nn.Flatten(start_dim=1)
-                                                   )
+        self.__visual_encoding_net = nn.Sequential(
+            nn.Conv2d(in_channels=3, out_channels=2, kernel_size=3, stride=2, padding=1),
+            nn.ELU(),
+            nn.Conv2d(in_channels=2, out_channels=1, kernel_size=3, stride=2, padding=1),
+            nn.ELU(),
+            nn.Conv2d(in_channels=1, out_channels=1, kernel_size=3, stride=2, padding=1),
+            nn.ELU(),
+            nn.Flatten(start_dim=1),
+        )
         lstm_dim = config.visual_embedding_dim + config.proprioceptive_dim
-        self.__action_net = nn.Sequential(nn.LSTM(lstm_dim, lstm_dim),
-                                          nn.Linear(lstm_dim, config.action_dim),
-                                          nn.Tanh())
+        self.__action_net = nn.Sequential(
+            nn.LSTM(lstm_dim, lstm_dim), nn.Linear(lstm_dim, config.action_dim), nn.Tanh()
+        )
 
         nn.GaussianNLLLoss
         self._CONFIG: CeilingPolicyConfig = config
@@ -58,4 +59,3 @@ class CeilingPolicy(PolicyBase):
         Parameters:
             goal: Goal object representing the task to be executed.
         """
-

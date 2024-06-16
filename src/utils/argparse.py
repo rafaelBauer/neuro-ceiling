@@ -24,32 +24,35 @@ def parse_args(
         help="Path to config file to use.",
     )
 
-    if need_task:
-        parser.add_argument(
-            "-t",
-            "--task",
-            default="PhoneOnBase",
-            type=str,
-            help="Name of the task to train on.",
-        )
+    parser.add_argument(
+        "-t",
+        "--task",
+        default="",
+        choices=["StackCubesA"],
+        type=str,
+        help="Name of the task to train on.",
+    )
+
+    parser.add_argument(
+        "-f",
+        "--feedback_type",
+        default="",
+        type=str,
+        choices=["pretrain_manual"],
+        help="The training data type.",
+    )
 
     if data_load:
         parser.add_argument(
-            "-f",
-            "--feedback_type",
-            default="pretrain_manual",
-            type=str,
-            help="The training data type. Cloning, dcm, ...",
-        )
-        parser.add_argument(
             "--path",
             default=None,
-            help="Path to a dataset. May be provided instead of f-t.",
+            help="Path to a dataset. May be provided instead of -t.",
         )
 
     for arg in extra_args:
+        arg_flag = arg.pop("flag")
         arg_name = arg.pop("name")
-        parser.add_argument(arg_name, **arg)
+        parser.add_argument(arg_flag, arg_name, **arg)
 
     parser.add_argument(
         "-o",
