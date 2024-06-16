@@ -33,15 +33,17 @@ controllers = [
 
 # ====== Policy configuration ========
 from policy.manualobjectactionpolicy import ManualObjectActionPolicyConfig
-
-manual_object_action_policy = ManualObjectActionPolicyConfig()
-
+from policy.manualrobotactionpolicy import ManualRobotActionPolicyConfig
 from policy.motionplannerpolicy import MotionPlannerPolicyConfig
 
-motion_planner = MotionPlannerPolicyConfig()
+policy0 = ManualObjectActionPolicyConfig()
+policy1 = MotionPlannerPolicyConfig()
 
 # The policy at index 0 is added to controllers[0], the policy at index N-1 is added to controllers[N-1]
-policies = [manual_object_action_policy, motion_planner]
+policies = [
+    policy0,
+    policy1
+]
 
 
 config = Config(

@@ -14,8 +14,6 @@ from controller import create_controller, ControllerBase, ControllerConfig
 from controller.controllerstep import ControllerStep
 from envs import BaseEnvironmentConfig, create_environment, BaseEnvironment
 from envs.object import Object, Spot
-from envs.scene import Scene
-from goal.goal import Goal
 from policy import PolicyBaseConfig, PolicyBase, create_policy
 from utils.argparse import get_config_from_args
 from utils.config import ConfigBase
@@ -77,16 +75,6 @@ def main() -> None:
     save_path = os.path.join("data/")
     os.makedirs(save_path, exist_ok=True)
 
-    cube_a: Object = Object(Pose(p=[0.615, -0.2, 0.02], q=[0, 1, 0, 0]))
-    cube_b: Object = Object(Pose(p=[0.615, 0.0, 0.02], q=[0, 1, 0, 0]))
-    cube_c: Object = Object(Pose(p=[0.615, 0.2, 0.02], q=[0, 1, 0, 0]))
-
-    spot_a: Spot = Spot(object=cube_a)
-    spot_b: Spot = Spot(object=cube_b)
-    spot_c: Spot = Spot(object=cube_c)
-
-    scene: Scene = Scene([cube_a, cube_b, cube_c], [spot_a, spot_b, spot_c])
-
     keyboard_obs = KeyboardObserver()
 
     environment: Final[BaseEnvironment] = create_environment(config.environment_config)
@@ -96,7 +84,7 @@ def main() -> None:
 
     for policy_config in config.policies:
         policy: PolicyBase = create_policy(
-            policy_config, keyboard_observer=keyboard_obs, environment=environment, scene=scene
+            policy_config, keyboard_observer=keyboard_obs, environment=environment
         )
         policies.append(policy)
 

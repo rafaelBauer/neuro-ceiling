@@ -36,14 +36,12 @@ class ManualObjectActionPolicy(ManualPolicy):
     It is expected that the user selects the object, and to which spot they want the object to be moved to.
 
     Attributes:
-        __scene (Scene): The scene in which the policy is applied.
         __last_goal (Goal): The last goal that was set.
     """
 
     def __init__(
-        self, config: ManualObjectActionPolicyConfig, keyboard_observer: KeyboardObserver, scene: Scene, **kwargs
+        self, config: ManualObjectActionPolicyConfig, keyboard_observer: KeyboardObserver, **kwargs
     ):
-        self.__scene: Scene = scene
         self.__last_goal: Goal = Goal()
         super().__init__(config, keyboard_observer, **kwargs)
         self._keyboard_observer.subscribe_callback_to_direction(self.__key_pressed_callback)

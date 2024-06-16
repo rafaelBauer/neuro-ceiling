@@ -5,6 +5,7 @@ from torch import nn, Tensor
 
 from goal.goal import Goal
 from utils.logging import log_constructor
+from utils.sceneobservation import SceneObservation
 
 
 @dataclass(kw_only=True)
@@ -52,17 +53,7 @@ class PolicyBase(nn.Module):
         super().__init__(**kwargs)
 
     @abstractmethod
-    def update(self):
-        """
-        Method usually called by the learning algorithm to update the policy.
-
-        Raises:
-            NotImplementedError: If the method is not implemented in a subclass.
-        """
-        raise NotImplementedError("The update method must be implemented in a subclass.")
-
-    @abstractmethod
-    def forward(self, states: Tensor) -> Tensor:
+    def forward(self, states: SceneObservation) -> Tensor:
         """
         Method that defines the forward pass of the policy.
         In the forward function we accept a Tensor of input data, and we must return
