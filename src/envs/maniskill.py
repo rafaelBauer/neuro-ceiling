@@ -29,7 +29,7 @@ class ManiSkillEnvironmentConfig(BaseEnvironmentConfig):
 class ManiSkillEnv(BaseEnvironment):
     __RENDER_MODE: Final[str] = "human"
     __CONTROL_MODE: Final[str] = "pd_joint_pos"  # "pd_joint_pos", "pd_ee_delta_pose"
-    __OBS_MODE: Final[str] = "sensor_data"  # "state", "state_dict", "none", "sensor_data", "rgb", "rgbd", "pointcloud"
+    __OBS_MODE: Final[str] = "rgbd"  # "state", "state_dict", "none", "sensor_data", "rgb", "rgbd", "pointcloud"
 
     # -------------------------------------------------------------------------- #
     # Initialization

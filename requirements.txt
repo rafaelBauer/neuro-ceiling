@@ -38,3 +38,4 @@ skorch
 scikit-learn
 overrides
 black
+wandb          # To log experiments

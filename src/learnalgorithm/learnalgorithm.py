@@ -12,4 +12,5 @@ class LearnAlgorithmBaseConfig:
 
 class LearnAlgorithmBase:
     def __init__(self, config: LearnAlgorithmBaseConfig):
+
         pass

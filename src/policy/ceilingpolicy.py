@@ -9,6 +9,7 @@ from torch import nn, Tensor
 
 from goal.goal import Goal
 from policy.policy import PolicyBase, PolicyBaseConfig
+from utils.device import device
 from utils.keyboard_observer import KeyboardObserver
 from utils.logging import log_constructor
 from utils.sceneobservation import SceneObservation
@@ -36,20 +37,31 @@ class CeilingPolicy(PolicyBase):
             nn.Flatten(start_dim=1),
         )
         lstm_dim = config.visual_embedding_dim + config.proprioceptive_dim
-        self.__action_net = nn.Sequential(
-            nn.LSTM(lstm_dim, lstm_dim), nn.Linear(lstm_dim, config.action_dim), nn.Tanh()
-        )
+        self.__lstm = nn.LSTM(lstm_dim, lstm_dim)
+        self.__lstm_state: tuple[torch.Tensor, torch.Tensor] | None = None
 
-        nn.GaussianNLLLoss
+        self.__action_net = nn.Sequential(nn.Linear(lstm_dim, config.action_dim), nn.Tanh())
+        self.__visual_encoding_net.to(device)
+        self.__action_net.to(device)
+        # nn.GaussianNLLLoss
         self._CONFIG: CeilingPolicyConfig = config
 
     @override
     def forward(self, states: SceneObservation) -> Tensor:
         assert isinstance(states, SceneObservation), "states should be of type SceneObservation"
-        visual_embedding = self.__visual_encoding_net(states.camera_observation)
-        low_dim_input = torch.cat((visual_embedding, states.proprioceptive_obs), dim=1).unsqueeze(0)
-        out = self.__action_net(low_dim_input)
+        # Had to manipulate the input tensor to match the expected input shape
+        # TODO: fix this before putting into SceneObservation
+        input_tensor = states.camera_observation["rgb"].squeeze(1).permute(0, 3, 1, 2).float()
+        visual_embedding = self.__visual_encoding_net(input_tensor)
+        low_dim_input = torch.hstack((visual_embedding, states.proprioceptive_obs)).unsqueeze(0)
+        lstm_out, self.__lstm_state = self.__lstm(low_dim_input, self.__lstm_state)
+        out = self.__action_net(lstm_out)
         return out
+
+    # TODO: REMOVE THIS METHOD AND MOVE LSTM TO SEQUENTIAL
+    def reset(self):
+        # TODO: REMOVE THIS METHOD
+        self.__lstm_state = None
 
     @override
     def goal_to_be_achieved(self, goal: Goal):
