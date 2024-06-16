@@ -76,7 +76,7 @@ class PoseActionBase(RobotAction):
 
     @override
     def to_tensor(self) -> torch.Tensor:
-        return torch.hstack([self.pose.get_raw_pose(self.rotation_representation), self._gripper_command])
+        return torch.hstack([self.pose.to_tensor(self.rotation_representation), self._gripper_command])
 
 
 class DeltaEEPoseAction(PoseActionBase):
