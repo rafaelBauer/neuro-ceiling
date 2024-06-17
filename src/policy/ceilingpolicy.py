@@ -38,12 +38,13 @@ class CeilingPolicy(PolicyBase):
         )
         lstm_dim = config.visual_embedding_dim + config.proprioceptive_dim
         self.__lstm = nn.LSTM(lstm_dim, lstm_dim)
+        # Stores the LSTM state between calls to forward. At every new episode, this should be reset to None by
+        # calling episode_finished
         self.__lstm_state: tuple[torch.Tensor, torch.Tensor] | None = None
 
         self.__action_net = nn.Sequential(nn.Linear(lstm_dim, config.action_dim), nn.Tanh())
         self.__visual_encoding_net.to(device)
         self.__action_net.to(device)
-        # nn.GaussianNLLLoss
         self._CONFIG: CeilingPolicyConfig = config
 
     @override
@@ -58,9 +59,8 @@ class CeilingPolicy(PolicyBase):
         out = self.__action_net(lstm_out)
         return out
 
-    # TODO: REMOVE THIS METHOD AND MOVE LSTM TO SEQUENTIAL
-    def reset(self):
-        # TODO: REMOVE THIS METHOD
+    @override
+    def episode_finished(self):
         self.__lstm_state = None
 
     @override
