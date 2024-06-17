@@ -6,16 +6,15 @@ import numpy as np
 import torch
 import wandb
 from omegaconf import OmegaConf, SCMode
+from torch.utils.data import RandomSampler, DataLoader
 
 from tqdm.auto import tqdm
 
 from controller import create_controller, ControllerBase, ControllerConfig
-from controller.controllerstep import ControllerStep
 from envs import BaseEnvironmentConfig, create_environment, BaseEnvironment
 from policy import PolicyBaseConfig, PolicyBase, create_policy
 from utils.argparse import get_config_from_args
 from utils.config import ConfigBase
-from utils.dataset import TrajectoryData
 from utils.device import device
 from utils.keyboard_observer import KeyboardObserver
 from utils.logging import logger
@@ -101,7 +100,12 @@ def main() -> None:
             controller: ControllerBase = create_controller(controller_config, environment, policies[i], controllers[0])
         controllers.insert(0, controller)
 
+    # Replay Buffer and Sampler
     replay_buffer = torch.load(source_path + config.dataset_name)
+    sampler = RandomSampler(replay_buffer)
+    dataloader: DataLoader = DataLoader(
+        replay_buffer, sampler=sampler, batch_size=config.batch_size, collate_fn=lambda x: x
+    )
 
     logger.info("Pre training starting!")
     try:
@@ -116,11 +120,11 @@ def main() -> None:
         )
 
         for _ in range(config.steps):
-            batch: TrajectoryData = replay_buffer.sample(config.batch_size)
+            batch = next(iter(dataloader))
             optimizer.zero_grad()
-            batch = batch.to(device)
             losses = []
             for trajectory in batch:
+                trajectory = trajectory.to(device)
                 variance = 0.1 * torch.ones(trajectory.action.size(), dtype=torch.float32)
                 variance = variance.to(device)
                 loss_function = torch.nn.GaussianNLLLoss()
