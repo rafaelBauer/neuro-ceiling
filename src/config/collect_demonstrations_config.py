@@ -13,10 +13,14 @@ env_config = ManiSkillEnvironmentConfig(task_config=task_config)
 # env_config = MockEnvironmentConfig()
 
 # ====== Learn algorithm configuration ========
-from learnalgorithm.learnalgorithm import LearnAlgorithmBaseConfig
+from learnalgorithm.ceilingalgorithm import CeilingAlgorithmConfig  # noqa
+from learnalgorithm.learnalgorithm import LearnAlgorithmConfig  # noqa Nothing will happen with this learn algorithm
 
-learn_algorithm_config = LearnAlgorithmBaseConfig("DQN")
-
+learn_algorithms = [
+    # TODO: Create one learn algorithm to use to collect demonstrations
+    LearnAlgorithmConfig(batch_size=16, learning_rate=3e-4, weight_decay=3e-6),
+    LearnAlgorithmConfig(batch_size=16, learning_rate=3e-4, weight_decay=3e-6),
+]
 
 # ====== Controller configuration ========
 from controller.periodiccontroller import PeriodicControllerConfig
@@ -25,8 +29,8 @@ from controller.periodiccontroller import PeriodicControllerConfig
 # The controller at index N-1 will interact with the environment, while the others will interact with the controller
 # at the next index.
 controllers = [
-    PeriodicControllerConfig(polling_period_s=5, learn_algorithm_config=learn_algorithm_config),
-    PeriodicControllerConfig(polling_period_s=0.05, learn_algorithm_config=learn_algorithm_config),
+    PeriodicControllerConfig(polling_period_s=5),
+    PeriodicControllerConfig(polling_period_s=0.05),
 ]
 
 # ====== Policy configuration ========
@@ -38,12 +42,16 @@ policy0 = ManualObjectActionPolicyConfig()
 policy1 = MotionPlannerPolicyConfig()
 
 # The policy at index 0 is added to controllers[0], the policy at index N-1 is added to controllers[N-1]
-policies = [policy0, policy1]
+policies = [
+    ManualObjectActionPolicyConfig(),
+    MotionPlannerPolicyConfig(),
+]
 
 
 config = Config(
     controllers=controllers,
     policies=policies,
+    learn_algorithms=learn_algorithms,
     environment_config=env_config,
     episodes=10,
     trajectory_size=200,

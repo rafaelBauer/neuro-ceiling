@@ -10,7 +10,7 @@ import torch
 from controller.controllerstep import ControllerStep
 from envs import BaseEnvironment
 from envs.robotactions import RobotAction
-from learnalgorithm.learnalgorithm import LearnAlgorithmBaseConfig
+from learnalgorithm.learnalgorithm import LearnAlgorithmConfig, LearnAlgorithm
 from policy import PolicyBase
 from goal.goal import Goal
 from utils.logging import log_constructor, logger
@@ -20,7 +20,6 @@ from utils.sceneobservation import SceneObservation
 @dataclass
 class ControllerConfig:
     _CONTROLLER_TYPE: str = field(init=True)
-    learn_algorithm_config: LearnAlgorithmBaseConfig
 
     @property
     def controller_type(self) -> str:
@@ -53,6 +52,7 @@ class ControllerBase:
         environment: BaseEnvironment,
         policy: PolicyBase,
         child_controller: Optional["ControllerBase"] = None,
+        learning_algorithm: Optional[LearnAlgorithm] = None,
     ):
         """
         Initializes the ControllerBase class.
@@ -66,6 +66,7 @@ class ControllerBase:
         self.__CONFIG: Final[ControllerConfig] = config
         self._environment: Final[BaseEnvironment] = environment
         self._policy: Final[PolicyBase] = policy
+        self._learn_algorithm: Final[LearnAlgorithm] = learning_algorithm
 
         self._child_controller: Optional[ControllerBase] = child_controller
 
@@ -106,6 +107,10 @@ class ControllerBase:
         """
         if self._child_controller is not None:
             self._child_controller.start()
+
+        if self._learn_algorithm is not None:
+            self._learn_algorithm.start()
+
         self._specific_start()
 
     @abstractmethod
@@ -122,6 +127,10 @@ class ControllerBase:
         """
         if self._child_controller is not None:
             self._child_controller.stop()
+
+        if self._learn_algorithm is not None:
+            self._learn_algorithm.stop()
+
         self._specific_stop()
 
     @abstractmethod

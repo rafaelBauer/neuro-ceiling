@@ -176,9 +176,6 @@ class TrajectoriesDataset(Dataset):
         Resets the current trajectory.
         """
         self.__current_trajectory = []
-        self.__good_count = 0
-        self.__corrected_count = 0
-        self.__bad_count = 0
         return
 
     def sample(self, batch_size) -> TrajectoryData:

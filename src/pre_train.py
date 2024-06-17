@@ -12,6 +12,7 @@ from tqdm.auto import tqdm
 
 from controller import create_controller, ControllerBase, ControllerConfig
 from envs import BaseEnvironmentConfig, create_environment, BaseEnvironment
+from learnalgorithm import LearnAlgorithmConfig, create_learn_algorithm, LearnAlgorithm
 from policy import PolicyBaseConfig, PolicyBase, create_policy
 from utils.argparse import get_config_from_args
 from utils.config import ConfigBase
@@ -28,6 +29,7 @@ class Config(ConfigBase):
 
     controllers: list[ControllerConfig]
     policies: list[PolicyBaseConfig]
+    learn_algorithms: list[LearnAlgorithmConfig]
     environment_config: BaseEnvironmentConfig
     steps: int = 800
     batch_size: int = 16
@@ -60,7 +62,8 @@ def create_config_from_args() -> Config:
         config.steps = args.steps
     if args.task:
         config.task = args.task
-    config.feedback_type = args.feedback_type
+    if args.feedback_type:
+        config.feedback_type = args.feedback_type
     return config
 
 
@@ -79,16 +82,23 @@ def main() -> None:
     source_path = os.path.join("data/")
     if config.task:
         source_path = os.path.join(source_path, config.task + "/")
+        config.learn_algorithms[0].dataset_path = source_path + config.dataset_name
 
     keyboard_obs = KeyboardObserver()
     environment: Final[BaseEnvironment] = create_environment(config.environment_config)
 
     policies: list[PolicyBase] = []
+    learn_algorithms: list[LearnAlgorithm] = []
     controllers: list[ControllerBase] = []
 
     for policy_config in config.policies:
         policy: PolicyBase = create_policy(policy_config, keyboard_observer=keyboard_obs, environment=environment)
         policies.append(policy)
+
+    for i, learn_algorithm_config in enumerate(config.learn_algorithms):
+        if learn_algorithm_config:
+            learn_algorithm: LearnAlgorithm = create_learn_algorithm(learn_algorithm_config, policy=policies[i])
+            learn_algorithms.append(learn_algorithm)
 
     # Traverse controllers in reverse order to create the controller hierarchy
     for i, (controller_config) in reversed(list(enumerate(config.controllers))):
@@ -100,45 +110,11 @@ def main() -> None:
             controller: ControllerBase = create_controller(controller_config, environment, policies[i], controllers[0])
         controllers.insert(0, controller)
 
-    # Replay Buffer and Sampler
-    replay_buffer = torch.load(source_path + config.dataset_name)
-    sampler = RandomSampler(replay_buffer)
-    dataloader: DataLoader = DataLoader(
-        replay_buffer, sampler=sampler, batch_size=config.batch_size, collate_fn=lambda x: x
-    )
-
     logger.info("Pre training starting!")
     try:
         policy = policies[0]
-        policy.to(device)
-        wandb.watch(policy, log_freq=100)
 
-        optimizer = torch.optim.Adam(
-            policy.parameters(),
-            lr=3e-4,  # learning rate
-            weight_decay=3e-6,  # weight decay
-        )
-
-        for _ in range(config.steps):
-            batch = next(iter(dataloader))
-            optimizer.zero_grad()
-            losses = []
-            for trajectory in batch:
-                trajectory = trajectory.to(device)
-                variance = 0.1 * torch.ones(trajectory.action.size(), dtype=torch.float32)
-                variance = variance.to(device)
-                loss_function = torch.nn.GaussianNLLLoss()
-                out = policy(trajectory.scene_observation)
-                # output from model, target, variance
-                loss = loss_function(out.squeeze(), trajectory.action, variance)
-                loss_with_feedback = loss * trajectory.feedback
-                losses.append(loss_with_feedback)
-            total_loss = torch.cat(losses).mean()
-            total_loss.backward()
-            optimizer.step()
-            policy.episode_finished()
-            training_metrics = {"loss": total_loss}
-            wandb.log(training_metrics)
+        learn_algorithms[0].train_step(config.steps)
 
         file_name = config.feedback_type + "_policy.pt"
         torch.save(policy.state_dict(), source_path + file_name)

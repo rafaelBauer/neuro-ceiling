@@ -12,6 +12,7 @@ from tqdm.auto import tqdm
 from controller import create_controller, ControllerBase, ControllerConfig
 from controller.controllerstep import ControllerStep
 from envs import BaseEnvironmentConfig, create_environment, BaseEnvironment
+from learnalgorithm import LearnAlgorithmConfig
 from policy import PolicyBaseConfig, PolicyBase, create_policy
 from utils.argparse import get_config_from_args
 from utils.config import ConfigBase
@@ -29,6 +30,7 @@ class Config(ConfigBase):
 
     controllers: list[ControllerConfig]
     policies: list[PolicyBaseConfig]
+    learn_algorithms: list[LearnAlgorithmConfig]
     environment_config: BaseEnvironmentConfig
     episodes: int = 5
     trajectory_size: int = 150

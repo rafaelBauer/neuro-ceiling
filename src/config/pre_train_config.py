@@ -1,6 +1,4 @@
 from pre_train import Config
-from controller import ControllerBase
-from policy import PolicyBase
 from task.stack_cubes_config import config as task_config
 
 
@@ -15,10 +13,15 @@ env_config = ManiSkillEnvironmentConfig(task_config=task_config)
 # env_config = MockEnvironmentConfig()
 
 # ====== Learn algorithm configuration ========
-from learnalgorithm.learnalgorithm import LearnAlgorithmBaseConfig
+from learnalgorithm.ceilingalgorithm import CeilingAlgorithmConfig
+from learnalgorithm.learnalgorithm import LearnAlgorithmConfig
 
-learn_algorithm_config = LearnAlgorithmBaseConfig("DQN")
-
+learn_algorithms = [
+    CeilingAlgorithmConfig(batch_size=16, learning_rate=3e-4, weight_decay=3e-6),
+    LearnAlgorithmConfig(
+        batch_size=16, learning_rate=3e-4, weight_decay=3e-6
+    ),  # Must have one. But it won't do nothing.
+]
 
 # ====== Controller configuration ========
 from controller.periodiccontroller import PeriodicControllerConfig
@@ -27,8 +30,8 @@ from controller.periodiccontroller import PeriodicControllerConfig
 # The controller at index N-1 will interact with the environment, while the others will interact with the controller
 # at the next index.
 controllers = [
-    PeriodicControllerConfig(polling_period_s=5, learn_algorithm_config=learn_algorithm_config),
-    PeriodicControllerConfig(polling_period_s=0.05, learn_algorithm_config=learn_algorithm_config),
+    PeriodicControllerConfig(polling_period_s=5),
+    PeriodicControllerConfig(polling_period_s=0.05),
 ]
 
 # ====== Policy configuration ========
@@ -52,6 +55,7 @@ policies = [policy0, policy1]
 config = Config(
     controllers=controllers,
     policies=policies,
+    learn_algorithms=learn_algorithms,
     environment_config=env_config,
     task="StackCubesA",
     feedback_type="pretrain_manual",

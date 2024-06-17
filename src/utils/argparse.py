@@ -38,7 +38,7 @@ def parse_args(
         "--feedback_type",
         default="",
         type=str,
-        choices=["pretrain_manual"],
+        choices=["pretrain_manual, ceiling_full"],
         help="The training data type.",
     )
 
