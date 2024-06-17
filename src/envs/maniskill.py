@@ -176,7 +176,17 @@ class ManiSkillEnv(BaseEnvironment):
     # Create Scene Observation
     # -------------------------------------------------------------------------- #
     def convert_to_scene_observation(self, observation: dict) -> SceneObservation:
+        observation["sensor_data"]["hand_camera"]["rgb"] = (
+            observation["sensor_data"]["hand_camera"]["rgb"].squeeze(0).permute(2, 0, 1)
+        )
+        observation["sensor_data"]["hand_camera"]["depth"] = (
+            observation["sensor_data"]["hand_camera"]["depth"].squeeze(0).permute(2, 0, 1)
+        )
+        observation["sensor_data"]["hand_camera"]["segmentation"] = (
+            observation["sensor_data"]["hand_camera"]["segmentation"].squeeze(0).permute(2, 0, 1)
+        )
         return SceneObservation(
+            # Make RGB camera observation of shape (3, H, W) instead of (1, H, W, 3)
             camera_observation=observation["sensor_data"]["hand_camera"],
             proprioceptive_obs=observation["agent"]["qpos"],
             end_effector_pose=self.__current_end_effector_pose().to_tensor(RotationRepresentation.EULER),

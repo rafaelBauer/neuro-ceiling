@@ -130,9 +130,9 @@ def main() -> None:
                 loss_with_feedback = loss * trajectory.feedback
                 losses.append(loss_with_feedback)
             total_loss = torch.cat(losses).mean()
-            total_loss.backward(retain_graph=True)
+            total_loss.backward()
             optimizer.step()
-            policy.reset()
+            policy.episode_finished()
             training_metrics = {"loss": total_loss}
             wandb.log(training_metrics)
 

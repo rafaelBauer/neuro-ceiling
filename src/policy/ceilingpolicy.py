@@ -50,9 +50,7 @@ class CeilingPolicy(PolicyBase):
     @override
     def forward(self, states: SceneObservation) -> Tensor:
         assert isinstance(states, SceneObservation), "states should be of type SceneObservation"
-        # Had to manipulate the input tensor to match the expected input shape
-        # TODO: fix this before putting into SceneObservation
-        input_tensor = states.camera_observation["rgb"].squeeze(1).permute(0, 3, 1, 2).float()
+        input_tensor = states.camera_observation["rgb"].float()
         visual_embedding = self.__visual_encoding_net(input_tensor)
         low_dim_input = torch.hstack((visual_embedding, states.proprioceptive_obs)).unsqueeze(0)
         lstm_out, self.__lstm_state = self.__lstm(low_dim_input, self.__lstm_state)
