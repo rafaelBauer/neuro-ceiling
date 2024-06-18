@@ -128,7 +128,7 @@ def main() -> None:
             # In python, immutable objects are passed by value whereas mutable objects are passed by reference.
             episodes_count: list[int] = [0]
 
-            with tqdm(total=config.epochs, desc="Sampling Episodes") as progress_bar:
+            with tqdm(total=config.episodes, desc="Sampling Episodes") as progress_bar:
 
                 def post_step(controller_step: ControllerStep):
                     if controller_step.episode_finished:

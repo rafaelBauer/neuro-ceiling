@@ -59,8 +59,8 @@ config = Config(
     policies=policies,
     learn_algorithms=learn_algorithms,
     environment_config=env_config,
-    episodes=0,
+    episodes=100,
     task="StackCubesA",
-    feedback_type="pretrain_manual",  # ceiling_full, pretrain_manual
+    feedback_type="ceiling_full",  # ceiling_full, pretrain_manual
     dataset_name="demos_2.dat",
 )
