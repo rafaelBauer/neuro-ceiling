@@ -3,6 +3,7 @@ from typing import Optional
 
 from controller.controller import ControllerConfig, ControllerBase
 from envs import BaseEnvironment
+from learnalgorithm import LearnAlgorithm
 from policy import PolicyBase
 
 
@@ -11,7 +12,8 @@ def create_controller(
     environment: BaseEnvironment,
     policy: PolicyBase,
     child_controller: Optional[ControllerBase] = None,
+    learn_algorithm: Optional[LearnAlgorithm] = None,
 ) -> ControllerBase:
     config_module = importlib.import_module("." + str.lower(config.controller_type), "controller")
     agent_class = getattr(config_module, config.controller_type)
-    return agent_class(config, environment, policy, child_controller)
+    return agent_class(config, environment, policy, child_controller, learn_algorithm)

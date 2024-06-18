@@ -1,6 +1,7 @@
 from abc import abstractmethod
 from dataclasses import dataclass, field
 
+import torch
 from torch import nn, Tensor
 
 from goal.goal import Goal
@@ -18,6 +19,7 @@ class PolicyBaseConfig:
     """
 
     _POLICY_TYPE: str = field(init=True)
+    from_file: str = field(init=True, default="")
 
     @property
     def policy_type(self) -> str:
@@ -51,9 +53,12 @@ class PolicyBase(nn.Module):
         self._CONFIG = config
 
         super().__init__(**kwargs)
+        # In case one wants to load the policy from a model, this is the place to do it
+        if config.from_file:
+            self.load_state_dict(torch.load(config.from_file))
 
     @abstractmethod
-    def forward(self, states: SceneObservation) -> Tensor:
+    def forward(self, states) -> Tensor:
         """
         Method that defines the forward pass of the policy.
         In the forward function we accept a Tensor of input data, and we must return

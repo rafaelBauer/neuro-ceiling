@@ -1,4 +1,5 @@
 import os
+import time
 from dataclasses import dataclass, asdict
 from typing import Final
 
@@ -11,6 +12,7 @@ from torch.utils.data import RandomSampler, DataLoader
 from tqdm.auto import tqdm
 
 from controller import create_controller, ControllerBase, ControllerConfig
+from controller.controllerstep import ControllerStep
 from envs import BaseEnvironmentConfig, create_environment, BaseEnvironment
 from learnalgorithm import LearnAlgorithmConfig, create_learn_algorithm, LearnAlgorithm
 from policy import PolicyBaseConfig, PolicyBase, create_policy
@@ -31,7 +33,7 @@ class Config(ConfigBase):
     policies: list[PolicyBaseConfig]
     learn_algorithms: list[LearnAlgorithmConfig]
     environment_config: BaseEnvironmentConfig
-    steps: int = 800
+    episodes: int = 100
     batch_size: int = 16
     feedback_type: str = ""  # This might be overwritten by the command line argument
     dataset_name: str = ""
@@ -58,8 +60,6 @@ def create_config_from_args() -> Config:
     )
 
     config: Config = OmegaConf.to_container(dict_config, resolve=True, structured_config_mode=SCMode.INSTANTIATE)
-    if args.steps:
-        config.steps = args.steps
     if args.task:
         config.task = args.task
     if args.feedback_type:
@@ -103,22 +103,54 @@ def main() -> None:
     # Traverse controllers in reverse order to create the controller hierarchy
     for i, (controller_config) in reversed(list(enumerate(config.controllers))):
         if i == len(config.controllers) - 1:
-            controller: ControllerBase = create_controller(controller_config, environment, policies[i])
+            controller: ControllerBase = create_controller(
+                controller_config, environment, policies[i], learn_algorithm=learn_algorithms[i]
+            )
         else:
             # Always the lower level controller is the child of the higher level controller
             # It will always be in the first position of the list since it was the previously inserted at the index 0
-            controller: ControllerBase = create_controller(controller_config, environment, policies[i], controllers[0])
+            controller: ControllerBase = create_controller(
+                controller_config, environment, policies[i], controllers[0], learn_algorithm=learn_algorithms[i]
+            )
         controllers.insert(0, controller)
 
-    logger.info("Pre training starting!")
-    try:
-        policy = policies[0]
+    logger.info("Training starting!")
 
-        learn_algorithms[0].train_step(config.steps)
+    try:
+        controllers[0].train()
+
+        if config.episodes > 0:
+            environment.start()
+            time.sleep(5)
+            keyboard_obs.start()
+
+            # Have to make as a list to be able to modify it in the post_step_function.
+            # In python, immutable objects are passed by value whereas mutable objects are passed by reference.
+            episodes_count: list[int] = [0]
+
+            with tqdm(total=config.epochs, desc="Sampling Episodes") as progress_bar:
+
+                def post_step(controller_step: ControllerStep):
+                    if controller_step.episode_finished:
+                        progress_bar.update(1)
+                        controllers[0].reset()
+                        episodes_count[0] = episodes_count[0] + 1
+
+                controllers[0].set_post_step_function(post_step)
+                controllers[0].start()
+
+                while episodes_count[0] < config.episodes:
+                    # just need to sleep, since there is a thread in the controller doing the stepping and
+                    # everything else
+                    time.sleep(1)
+
+            controllers[0].stop()
+            environment.stop()
+            keyboard_obs.stop()
 
         file_name = config.feedback_type + "_policy.pt"
-        torch.save(policy.state_dict(), source_path + file_name)
-        logger.info("Successfully pre-trained policy for task {}", config.task)
+        controllers[0].save_model(source_path + file_name)
+        logger.info("Successfully trained policy for task {}", config.task)
 
     except KeyboardInterrupt:
         logger.info("Keyboard interrupt. Attempting graceful env shutdown ...")

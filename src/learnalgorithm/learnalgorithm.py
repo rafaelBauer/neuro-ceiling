@@ -3,9 +3,13 @@ from dataclasses import dataclass, field
 from typing import Final, Optional
 
 import wandb
+from torch import Tensor, nn
 
+from controller.controllerstep import ControllerStep
+from goal.goal import Goal
 from policy import PolicyBase
 from utils.device import device
+from utils.sceneobservation import SceneObservation
 
 
 @dataclass
@@ -24,18 +28,14 @@ class LearnAlgorithmConfig:
 class LearnAlgorithm:
     def __init__(self, config: LearnAlgorithmConfig, policy: PolicyBase):
         self._policy = policy
-        self.__CONFIG: Final[LearnAlgorithmConfig] = config
+        self._CONFIG: Final[LearnAlgorithmConfig] = config
         policy.to(device)
         wandb.watch(policy, log_freq=100)
 
     @abstractmethod
-    def start(self):
+    def train(self, mode: bool = True):
         pass
 
     @abstractmethod
-    def stop(self):
-        pass
-
-    @abstractmethod
-    def train_step(self, num_steps: Optional[int] = None):
+    def step(self, controller_step: ControllerStep):
         pass

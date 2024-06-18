@@ -1,10 +1,11 @@
 import os
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from typing import Final
 
 import numpy as np
 import torch
+import wandb
 from omegaconf import OmegaConf, SCMode
 
 from tqdm.auto import tqdm
@@ -12,7 +13,7 @@ from tqdm.auto import tqdm
 from controller import create_controller, ControllerBase, ControllerConfig
 from controller.controllerstep import ControllerStep
 from envs import BaseEnvironmentConfig, create_environment, BaseEnvironment
-from learnalgorithm import LearnAlgorithmConfig
+from learnalgorithm import LearnAlgorithmConfig, LearnAlgorithm, create_learn_algorithm
 from policy import PolicyBaseConfig, PolicyBase, create_policy
 from utils.argparse import get_config_from_args
 from utils.config import ConfigBase
@@ -76,6 +77,7 @@ def main() -> None:
     """
     np.set_printoptions(suppress=True, precision=3)
     config: Config = create_config_from_args()
+    wandb.init(config=asdict(config), project="neuro-ceiling", mode="disabled")
 
     assert len(config.controllers) == len(
         config.policies
@@ -93,20 +95,30 @@ def main() -> None:
     environment: Final[BaseEnvironment] = create_environment(config.environment_config)
 
     policies: list[PolicyBase] = []
+    learn_algorithms: list[LearnAlgorithm] = []
     controllers: list[ControllerBase] = []
 
     for policy_config in config.policies:
         policy: PolicyBase = create_policy(policy_config, keyboard_observer=keyboard_obs, environment=environment)
         policies.append(policy)
 
+    for i, learn_algorithm_config in enumerate(config.learn_algorithms):
+        if learn_algorithm_config:
+            learn_algorithm: LearnAlgorithm = create_learn_algorithm(learn_algorithm_config, policy=policies[i])
+            learn_algorithms.append(learn_algorithm)
+
     # Traverse controllers in reverse order to create the controller hierarchy
     for i, (controller_config) in reversed(list(enumerate(config.controllers))):
         if i == len(config.controllers) - 1:
-            controller: ControllerBase = create_controller(controller_config, environment, policies[i])
+            controller: ControllerBase = create_controller(
+                controller_config, environment, policies[i], learn_algorithm=learn_algorithms[i]
+            )
         else:
             # Always the lower level controller is the child of the higher level controller
             # It will always be in the first position of the list since it was the previously inserted at the index 0
-            controller: ControllerBase = create_controller(controller_config, environment, policies[i], controllers[0])
+            controller: ControllerBase = create_controller(
+                controller_config, environment, policies[i], controllers[0], learn_algorithm=learn_algorithms[i]
+            )
         controllers.insert(0, controller)
 
     replay_buffer = TrajectoriesDataset(config.trajectory_size)

@@ -13,11 +13,12 @@ env_config = ManiSkillEnvironmentConfig(task_config=task_config)
 # env_config = MockEnvironmentConfig()
 
 # ====== Learn algorithm configuration ========
+from learnalgorithm.behaviorcloningalgorithm import BehaviorCloningAlgorithmConfig
 from learnalgorithm.ceilingalgorithm import CeilingAlgorithmConfig
 from learnalgorithm.learnalgorithm import LearnAlgorithmConfig
 
 learn_algorithms = [
-    CeilingAlgorithmConfig(batch_size=16, learning_rate=3e-4, weight_decay=3e-6),
+    BehaviorCloningAlgorithmConfig(batch_size=16, learning_rate=3e-4, weight_decay=3e-6, number_of_epochs=800),
     LearnAlgorithmConfig(
         batch_size=16, learning_rate=3e-4, weight_decay=3e-6
     ),  # Must have one. But it won't do nothing.
@@ -44,6 +45,7 @@ policy0 = CeilingPolicyConfig(
     visual_embedding_dim=256,
     proprioceptive_dim=9,
     action_dim=7,
+    # from_file="/home/bauerr/git/neuro-ceiling/data/StackCubesA/pretrain_manual_policy.pt"
 )
 # policy0 = ManualObjectActionPolicyConfig()
 policy1 = MotionPlannerPolicyConfig()
@@ -58,7 +60,6 @@ config = Config(
     learn_algorithms=learn_algorithms,
     environment_config=env_config,
     task="StackCubesA",
-    feedback_type="pretrain_manual",
+    feedback_type="ceiling_full",  # ceiling_full, pretrain_manual
     dataset_name="demos_2.dat",
-    steps=800,
 )

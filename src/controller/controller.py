@@ -52,7 +52,7 @@ class ControllerBase:
         environment: BaseEnvironment,
         policy: PolicyBase,
         child_controller: Optional["ControllerBase"] = None,
-        learning_algorithm: Optional[LearnAlgorithm] = None,
+        learn_algorithm: Optional[LearnAlgorithm] = None,
     ):
         """
         Initializes the ControllerBase class.
@@ -66,7 +66,7 @@ class ControllerBase:
         self.__CONFIG: Final[ControllerConfig] = config
         self._environment: Final[BaseEnvironment] = environment
         self._policy: Final[PolicyBase] = policy
-        self._learn_algorithm: Final[LearnAlgorithm] = learning_algorithm
+        self._learn_algorithm: Final[LearnAlgorithm] = learn_algorithm
 
         self._child_controller: Optional[ControllerBase] = child_controller
 
@@ -100,6 +100,18 @@ class ControllerBase:
             self._environment.reset if self._child_controller is None else self._child_controller.reset
         )
 
+    def train(self, mode: bool = True):
+        """
+        Trains the controller. If the controller has a child controller, it will first train the child, and then
+        itself.
+        """
+        if self._child_controller is not None:
+            self._child_controller.train(mode)
+
+        self._policy.train(mode)
+        if self._learn_algorithm is not None:
+            self._learn_algorithm.train(mode)
+
     def start(self):
         """
         Starts the controller. If the controller has a child controller, it will first start the child, and then
@@ -107,9 +119,6 @@ class ControllerBase:
         """
         if self._child_controller is not None:
             self._child_controller.start()
-
-        if self._learn_algorithm is not None:
-            self._learn_algorithm.start()
 
         self._specific_start()
 
@@ -127,9 +136,6 @@ class ControllerBase:
         """
         if self._child_controller is not None:
             self._child_controller.stop()
-
-        if self._learn_algorithm is not None:
-            self._learn_algorithm.stop()
 
         self._specific_stop()
 
@@ -199,6 +205,9 @@ class ControllerBase:
             )
             self._previous_observation = next_scene_observation
             self._previous_reward = next_reward
+
+            self._learn_algorithm.step(self.__last_controller_step)
+
         if self.__post_step_function is not None:
             self.__post_step_function(self.__last_controller_step)
 
@@ -226,3 +235,6 @@ class ControllerBase:
             post_step_function (Callable): The function to call.
         """
         self.__post_step_function = post_step_function
+
+    def save_model(self, full_path: str):
+        torch.save(self._policy.state_dict(), full_path)

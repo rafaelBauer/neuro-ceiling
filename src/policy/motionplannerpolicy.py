@@ -112,7 +112,7 @@ class MotionPlannerPolicy(PolicyBase):
         self.__target_sequence_lock: threading.Lock = threading.Lock()
 
     @override
-    def forward(self, states: SceneObservation) -> Tensor:
+    def forward(self, states) -> Tensor:
         """
         Samples actions to be taken by the robot based on the current path.
 

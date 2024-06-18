@@ -42,7 +42,7 @@ class ManualPolicy(PolicyBase):
         self._CONFIG: ManualPolicyConfig = config
 
     @override
-    def forward(self, states: SceneObservation) -> Tensor:
+    def forward(self, states) -> Tensor:
         # For when the keyboard observer is not working
         # action = numpy.array([0.0, 0.0, 0.0, -0.9, 0.0, 0.9])
         # gripper = numpy.array([0.0])

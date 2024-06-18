@@ -5,6 +5,7 @@ from overrides import override
 
 from controller import ControllerConfig, ControllerBase
 from envs import BaseEnvironment
+from learnalgorithm import LearnAlgorithm
 from policy import PolicyBase
 from utils.timer import Timer
 from utils.logging import log_constructor
@@ -24,9 +25,10 @@ class PeriodicController(ControllerBase):
         environment: BaseEnvironment,
         policy: PolicyBase,
         child_controller: Optional[ControllerBase] = None,
+        learn_algorithm: Optional[LearnAlgorithm] = None,
     ):
         self.__timer = Timer(self._timer_callback, config.polling_period_s)
-        super().__init__(config, environment, policy, child_controller)
+        super().__init__(config, environment, policy, child_controller, learn_algorithm)
 
     @override
     def _specific_start(self):
