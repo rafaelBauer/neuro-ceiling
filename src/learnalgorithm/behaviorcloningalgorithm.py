@@ -1,6 +1,4 @@
-import threading
 from dataclasses import dataclass, field
-from typing import Optional
 
 import torch
 import wandb
@@ -14,6 +12,7 @@ from utils.dataset import TrajectoriesDataset, TrajectoryData
 from utils.device import device
 from utils.human_feedback import HumanFeedback
 from utils.logging import log_constructor
+from utils.sceneobservation import SceneObservation
 
 
 @dataclass
@@ -30,75 +29,32 @@ class BehaviorCloningAlgorithm(LearnAlgorithm):
         policy: PolicyBase,
     ):
 
-        # Replay buffer and Data Loader
-        self.__replay_buffer: TrajectoriesDataset = TrajectoriesDataset(config.episode_steps)
-        self.__sampler = RandomSampler(self.__replay_buffer)
-        self.__dataloader: DataLoader = DataLoader(
-            self.__replay_buffer, sampler=self.__sampler, batch_size=config.batch_size, collate_fn=lambda x: x
-        )
-
         # Which loss function to use for the algorithm
-        self.__loss_function = torch.nn.GaussianNLLLoss()
+        loss_function = torch.nn.GaussianNLLLoss()
 
         # Optimizer
-        self.__optimizer = torch.optim.Adam(
+        optimizer = torch.optim.Adam(
             policy.parameters(),
             lr=config.learning_rate,
             weight_decay=config.weight_decay,
         )
-
-        super().__init__(config, policy)
-
-    @override
-    def load_from_file(self):
-        if self._CONFIG.load_dataset:
-            self.__replay_buffer: TrajectoriesDataset = torch.load(self._CONFIG.load_dataset)
-            self.__sampler = RandomSampler(self.__replay_buffer)
-            self.__dataloader: DataLoader = DataLoader(
-                self.__replay_buffer, sampler=self.__sampler, batch_size=self._CONFIG.batch_size, collate_fn=lambda x: x
-            )
+        super().__init__(config, policy, RandomSampler, DataLoader, loss_function, optimizer)
 
     @override
     def train(self, mode: bool = True):
         if mode:
             for _ in range(self._CONFIG.number_of_epochs):
-                batch = next(iter(self.__dataloader))
-                # Batch is a list where each element is a trajectory of size (trajectory_length, feature_size)
-                # We need to convert it to a tensor of shape (trajectory_length, batch_size, feature_size)
-                # Since the training is done per batch, and we need to iterate over time
-                batch = torch.stack(batch, dim=1)
-                self.__optimizer.zero_grad()
-                losses = self.__compute_losses_for_batch(batch)
-                total_loss = torch.cat(losses).mean()
-                total_loss.backward()
-                self.__optimizer.step()
-                self._policy.episode_finished()
-                training_metrics = {"loss": total_loss}
-                wandb.log(training_metrics)
+                self._train_step()
 
     @override
-    def step(self, controller_step: ControllerStep):
-        feedback = torch.Tensor([HumanFeedback.GOOD])
+    def _get_human_feedback(self, controller_step: ControllerStep):
+        return torch.Tensor([HumanFeedback.GOOD])
 
-        step: TrajectoryData = TrajectoryData(
-            scene_observation=controller_step.scene_observation,
-            action=controller_step.action,
-            feedback=feedback,
-        )
+    def _episode_finished(self):
+        self._policy.episode_finished()
 
-        self.__replay_buffer.add(step)
-        if controller_step.episode_finished:
-            self.__replay_buffer.save_current_traj()
-
-    def __compute_losses_for_batch(self, trajectories: torch.Tensor):
-        losses = []
-        for time_point in trajectories:
-            time_point = time_point.to(device)
-            variance = torch.full(time_point.action.size(), 0.1, dtype=torch.float32, device=device)
-            out = self._policy(time_point.scene_observation)
-            loss = self.__loss_function(out, time_point.action, variance)
-            losses.append(loss * time_point.feedback)
-        return losses
+    def _action_from_policy(self, scene_observation: SceneObservation) -> torch.Tensor:
+        return self._policy(scene_observation)
 
     def reset(self):
         self.__replay_buffer.reset_current_traj()

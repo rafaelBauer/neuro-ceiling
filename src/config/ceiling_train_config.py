@@ -19,7 +19,7 @@ from learnalgorithm.learnalgorithm import LearnAlgorithmConfig
 
 learn_algorithms = [
     CeilingAlgorithmConfig(
-        batch_size=16, learning_rate=3e-4, weight_decay=3e-6, episode_steps=200, load_dataset="demos_10.dat"
+        batch_size=16, learning_rate=3e-4, weight_decay=3e-6, steps_per_episode=200, load_dataset="demos_10.dat"
     ),
     LearnAlgorithmConfig(
         batch_size=16, learning_rate=3e-4, weight_decay=3e-6

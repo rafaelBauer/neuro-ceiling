@@ -22,12 +22,12 @@ learn_algorithms = [
         batch_size=16,
         learning_rate=3e-4,
         weight_decay=3e-6,
-        episode_steps=200,
+        steps_per_episode=200,
         load_dataset="demos_10.dat",
         number_of_epochs=800,
     ),
     LearnAlgorithmConfig(
-        batch_size=16, learning_rate=3e-4, weight_decay=3e-6, episode_steps=200
+        batch_size=16, learning_rate=3e-4, weight_decay=3e-6, steps_per_episode=200
     ),  # Must have one. But it won't do nothing.
 ]
 
