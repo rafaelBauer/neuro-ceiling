@@ -18,7 +18,12 @@ from learnalgorithm.ceilingalgorithm import CeilingAlgorithmConfig
 from learnalgorithm.learnalgorithm import LearnAlgorithmConfig
 
 learn_algorithms = [
-    CeilingAlgorithmConfig(batch_size=16, learning_rate=3e-4, weight_decay=3e-6),
+    CeilingAlgorithmConfig(batch_size=16,
+                           learning_rate=3e-4,
+                           weight_decay=3e-6,
+                           episode_steps=200,
+                           load_dataset="demos_10.dat"
+                           ),
     LearnAlgorithmConfig(
         batch_size=16, learning_rate=3e-4, weight_decay=3e-6
     ),  # Must have one. But it won't do nothing.
@@ -41,17 +46,16 @@ from policy.ceilingpolicy import CeilingPolicyConfig
 from policy.manualrobotactionpolicy import ManualRobotActionPolicyConfig
 from policy.motionplannerpolicy import MotionPlannerPolicyConfig
 
-policy0 = CeilingPolicyConfig(
-    visual_embedding_dim=256,
-    proprioceptive_dim=9,
-    action_dim=7,
-    from_file="/home/bauerr/git/neuro-ceiling/data/StackCubesA/ceiling_pretrain_policy.pt"
-)
-# policy0 = ManualObjectActionPolicyConfig()
-policy1 = MotionPlannerPolicyConfig()
-
 # The policy at index 0 is added to controllers[0], the policy at index N-1 is added to controllers[N-1]
-policies = [policy0, policy1]
+policies = [
+    CeilingPolicyConfig(visual_embedding_dim=256,
+                        proprioceptive_dim=9,
+                        action_dim=7,
+                        from_file="ceiling_pretrain_policy.pt",
+                        # save_to_file="ceiling_trained_policy.pt",
+                        ),
+    MotionPlannerPolicyConfig()
+]
 
 
 config = Config(
@@ -62,5 +66,4 @@ config = Config(
     episodes=100,
     task="StackCubesA",
     feedback_type="ceiling_full",  # ceiling_full, pretrain_manual
-    dataset_name="demos_2.dat",
 )

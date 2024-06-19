@@ -20,6 +20,7 @@ class PeriodicControllerConfig(ControllerConfig):
 
 ActionType = TypeVar("ActionType")
 
+
 class PeriodicController(ControllerBase[ActionType]):
     @log_constructor
     def __init__(
@@ -47,7 +48,7 @@ class PeriodicController(ControllerBase[ActionType]):
             next_action = self._policy(self._previous_observation)
             if isinstance(next_action, torch.Tensor):
                 next_action = next_action.to("cpu")
-                next_action = ActionType.from_tensor(next_action.squeeze(0))
+                next_action = self._action_type.from_tensor(next_action.squeeze(0).detach())
 
         if next_action is not None:
             self._step(next_action)

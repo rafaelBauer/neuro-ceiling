@@ -31,7 +31,7 @@ class BehaviorCloningAlgorithm(LearnAlgorithm):
     ):
 
         # Replay buffer and Data Loader
-        self.__replay_buffer: TrajectoriesDataset = torch.load(config.dataset_path)
+        self.__replay_buffer: TrajectoriesDataset = TrajectoriesDataset(config.episode_steps)
         self.__sampler = RandomSampler(self.__replay_buffer)
         self.__dataloader: DataLoader = DataLoader(
             self.__replay_buffer, sampler=self.__sampler, batch_size=config.batch_size, collate_fn=lambda x: x
@@ -48,6 +48,15 @@ class BehaviorCloningAlgorithm(LearnAlgorithm):
         )
 
         super().__init__(config, policy)
+
+    @override
+    def load_from_file(self):
+        if self._CONFIG.load_dataset:
+            self.__replay_buffer: TrajectoriesDataset = torch.load(self._CONFIG.load_dataset)
+            self.__sampler = RandomSampler(self.__replay_buffer)
+            self.__dataloader: DataLoader = DataLoader(
+                self.__replay_buffer, sampler=self.__sampler, batch_size=self._CONFIG.batch_size, collate_fn=lambda x: x
+            )
 
     @override
     def train(self, mode: bool = True):

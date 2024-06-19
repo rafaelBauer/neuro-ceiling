@@ -78,5 +78,5 @@ class PickPlaceObject(Goal):
             objective = PickPlaceObject.Objective.PLACE
         else:
             return Goal(7)
-        input_tensor[4:] = torch.Tensor([3.1415927, 0, 0])
-        return cls(pose=Pose(raw_euler_pose=input_tensor[1:].detach().numpy()), objective=objective)
+        input_tensor[4:] = torch.Tensor([3.1415927, 0, 0])  # This keeps the arm in the correct orientation
+        return cls(pose=Pose(raw_euler_pose=input_tensor[1:].numpy()), objective=objective)

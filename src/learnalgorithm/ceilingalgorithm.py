@@ -29,9 +29,8 @@ class CeilingAlgorithm(LearnAlgorithm):
         config: CeilingAlgorithmConfig,
         policy: PolicyBase,
     ):
-
         # Replay buffer and Data Loader
-        self.__replay_buffer: TrajectoriesDataset = torch.load(config.dataset_path)
+        self.__replay_buffer: TrajectoriesDataset = TrajectoriesDataset(config.episode_steps)
         self.__sampler = RandomSampler(self.__replay_buffer)
         self.__dataloader: DataLoader = DataLoader(
             self.__replay_buffer, sampler=self.__sampler, batch_size=config.batch_size, collate_fn=lambda x: x
@@ -53,6 +52,15 @@ class CeilingAlgorithm(LearnAlgorithm):
         # Used to prevent that someone calls the train_step method while it is already running
         # self.__train_step_lock: threading.Lock = threading.Lock()
         super().__init__(config, policy)
+
+    @override
+    def load_from_file(self):
+        if self._CONFIG.load_dataset:
+            self.__replay_buffer: TrajectoriesDataset = torch.load(self._CONFIG.load_dataset)
+            self.__sampler = RandomSampler(self.__replay_buffer)
+            self.__dataloader: DataLoader = DataLoader(
+                self.__replay_buffer, sampler=self.__sampler, batch_size=self._CONFIG.batch_size, collate_fn=lambda x: x
+            )
 
     @override
     def train(self, mode: bool = True):
@@ -110,3 +118,6 @@ class CeilingAlgorithm(LearnAlgorithm):
             loss = self.__loss_function(out, time_point.action, variance)
             losses.append(loss * time_point.feedback)
         return losses
+
+    def reset(self):
+        self.__replay_buffer.reset_current_traj()

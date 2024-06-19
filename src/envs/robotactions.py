@@ -27,6 +27,13 @@ class GripperCommand(IntEnum):
     OPEN = 1
     CLOSE = -1
 
+    @classmethod
+    def from_tensor(cls, input_tensor: torch.Tensor) -> "GripperCommand":
+        if 0.0 <= input_tensor:
+            return cls.OPEN
+        elif 0.0 > input_tensor:
+            return cls.CLOSE
+
 
 @tensorclass
 class RobotAction:
@@ -127,3 +134,8 @@ class TargetJointPositionAction(RobotAction):
     @override
     def to_target_joint_position(self) -> RobotAction:
         return self
+
+    @classmethod
+    def from_tensor(cls, input_tensor: torch.Tensor) -> RobotAction:
+        gripper_command = GripperCommand.from_tensor(input_tensor[-1])
+        return cls(target_position=input_tensor[:-1].numpy(), gripper_command=gripper_command)

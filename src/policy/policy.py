@@ -20,6 +20,7 @@ class PolicyBaseConfig:
 
     _POLICY_TYPE: str = field(init=True)
     from_file: str = field(init=True, default="")
+    save_to_file: str = field(init=True, default="")
 
     @property
     def policy_type(self) -> str:
@@ -57,6 +58,10 @@ class PolicyBase(nn.Module):
     def load_from_file(self):
         if self._CONFIG.from_file:
             self.load_state_dict(torch.load(self._CONFIG.from_file))
+
+    def save_to_file(self):
+        if self._CONFIG.save_to_file:
+            torch.save(self.state_dict(), self._CONFIG.save_to_file)
 
     @abstractmethod
     def forward(self, states) -> Tensor:

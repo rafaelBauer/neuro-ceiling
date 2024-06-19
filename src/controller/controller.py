@@ -242,5 +242,5 @@ class ControllerBase(Generic[ActionType]):
         """
         self.__post_step_function = post_step_function
 
-    def save_model(self, full_path: str):
-        torch.save(self._policy.state_dict(), full_path)
+    def save_model(self):
+        self._policy.save_to_file()

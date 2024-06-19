@@ -18,7 +18,9 @@ class LearnAlgorithmConfig:
     batch_size: int = field(init=True)
     learning_rate: float = field(init=True)
     weight_decay: float = field(init=True)
-    dataset_path: str = field(init=False, default="")
+    episode_steps: int = field(init=True)
+    load_dataset: str = field(init=True, default="")
+    save_dataset: str = field(init=True, default="")
 
     @property
     def algo_type(self) -> str:
@@ -42,4 +44,8 @@ class LearnAlgorithm:
 
     @abstractmethod
     def reset(self):
+        pass
+
+    @abstractmethod
+    def load_from_file(self):
         pass

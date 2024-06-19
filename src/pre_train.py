@@ -35,8 +35,6 @@ class Config(ConfigBase):
     environment_config: BaseEnvironmentConfig
     episodes: int = 100
     batch_size: int = 16
-    feedback_type: str = ""  # This might be overwritten by the command line argument
-    dataset_name: str = ""
     task: str = ""  # This will be overwritten by the command line argument
 
 
@@ -62,8 +60,6 @@ def create_config_from_args() -> Config:
     config: Config = OmegaConf.to_container(dict_config, resolve=True, structured_config_mode=SCMode.INSTANTIATE)
     if args.task:
         config.task = args.task
-    if args.feedback_type:
-        config.feedback_type = args.feedback_type
     return config
 
 
@@ -82,7 +78,6 @@ def main() -> None:
     source_path = os.path.join("data/")
     if config.task:
         source_path = os.path.join(source_path, config.task + "/")
-        config.learn_algorithms[0].dataset_path = source_path + config.dataset_name
 
     keyboard_obs = KeyboardObserver()
     environment: Final[BaseEnvironment] = create_environment(config.environment_config)
@@ -92,13 +87,21 @@ def main() -> None:
     controllers: list[ControllerBase] = []
 
     for policy_config in config.policies:
+        if policy_config.from_file:
+            os.path.join(source_path + policy_config.from_file)
         policy: PolicyBase = create_policy(policy_config, keyboard_observer=keyboard_obs, environment=environment)
         policy.load_from_file()
         policies.append(policy)
 
     for i, learn_algorithm_config in enumerate(config.learn_algorithms):
         if learn_algorithm_config:
+            if learn_algorithm_config.load_dataset:
+                learn_algorithm_config.load_dataset = source_path + learn_algorithm_config.load_dataset
+            if learn_algorithm_config.save_dataset:
+                learn_algorithm_config.save_dataset = source_path + learn_algorithm_config.save_dataset
+
             learn_algorithm: LearnAlgorithm = create_learn_algorithm(learn_algorithm_config, policy=policies[i])
+            learn_algorithm.load_from_file()
             learn_algorithms.append(learn_algorithm)
 
     # Traverse controllers in reverse order to create the controller hierarchy
@@ -156,8 +159,7 @@ def main() -> None:
             environment.stop()
             keyboard_obs.stop()
 
-        file_name = config.feedback_type + "_policy.pt"
-        controllers[0].save_model(source_path + file_name)
+        controllers[0].save_model()
         logger.info("Successfully trained policy for task {}", config.task)
 
     except KeyboardInterrupt:
