@@ -39,3 +39,7 @@ class LearnAlgorithm:
     @abstractmethod
     def step(self, controller_step: ControllerStep):
         pass
+
+    @abstractmethod
+    def reset(self):
+        pass

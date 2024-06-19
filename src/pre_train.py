@@ -93,6 +93,7 @@ def main() -> None:
 
     for policy_config in config.policies:
         policy: PolicyBase = create_policy(policy_config, keyboard_observer=keyboard_obs, environment=environment)
+        policy.load_from_file()
         policies.append(policy)
 
     for i, learn_algorithm_config in enumerate(config.learn_algorithms):
@@ -114,9 +115,16 @@ def main() -> None:
             )
         controllers.insert(0, controller)
 
+    def reset_episode():
+        learn_algorithms[0].reset()
+        controllers[0].reset()
+
+    keyboard_obs.subscribe_callback_to_reset(reset_episode)
+
     logger.info("Training starting!")
 
     try:
+
         controllers[0].train()
 
         if config.episodes > 0:

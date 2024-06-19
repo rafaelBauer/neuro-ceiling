@@ -53,9 +53,10 @@ class PolicyBase(nn.Module):
         self._CONFIG = config
 
         super().__init__(**kwargs)
-        # In case one wants to load the policy from a model, this is the place to do it
-        if config.from_file:
-            self.load_state_dict(torch.load(config.from_file))
+
+    def load_from_file(self):
+        if self._CONFIG.from_file:
+            self.load_state_dict(torch.load(self._CONFIG.from_file))
 
     @abstractmethod
     def forward(self, states) -> Tensor:

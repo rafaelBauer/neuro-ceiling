@@ -85,6 +85,10 @@ class CeilingAlgorithm(LearnAlgorithm):
     def __train_step(self):
         while self.__train_thread_running.is_set():
             batch = next(iter(self.__dataloader))
+            # Batch is a list where each element is a trajectory of size (trajectory_length, feature_size)
+            # We need to convert it to a tensor of shape (trajectory_length, batch_size, feature_size)
+            # Since the training is done per batch, and we need to iterate over time
+            batch = torch.stack(batch, dim=1)
             self.__optimizer.zero_grad()
             losses = self.__compute_losses_for_batch(batch)
             total_loss = torch.cat(losses).mean()
@@ -94,13 +98,15 @@ class CeilingAlgorithm(LearnAlgorithm):
             training_metrics = {"loss": total_loss}
             wandb.log(training_metrics)
 
-    def __compute_losses_for_batch(self, batch: list):
+    def __compute_losses_for_batch(self, trajectories: torch.Tensor):
         losses = []
         lstm_state = None
-        for trajectory in batch:
-            trajectory = trajectory.to(device)
-            variance = torch.full(trajectory.action.size(), 0.1, dtype=torch.float32, device=device)
-            out = self._policy([trajectory.scene_observation, lstm_state])
-            loss = self.__loss_function(out.squeeze(), trajectory.action, variance)
-            losses.append(loss * trajectory.feedback)
+        for time_point in trajectories:
+            time_point = time_point.to(device)
+            variance = torch.full(time_point.action.size(), 0.1, dtype=torch.float32, device=device)
+            policy_input = [time_point.scene_observation, lstm_state]
+            out = self._policy(policy_input)
+            lstm_state = policy_input[1]
+            loss = self.__loss_function(out, time_point.action, variance)
+            losses.append(loss * time_point.feedback)
         return losses

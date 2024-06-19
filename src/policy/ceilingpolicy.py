@@ -51,20 +51,34 @@ class CeilingPolicy(PolicyBase):
 
     @override
     def forward(self, states) -> Tensor:
-        if len(states) == 2:
-            scene_observation, lstm_state = states
+        # Expects a tensor of shape (batch_size, feature_size)
+        if isinstance(states, list):
+            scene_observation = states[0]
+            lstm_state = states[1]
         else:
             scene_observation = states
+            lstm_state = self.__lstm_state
         assert isinstance(scene_observation, SceneObservation), "states should be of type SceneObservation"
 
+        if len(scene_observation.proprioceptive_obs) == 0:
+            return torch.zeros(1, self._CONFIG.action_dim)
+        scene_observation = scene_observation.to(device)
         input_tensor = scene_observation.camera_observation["rgb"].float()
+        input_tensor = input_tensor.to(device)
         visual_embedding = self.__visual_encoding_net(input_tensor)
         low_dim_input = torch.hstack((visual_embedding, scene_observation.proprioceptive_obs)).unsqueeze(0)
 
-        lstm_out, self.__lstm_state = self.__lstm(low_dim_input, self.__lstm_state)
-        self.train()
+        lstm_out, lstm_state = self.__lstm(low_dim_input, lstm_state)
         out = self.__action_net(lstm_out)
-        return out
+
+        # Want to write the lstm_state back to the input variable. If it is a list, we write it back to it
+        if isinstance(states, list):
+            states[1] = lstm_state
+        else:
+            self.__lstm_state = lstm_state
+        # The output is a tensor of shape (time_step, batch_size, action_dim), and we always compute one time step,
+        # therefore, we simply remove the first dimension
+        return out.squeeze(0)
 
     @override
     def episode_finished(self):

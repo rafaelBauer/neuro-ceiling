@@ -10,6 +10,7 @@ import torch
 from controller.controllerstep import ControllerStep
 from envs import BaseEnvironment
 from envs.robotactions import RobotAction
+from goal.pickplaceobject import PickPlaceObject
 from learnalgorithm.learnalgorithm import LearnAlgorithmConfig, LearnAlgorithm
 from policy import PolicyBase
 from goal.goal import Goal
@@ -91,6 +92,9 @@ class ControllerBase:
         self._goal: Goal = Goal()
 
         self.__post_step_function: Optional[Callable[[ControllerStep], None]] = None
+
+        if self._child_controller is not None:
+            self._action_type = PickPlaceObject
 
         self.__step_function: Final[
             Callable[[Goal | RobotAction], tuple[SceneObservation, Tensor, Tensor, TensorDict]]

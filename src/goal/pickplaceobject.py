@@ -69,3 +69,14 @@ class PickPlaceObject(Goal):
                 self.__pose.to_tensor(RotationRepresentation.EULER),
             ]
         )
+
+    @classmethod
+    def from_tensor(cls, input_tensor: torch.Tensor) -> Goal:
+        if 0.5 < input_tensor[0] <= 1.5:
+            objective = PickPlaceObject.Objective.PICK
+        elif 1.5 < input_tensor[0] <= 2.5:
+            objective = PickPlaceObject.Objective.PLACE
+        else:
+            return Goal(7)
+        input_tensor[4:] = torch.Tensor([3.1415927, 0, 0])
+        return cls(pose=Pose(raw_euler_pose=input_tensor[1:].detach().numpy()), objective=objective)

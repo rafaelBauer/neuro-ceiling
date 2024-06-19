@@ -5,8 +5,10 @@ from overrides import override
 
 from controller import ControllerConfig, ControllerBase
 from envs import BaseEnvironment
+from envs.robotactions import DeltaEEPoseAction, GripperCommand
 from learnalgorithm import LearnAlgorithm
 from policy import PolicyBase
+from utils.pose import Pose, RotationRepresentation
 from utils.timer import Timer
 from utils.logging import log_constructor
 
@@ -39,8 +41,12 @@ class PeriodicController(ControllerBase):
         self.__timer.stop()
 
     def _timer_callback(self):
+        # Lock it so the previous observation is not changed while we are using it
         with self._control_variables_lock:
-            # Lock it so the previous observation is not changed while we are using it
             next_action = self._policy(self._previous_observation)
+            # if self._child_controller is not None:
+                # next_action = next_action.to("cpu")
+                # next_action = self._action_type.from_tensor(next_action.squeeze(0))
+
         if next_action is not None:
             self._step(next_action)

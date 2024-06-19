@@ -62,5 +62,5 @@ config = Config(
     episodes=0,
     task="StackCubesA",
     feedback_type="pretrain_manual",  # ceiling_full, pretrain_manual
-    dataset_name="demos_2.dat",
+    dataset_name="demos_10.dat",
 )

@@ -18,7 +18,7 @@ from learnalgorithm.ceilingalgorithm import CeilingAlgorithmConfig
 from learnalgorithm.learnalgorithm import LearnAlgorithmConfig
 
 learn_algorithms = [
-    BehaviorCloningAlgorithmConfig(batch_size=16, learning_rate=3e-4, weight_decay=3e-6, number_of_epochs=800),
+    CeilingAlgorithmConfig(batch_size=16, learning_rate=3e-4, weight_decay=3e-6),
     LearnAlgorithmConfig(
         batch_size=16, learning_rate=3e-4, weight_decay=3e-6
     ),  # Must have one. But it won't do nothing.
@@ -45,7 +45,7 @@ policy0 = CeilingPolicyConfig(
     visual_embedding_dim=256,
     proprioceptive_dim=9,
     action_dim=7,
-    # from_file="/home/bauerr/git/neuro-ceiling/data/StackCubesA/pretrain_manual_policy.pt"
+    from_file="/home/bauerr/git/neuro-ceiling/data/StackCubesA/pretrain_manual_policy.pt"
 )
 # policy0 = ManualObjectActionPolicyConfig()
 policy1 = MotionPlannerPolicyConfig()
