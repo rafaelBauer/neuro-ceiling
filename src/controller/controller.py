@@ -1,7 +1,7 @@
 import threading
 from abc import abstractmethod
 from dataclasses import dataclass, field
-from typing import Final, Optional, Callable
+from typing import Final, Optional, Callable, Generic, TypeVar
 
 from tensordict import TensorDict
 from torch import Tensor
@@ -10,8 +10,7 @@ import torch
 from controller.controllerstep import ControllerStep
 from envs import BaseEnvironment
 from envs.robotactions import RobotAction
-from goal.pickplaceobject import PickPlaceObject
-from learnalgorithm.learnalgorithm import LearnAlgorithmConfig, LearnAlgorithm
+from learnalgorithm.learnalgorithm import LearnAlgorithm
 from policy import PolicyBase
 from goal.goal import Goal
 from utils.logging import log_constructor, logger
@@ -21,13 +20,17 @@ from utils.sceneobservation import SceneObservation
 @dataclass
 class ControllerConfig:
     _CONTROLLER_TYPE: str = field(init=True)
+    ACTION_TYPE: str = field(init=True)
 
     @property
     def controller_type(self) -> str:
         return self._CONTROLLER_TYPE
 
 
-class ControllerBase:
+ActionType = TypeVar("ActionType")
+
+
+class ControllerBase(Generic[ActionType]):
     """
     The ControllerBase class is the base class for all controllers.
 
@@ -64,11 +67,13 @@ class ControllerBase:
             policy (PolicyBase): The policy used by the controller.
             child_controller (Optional[ControllerBase]): The child controller, if any.
         """
+        # Type of the action executed by this controller
+        self._action_type: ActionType = ActionType
+
         self.__CONFIG: Final[ControllerConfig] = config
         self._environment: Final[BaseEnvironment] = environment
         self._policy: Final[PolicyBase] = policy
         self._learn_algorithm: Final[LearnAlgorithm] = learn_algorithm
-
         self._child_controller: Optional[ControllerBase] = child_controller
 
         # Control variables for learning
@@ -92,9 +97,6 @@ class ControllerBase:
         self._goal: Goal = Goal()
 
         self.__post_step_function: Optional[Callable[[ControllerStep], None]] = None
-
-        if self._child_controller is not None:
-            self._action_type = PickPlaceObject
 
         self.__step_function: Final[
             Callable[[Goal | RobotAction], tuple[SceneObservation, Tensor, Tensor, TensorDict]]
@@ -173,7 +175,7 @@ class ControllerBase:
                 self.__last_controller_step.extra_info,
             )
 
-    def _step(self, action: Goal | RobotAction):
+    def _step(self, action: ActionType):
         """
         Performs a step in the controller. This method is responsible for executing the action and updating the state
         of the controller.

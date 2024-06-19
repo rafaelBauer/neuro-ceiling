@@ -1,14 +1,13 @@
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, TypeVar
 
+import torch
 from overrides import override
 
 from controller import ControllerConfig, ControllerBase
 from envs import BaseEnvironment
-from envs.robotactions import DeltaEEPoseAction, GripperCommand
 from learnalgorithm import LearnAlgorithm
 from policy import PolicyBase
-from utils.pose import Pose, RotationRepresentation
 from utils.timer import Timer
 from utils.logging import log_constructor
 
@@ -19,7 +18,9 @@ class PeriodicControllerConfig(ControllerConfig):
     polling_period_s: float = 0.05
 
 
-class PeriodicController(ControllerBase):
+ActionType = TypeVar("ActionType")
+
+class PeriodicController(ControllerBase[ActionType]):
     @log_constructor
     def __init__(
         self,
@@ -44,9 +45,9 @@ class PeriodicController(ControllerBase):
         # Lock it so the previous observation is not changed while we are using it
         with self._control_variables_lock:
             next_action = self._policy(self._previous_observation)
-            # if self._child_controller is not None:
-                # next_action = next_action.to("cpu")
-                # next_action = self._action_type.from_tensor(next_action.squeeze(0))
+            if isinstance(next_action, torch.Tensor):
+                next_action = next_action.to("cpu")
+                next_action = ActionType.from_tensor(next_action.squeeze(0))
 
         if next_action is not None:
             self._step(next_action)

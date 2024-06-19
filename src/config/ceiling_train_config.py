@@ -31,8 +31,8 @@ from controller.periodiccontroller import PeriodicControllerConfig
 # The controller at index N-1 will interact with the environment, while the others will interact with the controller
 # at the next index.
 controllers = [
-    PeriodicControllerConfig(polling_period_s=5),
-    PeriodicControllerConfig(polling_period_s=0.05),
+    PeriodicControllerConfig(ACTION_TYPE="PickPlaceObject", polling_period_s=5),
+    PeriodicControllerConfig(ACTION_TYPE="TargetJointPositionAction", polling_period_s=0.05),
 ]
 
 # ====== Policy configuration ========
@@ -45,7 +45,7 @@ policy0 = CeilingPolicyConfig(
     visual_embedding_dim=256,
     proprioceptive_dim=9,
     action_dim=7,
-    from_file="/home/bauerr/git/neuro-ceiling/data/StackCubesA/pretrain_manual_policy.pt"
+    from_file="/home/bauerr/git/neuro-ceiling/data/StackCubesA/ceiling_pretrain_policy.pt"
 )
 # policy0 = ManualObjectActionPolicyConfig()
 policy1 = MotionPlannerPolicyConfig()
