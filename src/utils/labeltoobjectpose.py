@@ -18,14 +18,14 @@ class LabelToGoalTranslator:
     def translate_label_to_pickplaceobject(
         self, current_label: torch.Tensor, current_observation: SceneObservation
     ) -> Optional[Goal]:
-        # label: [pick or place, spot1, spot2, spot3]
+        # label: [spot1, spot2, spot3]
         target_pose: Optional[Pose] = None
 
         end_effector_pose = Pose(raw_euler_pose=current_observation.end_effector_pose)
         object_poses = [Pose(raw_euler_pose=raw_pose) for raw_pose in list(current_observation.objects.values())]
         self.__fix_pose_of_stacked_objects(object_poses, end_effector_pose, current_observation.gripper_state)
 
-        if current_label[0]:
+        if current_observation.gripper_state == GripperState.OPENED:
             pick_place = PickPlaceObject.Objective.PICK
             pose_source = object_poses
         else:
@@ -33,11 +33,11 @@ class LabelToGoalTranslator:
             spots_poses = [Pose(raw_euler_pose=raw_pose) for raw_pose in list(current_observation.spots.values())]
             pose_source: [Pose] = self.__compute_available_place_poses(spots_poses, object_poses)
 
-        if current_label[1]:
+        if current_label[0]:
             target_pose: Pose = pose_source[0]
-        elif current_label[2]:
+        elif current_label[1]:
             target_pose: Pose = pose_source[1]
-        elif current_label[3]:
+        elif current_label[2]:
             target_pose: Pose = pose_source[2]
 
         if target_pose is not None:

@@ -105,8 +105,8 @@ class ControllerBase:
             self._environment.reset if self._child_controller is None else self._child_controller.reset
         )
 
-        self.__child_controller_step: ControllerStep = self.__last_controller_step
-        self.__child_controller_step_lock: threading.Lock = threading.Lock()
+        if self._child_controller is not None:
+            self._child_controller.set_post_step_function(self.child_controller_observation_callback)
 
     def train(self, mode: bool = True):
         """
@@ -210,7 +210,11 @@ class ControllerBase:
                 episode_finished=new_episode_finished,
                 extra_info=new_extra_info,
             )
-            self._previous_observation = next_scene_observation
+            # Only updates if there is no child controller, because the child controller will update the previous
+            # at every step of itself.
+            if self._child_controller is None:
+                self._previous_observation = next_scene_observation
+
             self._previous_reward = next_reward
 
             if self._learn_algorithm is not None:
@@ -226,10 +230,7 @@ class ControllerBase:
             action = self._action_type.from_tensor(action.squeeze(0).detach())
 
         if self._learn_algorithm is not None:
-            # action, feedback = self._learn_algorithm.get_human_feedback(action, scene_observation)
-            with self.__child_controller_step_lock:
-                child_scene_observation = self.__child_controller_step.scene_observation
-            action, feedback = self._learn_algorithm.get_human_feedback(action, child_scene_observation)
+            action, feedback = self._learn_algorithm.get_human_feedback(action, scene_observation)
         else:
             feedback = HumanFeedback.GOOD
 
@@ -266,5 +267,5 @@ class ControllerBase:
         self._policy.save_to_file()
 
     def child_controller_observation_callback(self, child_controller_step: ControllerStep):
-        with self.__child_controller_step_lock:
-            self.__child_controller_step = child_controller_step
+        with self._control_variables_lock:
+            self._previous_observation = child_controller_step.scene_observation

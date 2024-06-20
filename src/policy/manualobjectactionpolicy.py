@@ -65,16 +65,14 @@ class ManualObjectActionPolicy(ManualPolicy):
         if not self.__new_command:
             return self.__last_goal
 
-        label = torch.zeros(4)
-        if current_observation.gripper_state == GripperState.OPENED:
-            label[0] = True
+        label = torch.zeros(3)
 
         if self.__last_action[5] < -0.5:  # "u" key
-            label[1] = True
+            label[0] = True
         elif self.__last_action[4] < -0.5:  # "i" key
-            label[2] = True
+            label[1] = True
         elif self.__last_action[5] > 0.5:  # "o" key
-            label[3] = True
+            label[2] = True
 
         new_goal = self.__label_to_goal_translator.translate_label_to_pickplaceobject(label, current_observation)
 
