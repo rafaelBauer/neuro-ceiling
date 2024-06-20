@@ -26,11 +26,7 @@ class BehaviorCloningAlgorithmConfig(LearnAlgorithmConfig):
 
 class BehaviorCloningAlgorithm(LearnAlgorithm):
     @log_constructor
-    def __init__(
-        self,
-        config: BehaviorCloningAlgorithmConfig,
-        policy: PolicyBase,
-    ):
+    def __init__(self, config: BehaviorCloningAlgorithmConfig, policy: PolicyBase, feedback_device):
 
         # Which loss function to use for the algorithm
         loss_function = torch.nn.GaussianNLLLoss()
@@ -52,14 +48,19 @@ class BehaviorCloningAlgorithm(LearnAlgorithm):
                     progress_bar.update(1)
 
     @override
-    def get_human_feedback(self, next_action: Goal | RobotAction) -> (Goal | RobotAction, HumanFeedback):
+    def get_human_feedback(
+        self, next_action: Goal | RobotAction, scene_observation: SceneObservation
+    ) -> (Goal | RobotAction, HumanFeedback):
         return HumanFeedback.GOOD
 
-    def _episode_finished(self):
+    @override()
+    def _training_episode_finished(self):
         self._policy.episode_finished()
 
+    @override
     def _action_from_policy(self, scene_observation: SceneObservation) -> torch.Tensor:
         return self._policy(scene_observation)
 
-    def reset(self):
-        self.__replay_buffer.reset_current_traj()
+    @override
+    def episode_finished(self):
+        pass

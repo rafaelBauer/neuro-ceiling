@@ -91,7 +91,9 @@ class LearnAlgorithm:
     def train(self, mode: bool = True):
         pass
 
-    def get_human_feedback(self, next_action: Goal | RobotAction) -> (Goal | RobotAction, HumanFeedback):
+    def get_human_feedback(
+        self, next_action: Goal | RobotAction, scene_observation: SceneObservation
+    ) -> (Goal | RobotAction, HumanFeedback):
         return next_action, HumanFeedback.GOOD
 
     def step(self, controller_step: ControllerStep, feedback: HumanFeedback = HumanFeedback.GOOD):
@@ -107,10 +109,14 @@ class LearnAlgorithm:
 
     @abstractmethod
     def reset(self):
+        self._replay_buffer.reset_current_traj()
+
+    @abstractmethod
+    def episode_finished(self):
         pass
 
     @abstractmethod
-    def _episode_finished(self):
+    def _training_episode_finished(self):
         pass
 
     @abstractmethod
@@ -131,7 +137,7 @@ class LearnAlgorithm:
         total_loss = torch.cat(losses).mean()
         total_loss.backward()
         self._optimizer.step()
-        self._episode_finished()
+        self._training_episode_finished()
         training_metrics = {"loss": total_loss}
         wandb.log(training_metrics)
 

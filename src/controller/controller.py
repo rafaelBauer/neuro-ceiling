@@ -223,7 +223,7 @@ class ControllerBase:
             action = self._action_type.from_tensor(action.squeeze(0).detach())
 
         if self._learn_algorithm is not None:
-            action, feedback = self._learn_algorithm.get_human_feedback(action)
+            action, feedback = self._learn_algorithm.get_human_feedback(action, scene_observation)
         else:
             feedback = HumanFeedback.GOOD
 
@@ -232,6 +232,8 @@ class ControllerBase:
     def reset(self) -> SceneObservation:
         self.set_goal(Goal())
         self._policy.episode_finished()
+        if self._learn_algorithm is not None:
+            self._learn_algorithm.episode_finished()
         with self._control_variables_lock:
             self._previous_reward = torch.tensor(0.0)
             self._previous_observation = self.__reset_function()

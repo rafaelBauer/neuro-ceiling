@@ -107,7 +107,9 @@ def main() -> None:
                     source_path + str(config.episodes) + learn_algorithm_config.save_dataset
                 )
 
-            learn_algorithm: LearnAlgorithm = create_learn_algorithm(learn_algorithm_config, policy=policies[i])
+            learn_algorithm: LearnAlgorithm = create_learn_algorithm(
+                learn_algorithm_config, policy=policies[i], feedback_device=keyboard_obs
+            )
             if learn_algorithm:
                 learn_algorithm.load_dataset_from_file()
             learn_algorithms.append(learn_algorithm)

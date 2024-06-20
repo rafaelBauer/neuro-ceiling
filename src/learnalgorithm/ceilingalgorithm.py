@@ -11,7 +11,10 @@ from envs.robotactions import RobotAction
 from goal.goal import Goal
 from learnalgorithm.learnalgorithm import LearnAlgorithmConfig, LearnAlgorithm
 from policy import PolicyBase
+from utils.gripperstate import GripperState
 from utils.human_feedback import HumanFeedback
+from utils.keyboard_observer import KeyboardObserver
+from utils.labeltoobjectpose import LabelToGoalTranslator
 from utils.logging import log_constructor
 from utils.sceneobservation import SceneObservation
 
@@ -27,9 +30,11 @@ class CeilingAlgorithm(LearnAlgorithm):
         self,
         config: CeilingAlgorithmConfig,
         policy: PolicyBase,
+        feedback_device,
     ):
 
         # Which loss function to use for the algorithm
+        self.__label_to_goal_translator = LabelToGoalTranslator()
         loss_function = torch.nn.GaussianNLLLoss()
 
         # Optimizer
@@ -41,6 +46,8 @@ class CeilingAlgorithm(LearnAlgorithm):
 
         super().__init__(config, policy, RandomSampler, DataLoader, loss_function, optimizer)
 
+        # TODO for now have this as a keyboard observer, but should be a feedback device which could also come from EEG
+        self._feedback_device: KeyboardObserver = feedback_device
         # Thread to run the training in parallel with the steps as in original CEILing algorithm
         self.__train_thread_running = threading.Event()
         self.__train_thread: Optional[threading.Thread] = None
@@ -59,11 +66,31 @@ class CeilingAlgorithm(LearnAlgorithm):
             self.__train_thread = None
 
     @override
-    def get_human_feedback(self, next_action: Goal | RobotAction) -> (Goal | RobotAction, HumanFeedback):
-        return next_action, HumanFeedback.GOOD
+    def get_human_feedback(
+        self, next_action: Goal | RobotAction, scene_observation: SceneObservation
+    ) -> (Goal | RobotAction, HumanFeedback):
+        action = next_action
+        if self._feedback_device.is_direction_commanded:
+            feedback_device_output = self._feedback_device.direction
+            label = torch.zeros(4)
+            if scene_observation.gripper_state == GripperState.OPENED:
+                label[0] = True
+
+            if feedback_device_output[5] < -0.5:  # "u" key
+                label[1] = True
+            elif feedback_device_output[4] < -0.5:  # "i" key
+                label[2] = True
+            elif feedback_device_output[5] > 0.5:  # "o" key
+                label[3] = True
+
+            action = self.__label_to_goal_translator.translate_label_to_pickplaceobject(label, scene_observation)
+            feedback = HumanFeedback.CORRECTED
+        else:
+            feedback = self._feedback_device.label
+        return action, feedback
 
     @override
-    def _episode_finished(self):
+    def _training_episode_finished(self):
         self.__lstm_state = None
 
     @override
@@ -77,5 +104,6 @@ class CeilingAlgorithm(LearnAlgorithm):
         while self.__train_thread_running.is_set():
             self._train_step()
 
-    def reset(self):
-        self._replay_buffer.reset_current_traj()
+    @override
+    def episode_finished(self):
+        self._feedback_device.reset_episode()
