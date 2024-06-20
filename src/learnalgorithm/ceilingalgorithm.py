@@ -48,6 +48,7 @@ class CeilingAlgorithm(LearnAlgorithm):
 
         # TODO for now have this as a keyboard observer, but should be a feedback device which could also come from EEG
         self._feedback_device: KeyboardObserver = feedback_device
+
         # Thread to run the training in parallel with the steps as in original CEILing algorithm
         self.__train_thread_running = threading.Event()
         self.__train_thread: Optional[threading.Thread] = None
@@ -72,6 +73,7 @@ class CeilingAlgorithm(LearnAlgorithm):
         action = next_action
         if self._feedback_device.is_direction_commanded:
             feedback_device_output = self._feedback_device.direction
+            # TODO: This is a hardcoded label for the pickplaceobject goal for now
             label = torch.zeros(4)
             if scene_observation.gripper_state == GripperState.OPENED:
                 label[0] = True
