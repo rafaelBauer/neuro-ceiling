@@ -15,7 +15,7 @@ env_config = ManiSkillEnvironmentConfig(task_config=task_config)
 # ====== Learn algorithm configuration ========
 from learnalgorithm.behaviorcloningalgorithm import BehaviorCloningAlgorithmConfig
 from learnalgorithm.ceilingalgorithm import CeilingAlgorithmConfig
-from learnalgorithm.learnalgorithm import LearnAlgorithmConfig
+from learnalgorithm.learnalgorithm import LearnAlgorithmConfig, NoLearnAlgorithmConfig
 
 learn_algorithms = [
     BehaviorCloningAlgorithmConfig(
@@ -26,9 +26,7 @@ learn_algorithms = [
         load_dataset="demos_10.dat",
         number_of_epochs=800,
     ),
-    LearnAlgorithmConfig(
-        batch_size=16, learning_rate=3e-4, weight_decay=3e-6, steps_per_episode=200
-    ),  # Must have one. But it won't do nothing.
+    NoLearnAlgorithmConfig(),
 ]
 
 # ====== Controller configuration ========
@@ -68,5 +66,4 @@ config = Config(
     environment_config=env_config,
     episodes=0,
     task="StackCubesA",
-    feedback_type="pretrain_manual",  # ceiling_full, pretrain_manual
 )

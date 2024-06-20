@@ -79,7 +79,7 @@ class MotionPlannerPolicy(PolicyBase):
             user_link_names=ROBOT_INFO.links,
             user_joint_names=ROBOT_INFO.joints,
             move_group=ROBOT_INFO.end_effector_link,
-            joint_vel_limits=np.ones(7),
+            joint_vel_limits=np.array([0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 1]),
             joint_acc_limits=np.ones(7),
         )
 

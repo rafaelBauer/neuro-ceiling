@@ -4,8 +4,11 @@ import torch
 import wandb
 from overrides import override
 from torch.utils.data import RandomSampler, DataLoader
+from tqdm import tqdm
 
 from controller.controllerstep import ControllerStep
+from envs.robotactions import RobotAction
+from goal.goal import Goal
 from learnalgorithm.learnalgorithm import LearnAlgorithmConfig, LearnAlgorithm
 from policy import PolicyBase
 from utils.dataset import TrajectoriesDataset, TrajectoryData
@@ -18,7 +21,7 @@ from utils.sceneobservation import SceneObservation
 @dataclass
 class BehaviorCloningAlgorithmConfig(LearnAlgorithmConfig):
     _ALGO_TYPE: str = field(init=False, default="BehaviorCloningAlgorithm")
-    number_of_epochs: int = field(init=True)
+    number_of_epochs: int = field(init=True, default=0)
 
 
 class BehaviorCloningAlgorithm(LearnAlgorithm):
@@ -43,12 +46,14 @@ class BehaviorCloningAlgorithm(LearnAlgorithm):
     @override
     def train(self, mode: bool = True):
         if mode:
-            for _ in range(self._CONFIG.number_of_epochs):
-                self._train_step()
+            with tqdm(total=self._CONFIG.number_of_epochs, desc="Training ") as progress_bar:
+                for _ in range(self._CONFIG.number_of_epochs):
+                    self._train_step()
+                    progress_bar.update(1)
 
     @override
-    def _get_human_feedback(self, controller_step: ControllerStep):
-        return torch.Tensor([HumanFeedback.GOOD])
+    def get_human_feedback(self, next_action: Goal | RobotAction) -> (Goal | RobotAction, HumanFeedback):
+        return HumanFeedback.GOOD
 
     def _episode_finished(self):
         self._policy.episode_finished()

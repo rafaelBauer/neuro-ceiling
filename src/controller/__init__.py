@@ -6,6 +6,8 @@ from envs import BaseEnvironment
 from learnalgorithm import LearnAlgorithm
 from policy import PolicyBase
 
+import goal, envs as actions
+
 
 def create_controller(
     config: ControllerConfig,
@@ -15,5 +17,9 @@ def create_controller(
     learn_algorithm: Optional[LearnAlgorithm] = None,
 ) -> ControllerBase:
     config_module = importlib.import_module("." + str.lower(config.controller_type), "controller")
-    agent_class = getattr(config_module, config.controller_type)
-    return agent_class(config, environment, policy, child_controller, learn_algorithm)
+    controller_class = getattr(config_module, config.controller_type)
+    try:
+        action_type = eval("actions." + config.ACTION_TYPE)
+    except AttributeError:
+        action_type = eval("goal." + config.ACTION_TYPE)
+    return controller_class(config, environment, policy, action_type, child_controller, learn_algorithm)

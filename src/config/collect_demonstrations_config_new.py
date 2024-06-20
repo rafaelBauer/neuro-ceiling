@@ -18,8 +18,13 @@ from learnalgorithm.ceilingalgorithm import CeilingAlgorithmConfig
 from learnalgorithm.learnalgorithm import LearnAlgorithmConfig, NoLearnAlgorithmConfig
 
 learn_algorithms = [
-    CeilingAlgorithmConfig(
-        batch_size=16, learning_rate=3e-4, weight_decay=3e-6, steps_per_episode=200, load_dataset="demos_10.dat"
+    BehaviorCloningAlgorithmConfig(
+        batch_size=16,
+        learning_rate=3e-4,
+        weight_decay=3e-6,
+        steps_per_episode=200,
+        save_dataset="demos.dat",  # Will be appended with the number of episodes from config below
+        number_of_epochs=0,
     ),
     NoLearnAlgorithmConfig(),
 ]
@@ -43,13 +48,7 @@ from policy.motionplannerpolicy import MotionPlannerPolicyConfig
 
 # The policy at index 0 is added to controllers[0], the policy at index N-1 is added to controllers[N-1]
 policies = [
-    CeilingPolicyConfig(
-        visual_embedding_dim=256,
-        proprioceptive_dim=9,
-        action_dim=7,
-        from_file="ceiling_pretrain_policy.pt",
-        # save_to_file="ceiling_trained_policy.pt",
-    ),
+    ManualObjectActionPolicyConfig(),
     MotionPlannerPolicyConfig(),
 ]
 
@@ -59,6 +58,7 @@ config = Config(
     policies=policies,
     learn_algorithms=learn_algorithms,
     environment_config=env_config,
-    episodes=100,
+    episodes=2,
     task="StackCubesA",
+    train=False,
 )

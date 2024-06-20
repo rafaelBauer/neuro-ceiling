@@ -35,6 +35,7 @@ class Config(ConfigBase):
     environment_config: BaseEnvironmentConfig
     episodes: int = 100
     batch_size: int = 16
+    train: bool = True
     task: str = ""  # This will be overwritten by the command line argument
 
 
@@ -88,7 +89,11 @@ def main() -> None:
 
     for policy_config in config.policies:
         if policy_config.from_file:
-            os.path.join(source_path + policy_config.from_file)
+            policy_config.from_file = os.path.join(source_path + policy_config.from_file)
+
+        if policy_config.save_to_file:
+            policy_config.save_to_file = os.path.join(source_path + policy_config.save_to_file)
+
         policy: PolicyBase = create_policy(policy_config, keyboard_observer=keyboard_obs, environment=environment)
         policy.load_from_file()
         policies.append(policy)
@@ -98,10 +103,13 @@ def main() -> None:
             if learn_algorithm_config.load_dataset:
                 learn_algorithm_config.load_dataset = source_path + learn_algorithm_config.load_dataset
             if learn_algorithm_config.save_dataset:
-                learn_algorithm_config.save_dataset = source_path + learn_algorithm_config.save_dataset
+                learn_algorithm_config.save_dataset = (
+                    source_path + str(config.episodes) + learn_algorithm_config.save_dataset
+                )
 
             learn_algorithm: LearnAlgorithm = create_learn_algorithm(learn_algorithm_config, policy=policies[i])
-            learn_algorithm.load_from_file()
+            if learn_algorithm:
+                learn_algorithm.load_dataset_from_file()
             learn_algorithms.append(learn_algorithm)
 
     # Traverse controllers in reverse order to create the controller hierarchy
@@ -124,13 +132,14 @@ def main() -> None:
 
     keyboard_obs.subscribe_callback_to_reset(reset_episode)
 
-    logger.info("Training starting!")
-
     try:
-
-        controllers[0].train()
+        if config.train:
+            logger.info("Training starting!")
+            controllers[0].train()
 
         if config.episodes > 0:
+            logger.info("Sampling episodes starting!")
+
             environment.start()
             time.sleep(5)
             keyboard_obs.start()
@@ -159,8 +168,12 @@ def main() -> None:
             environment.stop()
             keyboard_obs.stop()
 
-        controllers[0].save_model()
-        logger.info("Successfully trained policy for task {}", config.task)
+        if config.train:
+            controllers[0].save_model()
+            logger.info("Successfully trained policy for task {}", config.task)
+
+        if config.episodes > 0:
+            learn_algorithms[0].save_dataset_to_file()
 
     except KeyboardInterrupt:
         logger.info("Keyboard interrupt. Attempting graceful env shutdown ...")

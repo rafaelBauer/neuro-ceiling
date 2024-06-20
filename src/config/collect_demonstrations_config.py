@@ -14,12 +14,11 @@ env_config = ManiSkillEnvironmentConfig(task_config=task_config)
 
 # ====== Learn algorithm configuration ========
 from learnalgorithm.ceilingalgorithm import CeilingAlgorithmConfig  # noqa
-from learnalgorithm.learnalgorithm import LearnAlgorithmConfig  # noqa Nothing will happen with this learn algorithm
+from learnalgorithm.learnalgorithm import NoLearnAlgorithmConfig  # noqa Nothing will happen with this learn algorithm
 
 learn_algorithms = [
-    # TODO: Create one learn algorithm to use to collect demonstrations
-    LearnAlgorithmConfig(batch_size=16, learning_rate=3e-4, weight_decay=3e-6),
-    LearnAlgorithmConfig(batch_size=16, learning_rate=3e-4, weight_decay=3e-6),
+    NoLearnAlgorithmConfig(),
+    NoLearnAlgorithmConfig(),
 ]
 
 # ====== Controller configuration ========

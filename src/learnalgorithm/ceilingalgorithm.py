@@ -7,6 +7,8 @@ from overrides import override
 from torch.utils.data import RandomSampler, DataLoader
 
 from controller.controllerstep import ControllerStep
+from envs.robotactions import RobotAction
+from goal.goal import Goal
 from learnalgorithm.learnalgorithm import LearnAlgorithmConfig, LearnAlgorithm
 from policy import PolicyBase
 from utils.human_feedback import HumanFeedback
@@ -57,8 +59,8 @@ class CeilingAlgorithm(LearnAlgorithm):
             self.__train_thread = None
 
     @override
-    def _get_human_feedback(self, controller_step: ControllerStep):
-        return torch.Tensor([HumanFeedback.GOOD])
+    def get_human_feedback(self, next_action: Goal | RobotAction) -> (Goal | RobotAction, HumanFeedback):
+        return next_action, HumanFeedback.GOOD
 
     @override
     def _episode_finished(self):

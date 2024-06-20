@@ -1,6 +1,8 @@
 import importlib
 from .environment import BaseEnvironmentConfig, BaseEnvironment
 
+from .robotactions import DeltaEEPoseAction, TargetJointPositionAction
+
 
 def create_environment(config: BaseEnvironmentConfig) -> BaseEnvironment:
     config_module = importlib.import_module("." + str.lower(config.env_type), "envs")

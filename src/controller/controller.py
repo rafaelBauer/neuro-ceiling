@@ -1,7 +1,7 @@
 import threading
 from abc import abstractmethod
 from dataclasses import dataclass, field
-from typing import Final, Optional, Callable, Generic, TypeVar
+from typing import Final, Optional, Callable, Generic, TypeVar, Type
 
 from tensordict import TensorDict
 from torch import Tensor
@@ -13,6 +13,7 @@ from envs.robotactions import RobotAction
 from learnalgorithm.learnalgorithm import LearnAlgorithm
 from policy import PolicyBase
 from goal.goal import Goal
+from utils.human_feedback import HumanFeedback
 from utils.logging import log_constructor, logger
 from utils.sceneobservation import SceneObservation
 
@@ -27,10 +28,7 @@ class ControllerConfig:
         return self._CONTROLLER_TYPE
 
 
-ActionType = TypeVar("ActionType")
-
-
-class ControllerBase(Generic[ActionType]):
+class ControllerBase:
     """
     The ControllerBase class is the base class for all controllers.
 
@@ -49,12 +47,13 @@ class ControllerBase(Generic[ActionType]):
                                     It is either the environment's step function or the child controller's set_goal function.
     """
 
-    @log_constructor
+    # @log_constructor
     def __init__(
         self,
         config: ControllerConfig,
         environment: BaseEnvironment,
         policy: PolicyBase,
+        action_type: Type = Goal,
         child_controller: Optional["ControllerBase"] = None,
         learn_algorithm: Optional[LearnAlgorithm] = None,
     ):
@@ -68,7 +67,7 @@ class ControllerBase(Generic[ActionType]):
             child_controller (Optional[ControllerBase]): The child controller, if any.
         """
         # Type of the action executed by this controller
-        self._action_type: ActionType = ActionType
+        self._action_type = action_type
 
         self.__CONFIG: Final[ControllerConfig] = config
         self._environment: Final[BaseEnvironment] = environment
@@ -175,21 +174,20 @@ class ControllerBase(Generic[ActionType]):
                 self.__last_controller_step.extra_info,
             )
 
-    def _step(self, action: ActionType):
+    def _step(self):
         """
         Performs a step in the controller. This method is responsible for executing the action and updating the state
         of the controller.
-
-        Args:
-            action (Goal | RobotAction): The action to perform. It should be of type RobotAction or Goal.
-
-        Raises:
-            AssertionError: If the action is not of type RobotAction or Goal.
         """
 
         with self._control_variables_lock:
             if self.__last_controller_step.episode_finished:
                 return
+
+            action, feedback = self.__sample_action_and_feedback(self._previous_observation)
+
+        if action is None:
+            return
 
         assert isinstance(
             action, Goal | RobotAction
@@ -212,10 +210,24 @@ class ControllerBase(Generic[ActionType]):
             self._previous_observation = next_scene_observation
             self._previous_reward = next_reward
 
-            self._learn_algorithm.step(self.__last_controller_step)
+            if self._learn_algorithm is not None:
+                self._learn_algorithm.step(self.__last_controller_step, feedback)
 
         if self.__post_step_function is not None:
             self.__post_step_function(self.__last_controller_step)
+
+    def __sample_action_and_feedback(self, scene_observation: SceneObservation) -> (Goal | RobotAction, HumanFeedback):
+        action = self._policy(scene_observation)
+        if isinstance(action, torch.Tensor):
+            action = action.to("cpu")
+            action = self._action_type.from_tensor(action.squeeze(0).detach())
+
+        if self._learn_algorithm is not None:
+            action, feedback = self._learn_algorithm.get_human_feedback(action)
+        else:
+            feedback = HumanFeedback.GOOD
+
+        return action, feedback
 
     def reset(self) -> SceneObservation:
         self.set_goal(Goal())

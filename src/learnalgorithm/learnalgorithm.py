@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from dataclasses import dataclass, field
-from typing import Final, TypeVar, Type
+from typing import Final, TypeVar, Type, Optional
 
 import torch
 import wandb
@@ -8,9 +8,13 @@ from torch import nn
 from torch.utils.data import Sampler, DataLoader
 
 from controller.controllerstep import ControllerStep
+from envs.robotactions import RobotAction
+from goal.goal import Goal
 from policy import PolicyBase
 from utils.dataset import TrajectoriesDataset, TrajectoryData
 from utils.device import device
+from utils.human_feedback import HumanFeedback
+from utils.logging import logger
 from utils.sceneobservation import SceneObservation
 
 
@@ -29,24 +33,34 @@ class LearnAlgorithmConfig:
         return self._ALGO_TYPE
 
 
+@dataclass
+class NoLearnAlgorithmConfig(LearnAlgorithmConfig):
+    _ALGO_TYPE: str = field(init=False, default="NoLearnAlgorithm")
+    batch_size: int = field(init=False, default=0)
+    learning_rate: float = field(init=False, default=0)
+    weight_decay: float = field(init=False, default=0)
+    steps_per_episode: int = field(init=False, default=0)
+
+
 class LearnAlgorithm:
     def __init__(
         self,
         config: LearnAlgorithmConfig,
         policy: PolicyBase,
         sampler: Type[Sampler],
-        dataloader: [DataLoader],
+        dataloader: Type[DataLoader],
         loss_function: nn.Module,
         optimizer: torch.optim.Optimizer,
     ):
         self._policy = policy
         self._CONFIG: Final[LearnAlgorithmConfig] = config
 
+        self.__sampler_type = sampler
+        self.__dataloader_type = dataloader
+
         self._replay_buffer: TrajectoriesDataset = TrajectoriesDataset(config.steps_per_episode)
-        self._sampler: Sampler = sampler(self._replay_buffer)
-        self._dataloader = dataloader(
-            dataset=self._replay_buffer, sampler=self._sampler, batch_size=config.batch_size, collate_fn=lambda x: x
-        )
+        self._sampler: Optional[Sampler] = None
+        self._dataloader: Optional[DataLoader] = None
 
         # Which loss function to use for the algorithm
         self._loss_function = loss_function
@@ -57,28 +71,34 @@ class LearnAlgorithm:
         policy.to(device)
         wandb.watch(policy, log_freq=100)
 
-    @abstractmethod
-    def load_from_file(self):
+    def load_dataset_from_file(self):
         if self._CONFIG.load_dataset:
             self._replay_buffer: TrajectoriesDataset = torch.load(self._CONFIG.load_dataset)
-            self._sampler.data_source = self._replay_buffer
-            self._dataloader.dataset = self._replay_buffer
+            self._sampler = self.__sampler_type(self._replay_buffer)
+            self._dataloader = self.__dataloader_type(
+                dataset=self._replay_buffer,
+                sampler=self._sampler,
+                batch_size=self._CONFIG.batch_size,
+                collate_fn=lambda x: x,
+            )
+
+    def save_dataset_to_file(self):
+        if self._CONFIG.save_dataset:
+            torch.save(self._replay_buffer, self._CONFIG.save_dataset)
+            logger.info("Successfully saved dataset {}", self._CONFIG.save_dataset)
 
     @abstractmethod
     def train(self, mode: bool = True):
         pass
 
-    @abstractmethod
-    def _get_human_feedback(self, controller_step: ControllerStep):
-        pass
+    def get_human_feedback(self, next_action: Goal | RobotAction) -> (Goal | RobotAction, HumanFeedback):
+        return next_action, HumanFeedback.GOOD
 
-    def step(self, controller_step: ControllerStep):
-        feedback = self._get_human_feedback(controller_step)
-
+    def step(self, controller_step: ControllerStep, feedback: HumanFeedback = HumanFeedback.GOOD):
         step: TrajectoryData = TrajectoryData(
             scene_observation=controller_step.scene_observation,
             action=controller_step.action,
-            feedback=feedback,
+            feedback=torch.Tensor([feedback.value]),
         )
 
         self._replay_buffer.add(step)
@@ -98,6 +118,8 @@ class LearnAlgorithm:
         pass
 
     def _train_step(self):
+        if self._dataloader is None:
+            return
         batch = next(iter(self._dataloader))
         # Batch is a list where each element is a trajectory of size (trajectory_length, feature_size)
         # We need to stack it, but in a way where we can iterate over time, instead of per trajectory.
