@@ -105,6 +105,9 @@ class ControllerBase:
             self._environment.reset if self._child_controller is None else self._child_controller.reset
         )
 
+        self.__child_controller_step: ControllerStep = self.__last_controller_step
+        self.__child_controller_step_lock: threading.Lock = threading.Lock()
+
     def train(self, mode: bool = True):
         """
         Trains the controller. If the controller has a child controller, it will first train the child, and then
@@ -223,7 +226,10 @@ class ControllerBase:
             action = self._action_type.from_tensor(action.squeeze(0).detach())
 
         if self._learn_algorithm is not None:
-            action, feedback = self._learn_algorithm.get_human_feedback(action, scene_observation)
+            # action, feedback = self._learn_algorithm.get_human_feedback(action, scene_observation)
+            with self.__child_controller_step_lock:
+                child_scene_observation = self.__child_controller_step.scene_observation
+            action, feedback = self._learn_algorithm.get_human_feedback(action, child_scene_observation)
         else:
             feedback = HumanFeedback.GOOD
 
@@ -258,3 +264,7 @@ class ControllerBase:
 
     def save_model(self):
         self._policy.save_to_file()
+
+    def child_controller_observation_callback(self, child_controller_step: ControllerStep):
+        with self.__child_controller_step_lock:
+            self.__child_controller_step = child_controller_step
