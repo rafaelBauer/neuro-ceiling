@@ -73,11 +73,13 @@ class CeilingAlgorithm(LearnAlgorithm):
         action = next_action
         if self._feedback_device.is_direction_commanded:
             feedback_device_output = self._feedback_device.direction
+
             # TODO: This is a hardcoded label for the pickplaceobject goal for now
             label = torch.zeros(4)
             if scene_observation.gripper_state == GripperState.OPENED:
                 label[0] = True
 
+            # Conversion from keyboard_observer to label. Needs to be changed so EEG output would also work
             if feedback_device_output[5] < -0.5:  # "u" key
                 label[1] = True
             elif feedback_device_output[4] < -0.5:  # "i" key
