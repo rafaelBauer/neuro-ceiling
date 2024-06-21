@@ -61,5 +61,5 @@ config = Config(
     learn_algorithms=learn_algorithms,
     environment_config=env_config,
     episodes=100,
-    task="StackCubesA",
+    task="StackCubesB",
 )
