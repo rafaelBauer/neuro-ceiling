@@ -8,13 +8,14 @@ from torch.utils.data import RandomSampler, DataLoader
 
 from controller.controllerstep import ControllerStep
 from envs.robotactions import RobotAction
+from goal import PickPlaceObject
 from goal.goal import Goal
 from learnalgorithm.learnalgorithm import LearnAlgorithmConfig, LearnAlgorithm
 from policy import PolicyBase
 from utils.gripperstate import GripperState
 from utils.human_feedback import HumanFeedback
 from utils.keyboard_observer import KeyboardObserver
-from utils.labeltoobjectpose import LabelToGoalTranslator
+from utils.labeltoobjectpose import LabelToPoseTranslator
 from utils.logging import log_constructor
 from utils.sceneobservation import SceneObservation
 
@@ -34,8 +35,8 @@ class CeilingAlgorithm(LearnAlgorithm):
     ):
 
         # Which loss function to use for the algorithm
-        self.__label_to_goal_translator = LabelToGoalTranslator()
-        loss_function = torch.nn.GaussianNLLLoss()
+        self.__label_to_goal_translator = LabelToPoseTranslator()
+        loss_function = torch.nn.CrossEntropyLoss()
 
         # Optimizer
         optimizer = torch.optim.Adam(
@@ -74,8 +75,8 @@ class CeilingAlgorithm(LearnAlgorithm):
         if self._feedback_device.is_direction_commanded:
             feedback_device_output = self._feedback_device.direction
 
-            # TODO: This is a hardcoded label for the pickplaceobject goal for now
-            label = torch.zeros(3)
+            # TODO: This is a hardcoded label for now
+            label = torch.zeros(4)
 
             # Conversion from keyboard_observer to label. Needs to be changed so EEG output would also work
             if feedback_device_output[5] < -0.5:  # "u" key
@@ -84,8 +85,10 @@ class CeilingAlgorithm(LearnAlgorithm):
                 label[1] = True
             elif feedback_device_output[5] > 0.5:  # "o" key
                 label[2] = True
+            else:
+                label[3] = True
 
-            action = self.__label_to_goal_translator.translate_label_to_pickplaceobject(label, scene_observation)
+            action = PickPlaceObject.from_label_tensor(label, scene_observation)
             feedback = HumanFeedback.CORRECTED
         else:
             feedback = self._feedback_device.label
@@ -108,4 +111,4 @@ class CeilingAlgorithm(LearnAlgorithm):
 
     @override
     def episode_finished(self):
-        self._feedback_device.reset_episode()
+        self._feedback_device.reset()

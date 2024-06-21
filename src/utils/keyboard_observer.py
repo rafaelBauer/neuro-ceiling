@@ -179,6 +179,9 @@ class KeyboardObserver:
     def reset_episode(self) -> None:
         for callback in self.__reset_callbacks:
             callback()
+        self.reset()
+
+    def reset(self) -> None:
         self.__set_label(HumanFeedback.GOOD)
         self.__set_gripper(0)
 

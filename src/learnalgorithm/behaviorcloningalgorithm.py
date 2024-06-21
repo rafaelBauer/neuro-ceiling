@@ -29,7 +29,7 @@ class BehaviorCloningAlgorithm(LearnAlgorithm):
     def __init__(self, config: BehaviorCloningAlgorithmConfig, policy: PolicyBase, feedback_device):
 
         # Which loss function to use for the algorithm
-        loss_function = torch.nn.GaussianNLLLoss()
+        loss_function = torch.nn.CrossEntropyLoss()
 
         # Optimizer
         optimizer = torch.optim.Adam(

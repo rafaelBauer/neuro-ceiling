@@ -147,6 +147,6 @@ class LearnAlgorithm:
             time_point = time_point.to(device)
             variance = torch.full(time_point.action.size(), 0.1, dtype=torch.float32, device=device)
             out = self._action_from_policy(time_point.scene_observation)
-            loss = self._loss_function(out, time_point.action, variance)
+            loss = self._loss_function(out, time_point.action)
             losses.append(loss * time_point.feedback)
         return losses

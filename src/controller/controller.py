@@ -91,6 +91,7 @@ class ControllerBase:
             episode_finished=False,
             extra_info={},
         )
+        self.__last_action: Goal | RobotAction = Goal()
         self._control_variables_lock: threading.Lock = threading.Lock()
 
         self._goal: Goal = Goal()
@@ -203,6 +204,7 @@ class ControllerBase:
             # To fit into the general RL framework, the controller step consists of current action taken and the
             # states and rewards that lead to the chosen action (previous state and rewards).
             # (S_{t-1}, R_{t-1}, a_t)
+            self.__last_action = action
             self.__last_controller_step = ControllerStep(
                 action=action.to_tensor(),
                 scene_observation=self._previous_observation,
@@ -227,13 +229,19 @@ class ControllerBase:
         action = self._policy(scene_observation)
         if isinstance(action, torch.Tensor):
             action = action.to("cpu")
-            action = self._action_type.from_tensor(action.squeeze(0).detach())
+            max_index = torch.argmax(action, dim=-1)
+            action = torch.zeros_like(action)
+            action[:, max_index] = 1
+            action = self._action_type.from_label_tensor(action.squeeze(0).detach(), scene_observation)
+
+        if isinstance(action, Goal) and self.__last_action == action:
+            return self.__last_action, HumanFeedback.GOOD
 
         if self._learn_algorithm is not None:
             action, feedback = self._learn_algorithm.get_human_feedback(action, scene_observation)
         else:
             feedback = HumanFeedback.GOOD
-
+        self.__last_action = action
         return action, feedback
 
     def reset(self) -> SceneObservation:

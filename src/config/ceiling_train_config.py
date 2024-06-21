@@ -1,5 +1,6 @@
 from pre_train import Config
-from task.stack_cubes_config import config as task_config
+# from task.stack_cubes_a_config import config as task_config
+from task.stack_cubes_b_config import config as task_config
 
 
 # ====== ManiSkill environment ========
@@ -46,9 +47,9 @@ policies = [
     CeilingPolicyConfig(
         visual_embedding_dim=256,
         proprioceptive_dim=9,
-        action_dim=7,
+        action_dim=4,
         from_file="ceiling_pretrain_policy.pt",
-        # save_to_file="ceiling_trained_policy.pt",
+        save_to_file="ceiling_trained_policy.pt",
     ),
     MotionPlannerPolicyConfig(),
 ]

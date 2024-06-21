@@ -151,7 +151,12 @@ class MotionPlannerPolicy(PolicyBase):
         self.__goal_being_achieved = goal
         with self.__target_sequence_lock:
             self.__target_sequence = goal.get_action_sequence()
-            if not self.__update_path_to_next_target():
+            robot_motion_info = self.__get_robot_motion_info()
+            if robot_motion_info.current_ee_pose.p[2] < self.__config.minimum_z_height_between_paths:
+                new_ee_pose = robot_motion_info.current_ee_pose.copy()
+                new_ee_pose.p = [new_ee_pose.p[0], new_ee_pose.p[1], self.__config.minimum_z_height_between_paths]
+                self.__current_path = self.__plan_to_pose(robot_motion_info.current_qpos.numpy(), new_ee_pose)
+            elif not self.__update_path_to_next_target():
                 self.__current_path = []
 
     @property
