@@ -229,11 +229,13 @@ class ControllerBase:
         action = self._policy(scene_observation)
         if isinstance(action, torch.Tensor):
             action = action.to("cpu")
+            # Select the action with the highest probability
             max_index = torch.argmax(action, dim=-1)
             action = torch.zeros_like(action)
             action[:, max_index] = 1
             action = self._action_type.from_label_tensor(action.squeeze(0).detach(), scene_observation)
 
+        # For now one can only compare "Goals" and not "RobotActions"
         if isinstance(action, Goal) and self.__last_action == action:
             return self.__last_action, HumanFeedback.GOOD
 

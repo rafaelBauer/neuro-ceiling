@@ -33,7 +33,7 @@ tqdm            # Library to show progress on the bash
 numpy
 torch
 tensordict
-torchvision     # Required to
+torchvision     # Required to log images with wandb
 pandas
 skorch
 scikit-learn

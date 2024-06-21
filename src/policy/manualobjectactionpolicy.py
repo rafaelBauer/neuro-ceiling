@@ -34,25 +34,16 @@ class ManualObjectActionPolicy(ManualPolicy):
     It is expected that the user selects the object, and to which spot they want the object to be moved to.
 
     Attributes:
-        __last_goal (Goal): The last goal that was set.
+        __last_action (Goal): The last goal that was set.
     """
 
     def __init__(self, config: ManualObjectActionPolicyConfig, keyboard_observer: KeyboardObserver, **kwargs):
-        self.__last_goal: Goal = Goal()
         super().__init__(config, keyboard_observer, **kwargs)
         self._keyboard_observer.subscribe_callback_to_direction(self.__key_pressed_callback)
         self.__last_action = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-        self.__new_command = False
 
     @override
     def specific_forward(self, action: numpy.array, current_observation: SceneObservation) -> Tensor:
-        # logger.debug("Current gripper state is {}", current_observation.gripper_state.name)
-
-        # If statement not placed with previous one on purpose. I want to see the gripper state even if there are no
-        # actions to be taken
-        # if not self.__new_command:
-        #     return self.__last_goal
-
         label = torch.zeros(4)
 
         if self.__last_action[5] < -0.5:  # "u" key
@@ -64,18 +55,11 @@ class ManualObjectActionPolicy(ManualPolicy):
         else:
             label[3] = True
 
-        # new_goal = PickPlaceObject.from_label_tensor(label, current_observation)
-        #
-        # # self.__new_command = False
-        #
-        # if new_goal != self.__last_goal:
-        #     self.__last_goal = new_goal
-
         return label.unsqueeze(0)
 
     @override
     def episode_finished(self):
-        self.__last_goal = Goal()
+        self.__last_action = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 
     def __key_pressed_callback(self, action: numpy.array):
         """
@@ -90,4 +74,3 @@ class ManualObjectActionPolicy(ManualPolicy):
         if not numpy.any(action):
             return
         self.__last_action = action
-        self.__new_command = True

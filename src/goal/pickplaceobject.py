@@ -8,7 +8,7 @@ from utils.gripperstate import GripperState
 from utils.labeltoobjectpose import LabelToPoseTranslator
 from utils.sceneobservation import SceneObservation
 from .goal import Goal
-from utils.pose import Pose, RotationRepresentation
+from utils.pose import Pose
 
 
 class PickPlaceObject(Goal):
@@ -35,7 +35,7 @@ class PickPlaceObject(Goal):
     def __eq__(self, other: "PickPlaceObject") -> bool:
         if not isinstance(other, PickPlaceObject):
             return False
-        return self.__pose.is_close(other.__pose, atol=0.0001) and self.__objective == other.__objective
+        return self.__pose.is_close(other.__pose, atol=0.001) and self.__objective == other.__objective
 
     @override
     def get_action_sequence(self) -> list[tuple[Pose, GripperCommand]]:

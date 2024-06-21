@@ -4,7 +4,6 @@ import numpy
 import torch
 
 from utils.gripperstate import GripperState
-from utils.logging import logger
 from utils.pose import Pose
 from utils.sceneobservation import SceneObservation
 
@@ -16,6 +15,9 @@ class LabelToPoseTranslator:
     def get_pose_from_label(cls, current_label: torch.Tensor, pose_list: list[Pose]) -> Optional[Pose]:
         # label: [spot1/object1, spot2/object2, ..., spotN/objectN, No object/spot]
         # pose_list: [pose1, pose2, ..., poseN]
+        assert (
+            len(current_label) == len(pose_list) + 1
+        ), "The length of the label should be equal to the length of the pose list plus one"
         target_pose: Optional[Pose] = None
         for i, pose in enumerate(pose_list):
             if current_label[i]:

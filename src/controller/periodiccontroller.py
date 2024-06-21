@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
-from typing import Optional, TypeVar, Type
+from typing import Optional, Type
 
-import torch
 from overrides import override
 
 from controller import ControllerConfig, ControllerBase

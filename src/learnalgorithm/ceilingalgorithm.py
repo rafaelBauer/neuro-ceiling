@@ -47,7 +47,8 @@ class CeilingAlgorithm(LearnAlgorithm):
 
         super().__init__(config, policy, RandomSampler, DataLoader, loss_function, optimizer)
 
-        # TODO for now have this as a keyboard observer, but should be a feedback device which could also come from EEG
+        # TODO: for now have this as a keyboard observer,
+        #       but should be a feedback device which could also come from EEG
         self._feedback_device: KeyboardObserver = feedback_device
 
         # Thread to run the training in parallel with the steps as in original CEILing algorithm

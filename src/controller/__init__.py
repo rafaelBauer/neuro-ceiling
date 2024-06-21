@@ -19,6 +19,8 @@ def create_controller(
     config_module = importlib.import_module("." + str.lower(config.controller_type), "controller")
     controller_class = getattr(config_module, config.controller_type)
     try:
+        # Get the action type from the actions module if it exists, otherwise from the goal module
+        # Had to use the exception, since didn't find a better way to do this
         action_type = eval("actions." + config.ACTION_TYPE)
     except AttributeError:
         action_type = eval("goal." + config.ACTION_TYPE)

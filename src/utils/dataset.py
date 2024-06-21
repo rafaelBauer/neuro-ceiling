@@ -190,7 +190,7 @@ class TrajectoriesDataset(Dataset):
         """
         batch_size = min(batch_size, len(self))
         indices = random.sample(range(len(self)), batch_size)
-        return torch.stack([*[self[i] for i in indices]])
+        return torch.stack([*[self[i] for i in indices]], dim=1)
 
     def __down_sample_current_trajectory(self):
         """
