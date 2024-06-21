@@ -68,4 +68,3 @@ class Goal:
             bool: True if the goal is completed, False otherwise.
         """
         return True
-

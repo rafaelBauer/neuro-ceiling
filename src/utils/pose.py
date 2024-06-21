@@ -86,7 +86,9 @@ class Pose:
     def __eq__(self, other):
         if not isinstance(other, Pose):
             return False
-        return numpy.all(self.__pose.p == other.__pose.p) and transforms3d.quaternions.nearly_equivalent(self.__pose.q, other.__pose.q)
+        return numpy.all(self.__pose.p == other.__pose.p) and transforms3d.quaternions.nearly_equivalent(
+            self.__pose.q, other.__pose.q
+        )
 
     def is_close(self, other, atol=1e-8) -> bool:
         if not isinstance(other, Pose):

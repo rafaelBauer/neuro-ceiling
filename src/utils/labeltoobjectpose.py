@@ -13,8 +13,7 @@ class LabelToPoseTranslator:
     __CUBE_SIZE: float = 0.04
 
     @classmethod
-    def get_pose_from_label(
-            cls, current_label: torch.Tensor, pose_list: list[Pose]) -> Optional[Pose]:
+    def get_pose_from_label(cls, current_label: torch.Tensor, pose_list: list[Pose]) -> Optional[Pose]:
         # label: [spot1/object1, spot2/object2, ..., spotN/objectN, No object/spot]
         # pose_list: [pose1, pose2, ..., poseN]
         target_pose: Optional[Pose] = None
@@ -36,8 +35,9 @@ class LabelToPoseTranslator:
         return object_poses, spots_poses
 
     @classmethod
-    def __adjust_available_spots_poses(cls, spots_poses: list[Pose], object_poses: list[Pose],
-                                       cube_size: float = __CUBE_SIZE) -> list[Pose]:
+    def __adjust_available_spots_poses(
+        cls, spots_poses: list[Pose], object_poses: list[Pose], cube_size: float = __CUBE_SIZE
+    ) -> list[Pose]:
         """
         This function computes the available places for the objects in the scene.
 
@@ -58,7 +58,7 @@ class LabelToPoseTranslator:
             for object_pose in object_poses:
                 # Check if the X and Y positions are the same and if there is an object on top of the spot
                 if spot_pose.is_same_xy_position(object_pose, atol=__CUBE_HALF_SIZE) and spot_pose.p[2] <= (
-                        object_pose.p[2] + 0.01
+                    object_pose.p[2] + 0.01
                 ):
                     # Replace the position of spot by object on top, since maybe the object is not straight
                     spots_poses[i] = Pose(p=(object_pose.p + [0, 0, cube_size]), q=object_pose.q)
@@ -66,8 +66,7 @@ class LabelToPoseTranslator:
 
     @classmethod
     def __adjust_pose_of_stacked_objects(
-            cls, object_poses: list[Pose], end_effector_pose: Pose, gripper_state: GripperState,
-            cube_size: float = 0.04
+        cls, object_poses: list[Pose], end_effector_pose: Pose, gripper_state: GripperState, cube_size: float = 0.04
     ):
         """
         This function adjusts the poses of stacked objects in the scene.

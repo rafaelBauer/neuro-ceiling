@@ -1,4 +1,5 @@
 from pre_train import Config
+
 # from task.stack_cubes_a_config import config as task_config
 from task.stack_cubes_b_config import config as task_config
 

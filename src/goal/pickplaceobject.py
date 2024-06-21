@@ -76,7 +76,9 @@ class PickPlaceObject(Goal):
             return Goal(input_tensor.size(0))
         object_poses, spots_poses = LabelToPoseTranslator.adjust_objects_and_spots_poses(current_observation)
 
-        if current_observation.gripper_state == GripperState.OPENED or len(current_observation.objects.values()) == len(object_poses):
+        if current_observation.gripper_state == GripperState.OPENED or len(current_observation.objects.values()) == len(
+            object_poses
+        ):
             pick_place = PickPlaceObject.Objective.PICK
             pose_source = object_poses
         else:
