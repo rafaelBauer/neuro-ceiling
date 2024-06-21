@@ -14,6 +14,7 @@ from policy.policy import PolicyBaseConfig, PolicyBase
 from goal.goal import Goal
 from utils.logging import logger, log_constructor
 from utils.pose import Pose
+from utils.sceneobservation import SceneObservation
 
 
 @dataclass(kw_only=True)
@@ -78,7 +79,7 @@ class MotionPlannerPolicy(PolicyBase):
             user_link_names=ROBOT_INFO.links,
             user_joint_names=ROBOT_INFO.joints,
             move_group=ROBOT_INFO.end_effector_link,
-            joint_vel_limits=np.ones(7),
+            joint_vel_limits=np.array([0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 1]),
             joint_acc_limits=np.ones(7),
         )
 
@@ -107,16 +108,11 @@ class MotionPlannerPolicy(PolicyBase):
             self.__initial_pose,
             self.gripper_command.name,
         )
+        self.__goal_being_achieved: Goal = Goal()
         self.__target_sequence_lock: threading.Lock = threading.Lock()
 
     @override
-    def update(self):
-        """
-        Updates the policy. This method is currently not implemented.
-        """
-
-    @override
-    def forward(self, states: Tensor) -> Tensor:
+    def forward(self, states) -> Tensor:
         """
         Samples actions to be taken by the robot based on the current path.
 
@@ -152,9 +148,15 @@ class MotionPlannerPolicy(PolicyBase):
         Parameters:
             goal (Goal): The goal that has to be executed.
         """
+        self.__goal_being_achieved = goal
         with self.__target_sequence_lock:
             self.__target_sequence = goal.get_action_sequence()
-            if not self.__update_path_to_next_target():
+            robot_motion_info = self.__get_robot_motion_info()
+            if robot_motion_info.current_ee_pose.p[2] < self.__config.minimum_z_height_between_paths:
+                new_ee_pose = robot_motion_info.current_ee_pose.copy()
+                new_ee_pose.p = [new_ee_pose.p[0], new_ee_pose.p[1], self.__config.minimum_z_height_between_paths]
+                self.__current_path = self.__plan_to_pose(robot_motion_info.current_qpos.numpy(), new_ee_pose)
+            elif not self.__update_path_to_next_target():
                 self.__current_path = []
 
     @property
@@ -239,6 +241,4 @@ class MotionPlannerPolicy(PolicyBase):
 
     @override
     def episode_finished(self):
-        with self.__target_sequence_lock:
-            self.__target_sequence = [(self.__initial_pose, GripperCommand.OPEN)]
-            self.__update_path_to_next_target()
+        self.goal_to_be_achieved(Goal(self.__goal_being_achieved.to_tensor().size(0)))

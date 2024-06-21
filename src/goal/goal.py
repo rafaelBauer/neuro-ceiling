@@ -59,3 +59,12 @@ class Goal:
             torch.Tensor: A tensor representing the goal.
         """
         return self.__zeros
+
+    def finished(self):
+        """
+        Method to check if the goal is completed.
+
+        Returns:
+            bool: True if the goal is completed, False otherwise.
+        """
+        return True

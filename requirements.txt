@@ -33,8 +33,10 @@ tqdm            # Library to show progress on the bash
 numpy
 torch
 tensordict
+torchvision     # Required to log images with wandb
 pandas
 skorch
 scikit-learn
 overrides
 black
+wandb          # To log experiments

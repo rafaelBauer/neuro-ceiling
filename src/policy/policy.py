@@ -1,10 +1,12 @@
 from abc import abstractmethod
 from dataclasses import dataclass, field
 
+import torch
 from torch import nn, Tensor
 
 from goal.goal import Goal
 from utils.logging import log_constructor
+from utils.sceneobservation import SceneObservation
 
 
 @dataclass(kw_only=True)
@@ -17,6 +19,8 @@ class PolicyBaseConfig:
     """
 
     _POLICY_TYPE: str = field(init=True)
+    from_file: str = field(init=True, default="")
+    save_to_file: str = field(init=True, default="")
 
     @property
     def policy_type(self) -> str:
@@ -51,18 +55,16 @@ class PolicyBase(nn.Module):
 
         super().__init__(**kwargs)
 
-    @abstractmethod
-    def update(self):
-        """
-        Method usually called by the learning algorithm to update the policy.
+    def load_from_file(self):
+        if self._CONFIG.from_file:
+            self.load_state_dict(torch.load(self._CONFIG.from_file))
 
-        Raises:
-            NotImplementedError: If the method is not implemented in a subclass.
-        """
-        raise NotImplementedError("The update method must be implemented in a subclass.")
+    def save_to_file(self):
+        if self._CONFIG.save_to_file:
+            torch.save(self.state_dict(), self._CONFIG.save_to_file)
 
     @abstractmethod
-    def forward(self, states: Tensor) -> Tensor:
+    def forward(self, states) -> Tensor:
         """
         Method that defines the forward pass of the policy.
         In the forward function we accept a Tensor of input data, and we must return

@@ -42,7 +42,7 @@ class ManualPolicy(PolicyBase):
         self._CONFIG: ManualPolicyConfig = config
 
     @override
-    def forward(self, states: Tensor) -> Tensor:
+    def forward(self, states) -> Tensor:
         # For when the keyboard observer is not working
         # action = numpy.array([0.0, 0.0, 0.0, -0.9, 0.0, 0.9])
         # gripper = numpy.array([0.0])
@@ -50,12 +50,6 @@ class ManualPolicy(PolicyBase):
         gripper = numpy.array([self._keyboard_observer.gripper])
         assert isinstance(states, SceneObservation), "states should be of type SceneObservation"
         return self.specific_forward(numpy.concatenate((action, gripper)), states)
-
-    @override
-    def update(self):
-        """
-        Update method for the ManualPolicy class. This method is currently not implemented.
-        """
 
     @override
     def goal_to_be_achieved(self, goal: Goal):

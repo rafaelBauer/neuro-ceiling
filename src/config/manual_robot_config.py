@@ -13,9 +13,9 @@ env_config = ManiSkillEnvironmentConfig(task_config=task_config)
 # env_config = MockEnvironmentConfig()
 
 # ====== Learn algorithm configuration ========
-from learnalgorithm.learnalgorithm import LearnAlgorithmBaseConfig
+from learnalgorithm.learnalgorithm import LearnAlgorithmConfig
 
-learn_algorithm_config = LearnAlgorithmBaseConfig("DQN")
+learn_algorithm_config = LearnAlgorithmConfig("DQN")
 
 # ====== Policy configuration ========
 from policy.manualobjectactionpolicy import ManualObjectActionPolicyConfig

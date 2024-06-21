@@ -176,12 +176,9 @@ class TrajectoriesDataset(Dataset):
         Resets the current trajectory.
         """
         self.__current_trajectory = []
-        self.__good_count = 0
-        self.__corrected_count = 0
-        self.__bad_count = 0
         return
 
-    def sample(self, batch_size):
+    def sample(self, batch_size) -> TrajectoryData:
         """
         Samples a batch of trajectories from the dataset.
 
@@ -189,16 +186,11 @@ class TrajectoriesDataset(Dataset):
             batch_size (int): The size of the batch to sample.
 
         Returns:
-            TODO: Make it return a TrajectoryData object with the desired batch size.
+            A TrajectoryData object with the desired batch size (batch_size, num_steps_per_trajectory).
         """
         batch_size = min(batch_size, len(self))
         indices = random.sample(range(len(self)), batch_size)
-        batch = zip(*[self[i] for i in indices])
-        camera_batch = torch.stack(next(batch), dim=1)
-        proprio_batch = torch.stack(next(batch), dim=1)
-        action_batch = torch.stack(next(batch), dim=1)
-        feedback_batch = torch.stack(next(batch), dim=1)
-        return camera_batch, proprio_batch, action_batch, feedback_batch
+        return torch.stack([*[self[i] for i in indices]], dim=1)
 
     def __down_sample_current_trajectory(self):
         """

@@ -1,4 +1,4 @@
-from collect_demonstrations import Config
+from pre_train import Config
 
 # from task.stack_cubes_a_config import config as task_config
 from task.stack_cubes_b_config import config as task_config
@@ -15,11 +15,19 @@ env_config = ManiSkillEnvironmentConfig(task_config=task_config)
 # env_config = MockEnvironmentConfig()
 
 # ====== Learn algorithm configuration ========
-from learnalgorithm.ceilingalgorithm import CeilingAlgorithmConfig  # noqa
-from learnalgorithm.learnalgorithm import NoLearnAlgorithmConfig  # noqa Nothing will happen with this learn algorithm
+from learnalgorithm.behaviorcloningalgorithm import BehaviorCloningAlgorithmConfig
+from learnalgorithm.ceilingalgorithm import CeilingAlgorithmConfig
+from learnalgorithm.learnalgorithm import LearnAlgorithmConfig, NoLearnAlgorithmConfig
 
 learn_algorithms = [
-    NoLearnAlgorithmConfig(),
+    BehaviorCloningAlgorithmConfig(
+        batch_size=16,
+        learning_rate=3e-4,
+        weight_decay=3e-6,
+        steps_per_episode=200,
+        load_dataset="demos_10.dat",
+        number_of_epochs=800,
+    ),
     NoLearnAlgorithmConfig(),
 ]
 
@@ -36,15 +44,19 @@ controllers = [
 
 # ====== Policy configuration ========
 from policy.manualobjectactionpolicy import ManualObjectActionPolicyConfig
+from policy.ceilingpolicy import CeilingPolicyConfig
 from policy.manualrobotactionpolicy import ManualRobotActionPolicyConfig
 from policy.motionplannerpolicy import MotionPlannerPolicyConfig
 
-policy0 = ManualObjectActionPolicyConfig()
-policy1 = MotionPlannerPolicyConfig()
-
 # The policy at index 0 is added to controllers[0], the policy at index N-1 is added to controllers[N-1]
 policies = [
-    ManualObjectActionPolicyConfig(),
+    CeilingPolicyConfig(
+        visual_embedding_dim=256,
+        proprioceptive_dim=9,
+        action_dim=4,
+        # from_file="pretrain_manual_policy.pt"
+        save_to_file="ceiling_pretrain_policy.pt",
+    ),
     MotionPlannerPolicyConfig(),
 ]
 
@@ -54,8 +66,6 @@ config = Config(
     policies=policies,
     learn_algorithms=learn_algorithms,
     environment_config=env_config,
-    episodes=10,
-    trajectory_size=200,
+    episodes=0,
     task="StackCubesB",
-    feedback_type="pretrain_manual",
 )
