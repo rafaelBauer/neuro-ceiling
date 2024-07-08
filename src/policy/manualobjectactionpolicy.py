@@ -31,26 +31,26 @@ class ManualObjectActionPolicy(ManualPolicy):
     The ManualObjectActionPolicy class represents a policy for manually generate the MoveObjectToPosition objects.
     It inherits from the ManualPolicy class.
 
-    It is expected that the user selects the object, and to which spot they want the object to be moved to.
+    It is expected that the user selects an object or spot in which the object should be picked or placed into.
 
     Attributes:
-        __last_action (Goal): The last goal that was set.
+        __last_feedback (numpy.array): The last feedback that was set.
     """
 
     def __init__(self, config: ManualObjectActionPolicyConfig, keyboard_observer: KeyboardObserver, **kwargs):
         super().__init__(config, keyboard_observer, **kwargs)
         self._keyboard_observer.subscribe_callback_to_direction(self.__key_pressed_callback)
-        self.__last_action = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        self.__last_feedback = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 
     @override
     def specific_forward(self, action: numpy.array, current_observation: SceneObservation) -> Tensor:
         label = torch.zeros(4)
 
-        if self.__last_action[5] < -0.5:  # "u" key
+        if self.__last_feedback[5] < -0.5:  # "u" key
             label[0] = True
-        elif self.__last_action[4] < -0.5:  # "i" key
+        elif self.__last_feedback[4] < -0.5:  # "i" key
             label[1] = True
-        elif self.__last_action[5] > 0.5:  # "o" key
+        elif self.__last_feedback[5] > 0.5:  # "o" key
             label[2] = True
         else:
             label[3] = True
@@ -59,7 +59,10 @@ class ManualObjectActionPolicy(ManualPolicy):
 
     @override
     def episode_finished(self):
-        self.__last_action = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+        self.__reset_last_action()
+
+    def __reset_last_action(self):
+        self.__last_feedback = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 
     def __key_pressed_callback(self, action: numpy.array):
         """
@@ -73,4 +76,4 @@ class ManualObjectActionPolicy(ManualPolicy):
         """
         if not numpy.any(action):
             return
-        self.__last_action = action
+        self.__last_feedback = action

@@ -2,15 +2,15 @@ from envs.taskconfig import TaskConfig
 
 # Poses must be a pose using quaternion and w.r.t to the robot base frame
 _initial_objects = {
-    "Cube A": {"pose": [0.615, -0.2, 0.02, 0, 1, 0, 0]},
-    "Cube B": {"pose": [0.615, 0.0, 0.02, 0, 1, 0, 0], "color": [0, 1, 0, 1]},
-    "Cube C": {"pose": [0.615, 0.2, 0.02, 0, 1, 0, 0], "color": [0, 0, 1, 1]},
+    "Cube A": {"pose": [0.615, -0.2, 0.02, 0, 1, 0, 0]},  # Red
+    "Cube B": {"pose": [0.615, 0.0, 0.02, 0, 1, 0, 0], "color": [0, 1, 0, 1]},  # Green
+    "Cube C": {"pose": [0.615, 0.2, 0.02, 0, 1, 0, 0], "color": [0, 0, 1, 1]},  # Blue
 }
 
 _available_spots_pose = {
-    "Spot A": [0.615, -0.2, 0, 0, 1, 0, 0],
-    "Spot B": [0.615, 0.0, 0, 0, 1, 0, 0],
-    "Spot C": [0.615, 0.2, 0, 0, 1, 0, 0],
+    "Spot A": {"pose": [0.615, -0.2, 0, 0, 1, 0, 0]},
+    "Spot B": {"pose": [0.615, 0.0, 0, 0, 1, 0, 0]},
+    "Spot C": {"pose": [0.615, 0.2, 0, 0, 1, 0, 0]},
 }
 
 _target_objects_pose = {

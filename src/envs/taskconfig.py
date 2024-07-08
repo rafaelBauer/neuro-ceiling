@@ -12,7 +12,7 @@ class TaskConfig:
     """
 
     _initial_objects: dict[str, dict[str, Any]]
-    _available_spots_pose: dict[str, list[float]]
+    _available_spots_pose: dict[str, dict[str, Any]]
     _target_objects_pose: dict[str, list[float]]
 
     @property
@@ -29,7 +29,7 @@ class TaskConfig:
     def available_spots_pose(self) -> dict[str, Pose]:
         available_spots_pose: dict[str, Pose] = {}
         for key, value in self._available_spots_pose.items():
-            available_spots_pose[key] = Pose(p=value[:3], q=value[3:])
+            available_spots_pose[key] = Pose(p=value["pose"][:3], q=value["pose"][3:])
         return available_spots_pose
 
     @property

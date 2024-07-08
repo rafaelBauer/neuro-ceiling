@@ -19,6 +19,7 @@ For a minimal implementation of a simple task, check out
 mani_skill /envs/tasks/push_cube.py which is annotated with comments to explain how it is implemented
 """
 
+import random
 from typing import Union, Any, Dict, Final
 
 import numpy as np
@@ -186,16 +187,22 @@ class NeuroCeilingEnv(BaseEnv):
         with torch.device(self.device):
             self.table_scene.initialize(env_idx)
 
+            objects_shuffled = list(self._task_config.initial_objects.values())
+            random.shuffle(objects_shuffled)
+
             # robot_pose in w.r.t to the robot world frame
             robot_pose: Final[pose_utils.Pose] = pose_utils.Pose(obj=self.agent.robot.pose.sp)
             for number, (name, obj) in enumerate(self._task_config.initial_objects.items()):
-                obj_pose: pose_utils.Pose = pose_utils.Pose(obj=robot_pose * obj.pose)
+                obj_pose: pose_utils.Pose = pose_utils.Pose(obj=robot_pose * objects_shuffled[number].pose)
                 self.actors[name].set_pose(
                     Pose.create(obj_pose.to_tensor(rotation_representation=RotationRepresentation.QUATERNION))
                 )
+
+            for number, (name, spot) in enumerate(self._task_config.available_spots_pose.items()):
+                spot_pose: pose_utils.Pose = pose_utils.Pose(obj=robot_pose * spot)
                 spot_name = "Spot " + str(number)
                 self.spots[spot_name].set_pose(
-                    Pose.create(obj_pose.to_tensor(rotation_representation=RotationRepresentation.QUATERNION))
+                    Pose.create(spot_pose.to_tensor(rotation_representation=RotationRepresentation.QUATERNION))
                 )
 
     """
@@ -237,16 +244,12 @@ class NeuroCeilingEnv(BaseEnv):
         spots = {}
         robot_pose: Final[pose_utils.Pose] = pose_utils.Pose(obj=self.agent.robot.pose.sp)
 
-        for name, obj in self._task_config.initial_objects.items():
-            actor_pose: pose_utils.Pose = pose_utils.Pose(
-                obj=(robot_pose.inv() * pose_utils.Pose(obj=self.actors[name].pose.sp))
-            )
+        for name, actor in self.actors.items():
+            actor_pose: pose_utils.Pose = pose_utils.Pose(obj=(robot_pose.inv() * pose_utils.Pose(obj=actor.pose.sp)))
             objects[name] = actor_pose.to_tensor(rotation_representation=RotationRepresentation.EULER)
 
         for name, spot in self.spots.items():
-            spot_pose: pose_utils.Pose = pose_utils.Pose(
-                obj=(robot_pose.inv() * pose_utils.Pose(obj=self.spots[name].pose.sp))
-            )
+            spot_pose: pose_utils.Pose = pose_utils.Pose(obj=(robot_pose.inv() * pose_utils.Pose(obj=spot.pose.sp)))
             spots[name] = spot_pose.to_tensor(rotation_representation=RotationRepresentation.EULER)
 
         return {

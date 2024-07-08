@@ -71,6 +71,11 @@ class PickPlaceObject(Goal):
 
     @classmethod
     def from_label_tensor(cls, input_tensor: torch.Tensor, current_observation: SceneObservation) -> Goal:
+        # Select the action with the highest probability
+        max_index = torch.argmax(input_tensor, dim=-1)
+        input_tensor = torch.zeros_like(input_tensor)
+        input_tensor[max_index] = 1
+
         # If statement only to protect against very first iteration where the current_observation is empty
         if len(current_observation.spots.values()) == 0:
             return Goal(input_tensor.size(0))

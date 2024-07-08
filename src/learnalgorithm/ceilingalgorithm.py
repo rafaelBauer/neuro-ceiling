@@ -17,6 +17,7 @@ from utils.human_feedback import HumanFeedback
 from utils.keyboard_observer import KeyboardObserver
 from utils.labeltoobjectpose import LabelToPoseTranslator
 from utils.logging import log_constructor
+from utils.metricslogger import MetricsLogger, EpisodeMetrics
 from utils.sceneobservation import SceneObservation
 
 
@@ -90,7 +91,10 @@ class CeilingAlgorithm(LearnAlgorithm):
                 label[3] = True
 
             action = PickPlaceObject.from_label_tensor(label, scene_observation)
-            feedback = HumanFeedback.CORRECTED
+            if action != next_action:
+                feedback = HumanFeedback.CORRECTED
+            else:
+                feedback = HumanFeedback.GOOD
         else:
             feedback = self._feedback_device.label
         return action, feedback

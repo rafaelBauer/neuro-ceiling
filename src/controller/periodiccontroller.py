@@ -8,6 +8,7 @@ from envs import BaseEnvironment
 from goal.goal import Goal
 from learnalgorithm import LearnAlgorithm
 from policy import PolicyBase
+from utils.metricslogger import MetricsLogger
 from utils.timer import Timer
 from utils.logging import log_constructor
 
@@ -29,7 +30,9 @@ class PeriodicController(ControllerBase):
         child_controller: Optional[ControllerBase] = None,
         learn_algorithm: Optional[LearnAlgorithm] = None,
     ):
-        self.__timer = Timer(self._timer_callback, config.polling_period_s)
+        self.__timer = Timer(
+            self._timer_callback, config.polling_period_s, name=("PeriodicController " + str(config.polling_period_s))
+        )
         super().__init__(config, environment, policy, action_type, child_controller, learn_algorithm)
 
     @override

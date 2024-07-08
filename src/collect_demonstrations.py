@@ -21,6 +21,7 @@ from utils.dataset import TrajectoriesDataset, TrajectoryData
 from utils.human_feedback import HumanFeedback
 from utils.keyboard_observer import KeyboardObserver
 from utils.logging import logger
+from utils.metricslogger import MetricsLogger
 
 
 @dataclass
@@ -91,7 +92,6 @@ def main() -> None:
         os.makedirs(save_path, exist_ok=True)
 
     keyboard_obs = KeyboardObserver()
-
     environment: Final[BaseEnvironment] = create_environment(config.environment_config)
 
     policies: list[PolicyBase] = []

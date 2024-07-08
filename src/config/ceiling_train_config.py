@@ -49,7 +49,7 @@ policies = [
         visual_embedding_dim=256,
         proprioceptive_dim=9,
         action_dim=4,
-        from_file="ceiling_pretrain_policy.pt",
+        from_file="ceiling_pretrain_policy_5.pt",
         save_to_file="ceiling_trained_policy.pt",
     ),
     MotionPlannerPolicyConfig(),
@@ -61,6 +61,6 @@ config = Config(
     policies=policies,
     learn_algorithms=learn_algorithms,
     environment_config=env_config,
-    episodes=100,
+    episodes=5,
     task="StackCubesB",
 )

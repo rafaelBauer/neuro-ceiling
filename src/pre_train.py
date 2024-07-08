@@ -21,6 +21,7 @@ from utils.config import ConfigBase
 from utils.device import device
 from utils.keyboard_observer import KeyboardObserver
 from utils.logging import logger
+from utils.metricslogger import MetricsLogger
 
 
 @dataclass
@@ -165,6 +166,9 @@ def main() -> None:
                     # just need to sleep, since there is a thread in the controller doing the stepping and
                     # everything else
                     time.sleep(1)
+
+            if config.train:
+                controllers[0].train(False)
 
             controllers[0].stop()
             environment.stop()
