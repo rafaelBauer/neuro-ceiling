@@ -77,7 +77,7 @@ class CeilingAlgorithm(LearnAlgorithm):
         if self._feedback_device.is_direction_commanded:
             feedback_device_output = self._feedback_device.direction
 
-            # TODO: This is a hardcoded label for now
+            # TODO: This is a hardcoded label algorithm for now
             label = torch.zeros(4)
 
             # Conversion from keyboard_observer to label. Needs to be changed so EEG output would also work
@@ -90,7 +90,7 @@ class CeilingAlgorithm(LearnAlgorithm):
             else:
                 label[3] = True
 
-            action = PickPlaceObject.from_label_tensor(label, scene_observation)
+            action = PickPlaceObject.from_tensor(label, scene_observation)
             if action != next_action:
                 feedback = HumanFeedback.CORRECTED
             else:

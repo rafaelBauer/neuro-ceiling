@@ -38,6 +38,16 @@ class PickPlaceObject(Goal):
         return self.__pose.is_close(other.__pose, atol=0.001) and self.__objective == other.__objective
 
     @override
+    def replaceable(self, other: "Goal") -> bool:
+        if isinstance(other, PickPlaceObject):
+            return (
+                self.__objective == other.__objective
+                or self.is_completed
+                or not self.__pose.is_close(other.__pose, atol=0.001)
+            )
+        return True
+
+    @override
     def get_action_sequence(self) -> list[tuple[Pose, GripperCommand]]:
         """
         This method generates a sequence of poses as well as gripper commands to move the object from its initial
@@ -50,7 +60,7 @@ class PickPlaceObject(Goal):
         """
         pose_above = self.__pose.copy()
         # An offset of 0.1 is added to the Z coordinate to ensure that the gripper does not collide with the object
-        pose_above.p = pose_above.p + [0, 0, 0.1]
+        pose_above.p = pose_above.p + [0, 0, 0.2]
         if self.__objective == PickPlaceObject.Objective.PICK:
             first_gripper_command: GripperCommand = GripperCommand.OPEN
             second_gripper_command: GripperCommand = GripperCommand.CLOSE
@@ -70,7 +80,7 @@ class PickPlaceObject(Goal):
         return self.__label_source
 
     @classmethod
-    def from_label_tensor(cls, input_tensor: torch.Tensor, current_observation: SceneObservation) -> Goal:
+    def from_tensor(cls, input_tensor: torch.Tensor, current_observation: SceneObservation) -> Goal:
         # Select the action with the highest probability
         max_index = torch.argmax(input_tensor, dim=-1)
         input_tensor = torch.zeros_like(input_tensor)
@@ -79,18 +89,20 @@ class PickPlaceObject(Goal):
         # If statement only to protect against very first iteration where the current_observation is empty
         if len(current_observation.spots.values()) == 0:
             return Goal(input_tensor.size(0))
-        object_poses, spots_poses = LabelToPoseTranslator.adjust_objects_and_spots_poses(current_observation)
 
-        if current_observation.gripper_state == GripperState.OPENED or len(current_observation.objects.values()) == len(
-            object_poses
-        ):
+        object_poses, object_being_held_by_end_effector = LabelToPoseTranslator.is_object_being_held_by_end_effector(
+            current_observation
+        )
+
+        if current_observation.gripper_state == GripperState.OPENED or not object_being_held_by_end_effector:
             pick_place = PickPlaceObject.Objective.PICK
-            pose_source = object_poses
         else:
             pick_place = PickPlaceObject.Objective.PLACE
-            pose_source = spots_poses
+        object_poses, spots_poses = LabelToPoseTranslator.adjust_objects_and_spots_poses(
+            current_observation, stack_objects=pick_place == PickPlaceObject.Objective.PLACE
+        )
 
-        target_pose = LabelToPoseTranslator.get_pose_from_label(input_tensor, pose_source)
+        target_pose = LabelToPoseTranslator.get_pose_from_label(input_tensor, spots_poses)
 
         if target_pose is not None:
             new_goal = cls(pose=target_pose, objective=pick_place, label_source=input_tensor)

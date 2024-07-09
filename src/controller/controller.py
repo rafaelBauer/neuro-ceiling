@@ -225,14 +225,15 @@ class ControllerBase:
                 episode_finished=new_episode_finished,
                 extra_info=new_extra_info,
             )
+            if new_episode_finished:
+                logger.info("Episode finished! Reward is: {}", next_reward.item())
 
             self._episode_metrics.log_step(self.__last_controller_step.reward, feedback)
             # Only updates if there is no child controller, because the child controller will update the previous
             # at every step of itself.
             if self._child_controller is None:
                 self._previous_observation = next_scene_observation
-
-            self._previous_reward = next_reward
+                self._previous_reward = next_reward
 
             if self._learn_algorithm is not None:
                 self._learn_algorithm.save_current_step(self.__last_controller_step, feedback)
@@ -245,7 +246,7 @@ class ControllerBase:
         if isinstance(action, torch.Tensor):
             action = action.to("cpu")
             # Squeeze the batch dimension
-            action = self._action_type.from_label_tensor(action.squeeze(0).detach(), scene_observation)
+            action = self._action_type.from_tensor(action.squeeze(0).detach(), scene_observation)
 
         if self._learn_algorithm is not None:
             action, feedback = self._learn_algorithm.get_human_feedback(action, scene_observation)
@@ -253,7 +254,9 @@ class ControllerBase:
             feedback = HumanFeedback.GOOD
 
         # For now one can only compare "Goals" and not "RobotActions"
-        if isinstance(action, Goal) and self.__last_action == action:
+        if isinstance(action, Goal) and (self.__last_action == action or not self.__last_action.replaceable(action)):
+            # if feedback != HumanFeedback.CORRECTED:
+
             return self.__last_action, HumanFeedback.GOOD
 
         self.__last_action = action
@@ -296,3 +299,4 @@ class ControllerBase:
     def child_controller_observation_callback(self, child_controller_step: ControllerStep):
         with self._control_variables_lock:
             self._previous_observation = child_controller_step.scene_observation
+            self._previous_reward = child_controller_step.reward

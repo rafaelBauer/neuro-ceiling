@@ -108,14 +108,22 @@ class MetricsLogger:
         return
 
     def log_session(self):
-        success_rate = self.total_successes / self.total_episodes
-        cor_rate = self.total_corrected_steps / self.total_steps
-        pos_rate = self.total_good_steps / self.total_steps
-        neg_rate = self.total_bad_steps / self.total_steps
+        if self.total_episodes == 0:
+            success_rate = 0
+        else:
+            success_rate = self.total_successes / self.total_episodes
+        if self.total_steps == 0:
+            corrected_rate = 0
+            good_rate = 0
+            bad_rate = 0
+        else:
+            corrected_rate = self.total_corrected_steps / self.total_steps
+            good_rate = self.total_good_steps / self.total_steps
+            bad_rate = self.total_bad_steps / self.total_steps
         wandb.run.summary["success_rate"] = success_rate
-        wandb.run.summary["total_cor_rate"] = cor_rate
-        wandb.run.summary["total_pos_rate"] = pos_rate
-        wandb.run.summary["total_neg_rate"] = neg_rate
+        wandb.run.summary["total_corrected_rate"] = corrected_rate
+        wandb.run.summary["total_good_rate"] = good_rate
+        wandb.run.summary["total_bad_rate"] = bad_rate
         return
 
     def append(self, episode_metrics):

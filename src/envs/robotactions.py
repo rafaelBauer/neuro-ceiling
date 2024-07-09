@@ -136,6 +136,6 @@ class TargetJointPositionAction(RobotAction):
         return self
 
     @classmethod
-    def from_tensor(cls, input_tensor: torch.Tensor) -> RobotAction:
+    def from_tensor(cls, input_tensor: torch.Tensor, *args) -> RobotAction:
         gripper_command = GripperCommand.from_tensor(input_tensor[-1])
         return cls(target_position=input_tensor[:-1].numpy(), gripper_command=gripper_command)

@@ -1,3 +1,4 @@
+import threading
 from abc import abstractmethod
 
 import torch
@@ -23,6 +24,8 @@ class Goal:
             length (int): The length of the tensor representing the goal. Defaults to 0.
         """
         self.__zeros: torch.Tensor = torch.zeros(length)
+        self.__completed: bool = False
+        self.__completed_lock: threading.Lock = threading.Lock()
 
     @abstractmethod
     def __eq__(self, other) -> bool:
@@ -60,11 +63,27 @@ class Goal:
         """
         return self.__zeros
 
-    def finished(self):
+    @abstractmethod
+    def replaceable(self, other: "Goal") -> bool:
+        """
+        Method to check if the goal is replaceable by another goal.
+        """
+        return True
+
+    @property
+    def is_completed(self):
         """
         Method to check if the goal is completed.
 
         Returns:
             bool: True if the goal is completed, False otherwise.
         """
-        return True
+        with self.__completed_lock:
+            return self.__completed
+
+    def complete(self):
+        """
+        Method to tell that the goal has been completed.
+        """
+        with self.__completed_lock:
+            self.__completed = True
