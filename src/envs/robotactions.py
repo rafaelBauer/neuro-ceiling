@@ -35,7 +35,7 @@ class GripperCommand(IntEnum):
             return cls.CLOSE
 
 
-@tensorclass
+# @tensorclass
 class RobotAction:
     _gripper_command: Tensor
 
@@ -60,6 +60,9 @@ class RobotAction:
     @abstractmethod
     def to_target_joint_position(self) -> "RobotAction":
         pass
+
+    def replaceable(self, other: "RobotAction") -> bool:
+        return True
 
 
 class PoseActionBase(RobotAction):

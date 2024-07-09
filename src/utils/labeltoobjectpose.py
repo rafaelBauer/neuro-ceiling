@@ -70,8 +70,12 @@ class LabelToPoseTranslator:
                 if spot_pose.is_same_xy_position(object_pose, atol=__CUBE_HALF_SIZE) and spot_pose.p[2] <= (
                     object_pose.p[2] + 0.01
                 ):
+                    if stack_objects:
+                        spot_pose.p = [spot_pose.p[0], spot_pose.p[1], object_pose.p[2]]
+                    else:
+                        spot_pose.p = object_pose.p
                     # Replace the position of spot by object on top, since maybe the object is not straight
-                    spots_poses[i] = Pose(p=(object_pose.p + Z_OFFSET), q=object_pose.q)
+                    spots_poses[i] = Pose(p=(spot_pose.p + Z_OFFSET), q=object_pose.q)
         return spots_poses
 
     @classmethod
@@ -109,9 +113,9 @@ class LabelToPoseTranslator:
                 if object_poses[i].is_same_xy_position(object_poses[j], atol=cube_size):
                     if object_poses[i].p[2] < object_poses[j].p[2]:
                         # Replace the Z position of the lower object by the one on top
-                        object_poses[i].p = [object_poses[i].p[0], object_poses[i].p[1], object_poses[j].p[2]]
+                        object_poses[i].p = object_poses[j].p
                     else:
-                        object_poses[j].p = [object_poses[j].p[0], object_poses[j].p[1], object_poses[i].p[2]]
+                        object_poses[j].p = object_poses[i].p
 
     @classmethod
     def is_object_being_held_by_end_effector(cls, current_observation: SceneObservation) -> tuple[list[Pose], bool]:

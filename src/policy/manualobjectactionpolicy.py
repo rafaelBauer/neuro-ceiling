@@ -46,11 +46,11 @@ class ManualObjectActionPolicy(ManualPolicy):
     def specific_forward(self, action: numpy.array, current_observation: SceneObservation) -> Tensor:
         label = torch.zeros(4)
 
-        if self.__last_feedback[5] < -0.5:  # "u" key
+        if self.__last_feedback[5] > 0.5:  # "o" key
             label[0] = True
         elif self.__last_feedback[4] < -0.5:  # "i" key
             label[1] = True
-        elif self.__last_feedback[5] > 0.5:  # "o" key
+        elif self.__last_feedback[5] < -0.5:  # "u" key
             label[2] = True
         else:
             label[3] = True

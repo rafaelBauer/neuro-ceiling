@@ -225,8 +225,6 @@ class ControllerBase:
                 episode_finished=new_episode_finished,
                 extra_info=new_extra_info,
             )
-            if new_episode_finished:
-                logger.info("Episode finished! Reward is: {}", next_reward.item())
 
             self._episode_metrics.log_step(self.__last_controller_step.reward, feedback)
             # Only updates if there is no child controller, because the child controller will update the previous
@@ -254,13 +252,10 @@ class ControllerBase:
             feedback = HumanFeedback.GOOD
 
         # For now one can only compare "Goals" and not "RobotActions"
-        if isinstance(action, Goal) and (self.__last_action == action or not self.__last_action.replaceable(action)):
-            # if feedback != HumanFeedback.CORRECTED:
+        if self.__last_action != action and self.__last_action.replaceable(action):
+            self.__last_action = action
 
-            return self.__last_action, HumanFeedback.GOOD
-
-        self.__last_action = action
-        return action, feedback
+        return self.__last_action, feedback
 
     def reset(self) -> SceneObservation:
         # Log current episode metrics and create new episode metrics object

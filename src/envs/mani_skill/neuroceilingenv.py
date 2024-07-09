@@ -146,10 +146,12 @@ class NeuroCeilingEnv(BaseEnv):
     def _default_sensor_configs(self):
         # To customize the sensors that capture images/pointclouds for the environment observations,
         # simply define a CameraConfig as done below for Camera sensors. You can add multiple sensors by returning a list
-        pose = sapien_utils.look_at(
-            eye=[0.3, 0, 0.6], target=[-0.1, 0, 0.1]
-        )  # sapien_utils.look_at is a utility to get the pose of a camera that looks at a target
+        # pose = sapien_utils.look_at(
+        #     eye=[0.3, 0, 0.6], target=[-0.1, 0, 0.1]
+        # )
+        # sapien_utils.look_at is a utility to get the pose of a camera that looks at a target point from a given eye point
 
+        pose = Pose.create_from_pq([-0.45, 0, 0.02], [1, 0, 0, 0])
         # to see what all the sensors capture in the environment for observations, run env.render_sensors() which returns an rgb array you can visualize
         return [CameraConfig("base_camera", pose, 128, 128, np.pi / 2, 0.01, 100)]
 
