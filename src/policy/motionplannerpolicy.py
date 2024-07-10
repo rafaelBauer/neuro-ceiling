@@ -173,7 +173,7 @@ class MotionPlannerPolicy(PolicyBase):
         Parameters:
             command (GripperCommand): The command for the gripper.
         """
-        logger.debug("Setting gripper command to {}", command.name)
+        logger.trace("Setting gripper command to {}", command.name)
         self.__gripper_command = command
 
     def __update_path_to_next_target(self) -> bool:

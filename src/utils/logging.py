@@ -51,7 +51,7 @@ def formatter(record):
 def setup_logger() -> logger:
     logger.remove()
     duplicate_filter = DuplicateFilter()
-    logger.add(write_tqdm, colorize=True, format=formatter, filter=duplicate_filter)
+    logger.add(write_tqdm, colorize=True, format=formatter, filter=duplicate_filter, level="DEBUG")
 
     return logger
 
@@ -96,4 +96,4 @@ def log_constructor(init_func):
 #         return loguru.logger
 
 
-# logger = logger
+logger = setup_logger()

@@ -17,8 +17,7 @@ from utils.gripperstate import GripperState
 from utils.human_feedback import HumanFeedback
 from utils.keyboard_observer import KeyboardObserver
 from utils.labeltoobjectpose import LabelToPoseTranslator
-from utils.logging import log_constructor
-from utils.metricslogger import MetricsLogger, EpisodeMetrics
+from utils.logging import log_constructor, logger
 from utils.sceneobservation import SceneObservation
 
 
@@ -97,7 +96,10 @@ class CeilingAlgorithm(LearnAlgorithm):
             action = PickPlaceObject.from_tensor(label, scene_observation)
             if action != next_action:
                 feedback = HumanFeedback.CORRECTED
+                logger.debug(f"Corrected action:" f" original: {next_action}" f" corrected: {action}")
             else:
+                # Reset "action" to original given action
+                action = next_action
                 feedback = HumanFeedback.GOOD
         else:
             feedback = self._feedback_device.label

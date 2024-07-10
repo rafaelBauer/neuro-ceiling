@@ -104,8 +104,9 @@ def main() -> None:
             if learn_algorithm_config.load_dataset:
                 learn_algorithm_config.load_dataset = source_path + learn_algorithm_config.load_dataset
             if learn_algorithm_config.save_dataset:
+                filename, file_extension = os.path.splitext(learn_algorithm_config.save_dataset)
                 learn_algorithm_config.save_dataset = (
-                    source_path + str(config.episodes) + learn_algorithm_config.save_dataset
+                    source_path + filename + "_" + str(config.episodes) + file_extension
                 )
 
             learn_algorithm: LearnAlgorithm = create_learn_algorithm(
