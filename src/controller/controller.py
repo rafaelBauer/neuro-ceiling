@@ -198,13 +198,7 @@ class ControllerBase:
         """
 
         with self._control_variables_lock:
-            # if self.__last_controller_step.episode_finished:
-            #     return
-
             action, feedback = self.__sample_action_and_feedback(self._previous_observation)
-
-        if action is None:
-            return
 
         assert isinstance(
             action, Goal | RobotAction
@@ -252,7 +246,7 @@ class ControllerBase:
             feedback = HumanFeedback.GOOD
 
         # For now one can only compare "Goals" and not "RobotActions"
-        if self.__last_action != action and self.__last_action.replaceable(action):
+        if action is not None and self.__last_action != action and self.__last_action.replaceable(action):
             self.__last_action = action
 
         return self.__last_action, feedback
