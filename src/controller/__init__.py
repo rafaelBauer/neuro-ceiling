@@ -5,6 +5,7 @@ from controller.controller import ControllerConfig, ControllerBase
 from envs import BaseEnvironment
 from learnalgorithm import LearnAlgorithm
 from policy import PolicyBase
+from utils.metricslogger import MetricsLogger
 
 import goal, envs as actions
 

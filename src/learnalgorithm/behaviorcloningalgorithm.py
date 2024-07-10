@@ -5,12 +5,10 @@ from overrides import override
 from torch.utils.data import RandomSampler, DataLoader
 from tqdm import tqdm
 
-from envs.robotactions import RobotAction
-from goal.goal import Goal
 from learnalgorithm.learnalgorithm import LearnAlgorithmConfig, LearnAlgorithm
 from policy import PolicyBase
-from utils.human_feedback import HumanFeedback
 from utils.logging import log_constructor
+from utils.metricslogger import MetricsLogger
 from utils.sceneobservation import SceneObservation
 
 
@@ -42,12 +40,6 @@ class BehaviorCloningAlgorithm(LearnAlgorithm):
                 for _ in range(self._CONFIG.number_of_epochs):
                     self._train_step()
                     progress_bar.update(1)
-
-    @override
-    def get_human_feedback(
-        self, next_action: Goal | RobotAction, scene_observation: SceneObservation
-    ) -> (Goal | RobotAction, HumanFeedback):
-        return HumanFeedback.GOOD
 
     @override()
     def _training_episode_finished(self):

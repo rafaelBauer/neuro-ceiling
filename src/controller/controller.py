@@ -15,6 +15,7 @@ from policy import PolicyBase
 from goal.goal import Goal
 from utils.human_feedback import HumanFeedback
 from utils.logging import log_constructor, logger
+from utils.metricslogger import MetricsLogger, EpisodeMetrics
 from utils.sceneobservation import SceneObservation
 
 
@@ -109,6 +110,12 @@ class ControllerBase:
         if self._child_controller is not None:
             self._child_controller.set_post_step_function(self.child_controller_observation_callback)
 
+        self._episode_metrics = EpisodeMetrics(0)
+        self._metrics_logger = MetricsLogger()
+
+        if self._learn_algorithm is not None:
+            self._learn_algorithm.set_metrics_logger(self._metrics_logger)
+
     def train(self, mode: bool = True):
         """
         Trains the controller. If the controller has a child controller, it will first train the child, and then
@@ -117,9 +124,14 @@ class ControllerBase:
         if self._child_controller is not None:
             self._child_controller.train(mode)
 
-        self._policy.train(mode)
-        if self._learn_algorithm is not None:
-            self._learn_algorithm.train(mode)
+        if mode:
+            self._policy.train(mode)
+            if self._learn_algorithm is not None:
+                self._learn_algorithm.train(mode)
+        else:
+            if self._learn_algorithm is not None:
+                self._learn_algorithm.train(mode)
+            self._policy.train(mode)
 
     def start(self):
         """
@@ -147,6 +159,7 @@ class ControllerBase:
             self._child_controller.stop()
 
         self._specific_stop()
+        self._metrics_logger.log_session()
 
     @abstractmethod
     def _specific_stop(self):
@@ -185,13 +198,7 @@ class ControllerBase:
         """
 
         with self._control_variables_lock:
-            if self.__last_controller_step.episode_finished:
-                return
-
             action, feedback = self.__sample_action_and_feedback(self._previous_observation)
-
-        if action is None:
-            return
 
         assert isinstance(
             action, Goal | RobotAction
@@ -212,15 +219,16 @@ class ControllerBase:
                 episode_finished=new_episode_finished,
                 extra_info=new_extra_info,
             )
+
+            self._episode_metrics.log_step(self.__last_controller_step.reward, feedback)
             # Only updates if there is no child controller, because the child controller will update the previous
             # at every step of itself.
             if self._child_controller is None:
                 self._previous_observation = next_scene_observation
-
-            self._previous_reward = next_reward
+                self._previous_reward = next_reward
 
             if self._learn_algorithm is not None:
-                self._learn_algorithm.step(self.__last_controller_step, feedback)
+                self._learn_algorithm.save_current_step(self.__last_controller_step, feedback)
 
         if self.__post_step_function is not None:
             self.__post_step_function(self.__last_controller_step)
@@ -229,24 +237,25 @@ class ControllerBase:
         action = self._policy(scene_observation)
         if isinstance(action, torch.Tensor):
             action = action.to("cpu")
-            # Select the action with the highest probability
-            max_index = torch.argmax(action, dim=-1)
-            action = torch.zeros_like(action)
-            action[:, max_index] = 1
-            action = self._action_type.from_label_tensor(action.squeeze(0).detach(), scene_observation)
-
-        # For now one can only compare "Goals" and not "RobotActions"
-        if isinstance(action, Goal) and self.__last_action == action:
-            return self.__last_action, HumanFeedback.GOOD
+            # Squeeze the batch dimension
+            action = self._action_type.from_tensor(action.squeeze(0).detach(), scene_observation)
 
         if self._learn_algorithm is not None:
             action, feedback = self._learn_algorithm.get_human_feedback(action, scene_observation)
         else:
             feedback = HumanFeedback.GOOD
-        self.__last_action = action
-        return action, feedback
+
+        # For now one can only compare "Goals" and not "RobotActions"
+        if action is not None and self.__last_action != action and self.__last_action.replaceable(action):
+            self.__last_action = action
+
+        return self.__last_action, feedback
 
     def reset(self) -> SceneObservation:
+        # Log current episode metrics and create new episode metrics object
+        self._metrics_logger.log_episode(self._episode_metrics)
+        self._episode_metrics = EpisodeMetrics(self._episode_metrics.episode_number + 1)
+
         self.set_goal(Goal())
         self._policy.episode_finished()
         if self._learn_algorithm is not None:
@@ -279,3 +288,4 @@ class ControllerBase:
     def child_controller_observation_callback(self, child_controller_step: ControllerStep):
         with self._control_variables_lock:
             self._previous_observation = child_controller_step.scene_observation
+            self._previous_reward = child_controller_step.reward

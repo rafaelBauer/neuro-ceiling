@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Tuple, List
 
 import numpy
 import torch
@@ -28,17 +28,21 @@ class LabelToPoseTranslator:
         return target_pose
 
     @classmethod
-    def adjust_objects_and_spots_poses(cls, current_observation: SceneObservation):
+    def adjust_objects_and_spots_poses(cls, current_observation: SceneObservation, stack_objects: bool = False):
         end_effector_pose = Pose(raw_euler_pose=current_observation.end_effector_pose)
         object_poses = [Pose(raw_euler_pose=raw_pose) for raw_pose in list(current_observation.objects.values())]
         spots_poses = [Pose(raw_euler_pose=raw_pose) for raw_pose in list(current_observation.spots.values())]
         cls.__adjust_pose_of_stacked_objects(object_poses, end_effector_pose, current_observation.gripper_state)
-        spots_poses = cls.__adjust_available_spots_poses(spots_poses, object_poses)
+        spots_poses = cls.__adjust_available_spots_poses(spots_poses, object_poses, stack_objects=stack_objects)
         return object_poses, spots_poses
 
     @classmethod
     def __adjust_available_spots_poses(
-        cls, spots_poses: list[Pose], object_poses: list[Pose], cube_size: float = __CUBE_SIZE
+        cls,
+        spots_poses: list[Pose],
+        object_poses: list[Pose],
+        stack_objects: bool = False,
+        cube_size: float = __CUBE_SIZE,
     ) -> list[Pose]:
         """
         This function computes the available places for the objects in the scene.
@@ -55,6 +59,10 @@ class LabelToPoseTranslator:
             list[Pose]: A list of updated spot poses considering the positions of the objects in the scene.
         """
         __CUBE_HALF_SIZE: float = cube_size / 2
+        if stack_objects:
+            Z_OFFSET = numpy.array([0, 0, cube_size])
+        else:
+            Z_OFFSET = numpy.array([0, 0, 0])
 
         for i, (spot_pose) in enumerate(spots_poses):
             for object_pose in object_poses:
@@ -62,8 +70,12 @@ class LabelToPoseTranslator:
                 if spot_pose.is_same_xy_position(object_pose, atol=__CUBE_HALF_SIZE) and spot_pose.p[2] <= (
                     object_pose.p[2] + 0.01
                 ):
+                    if stack_objects:
+                        spot_pose.p = [spot_pose.p[0], spot_pose.p[1], object_pose.p[2]]
+                    else:
+                        spot_pose.p = object_pose.p
                     # Replace the position of spot by object on top, since maybe the object is not straight
-                    spots_poses[i] = Pose(p=(object_pose.p + [0, 0, cube_size]), q=object_pose.q)
+                    spots_poses[i] = Pose(p=(spot_pose.p + Z_OFFSET), q=object_pose.q)
         return spots_poses
 
     @classmethod
@@ -101,6 +113,17 @@ class LabelToPoseTranslator:
                 if object_poses[i].is_same_xy_position(object_poses[j], atol=cube_size):
                     if object_poses[i].p[2] < object_poses[j].p[2]:
                         # Replace the Z position of the lower object by the one on top
-                        object_poses[i].p = [object_poses[i].p[0], object_poses[i].p[1], object_poses[j].p[2]]
+                        object_poses[i].p = object_poses[j].p
                     else:
-                        object_poses[j].p = [object_poses[j].p[0], object_poses[j].p[1], object_poses[i].p[2]]
+                        object_poses[j].p = object_poses[i].p
+
+    @classmethod
+    def is_object_being_held_by_end_effector(cls, current_observation: SceneObservation) -> tuple[list[Pose], bool]:
+        end_effector_pose = Pose(raw_euler_pose=current_observation.end_effector_pose)
+        object_poses = [Pose(raw_euler_pose=raw_pose) for raw_pose in list(current_observation.objects.values())]
+        object_poses_cleaned = object_poses
+        if current_observation.gripper_state == GripperState.CLOSED:
+            object_poses_cleaned = [
+                pose for pose in object_poses if not numpy.allclose(pose.p, end_effector_pose.p, atol=0.01)
+            ]
+        return object_poses, len(object_poses_cleaned) < len(object_poses)

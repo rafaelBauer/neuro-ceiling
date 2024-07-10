@@ -15,6 +15,7 @@ from utils.dataset import TrajectoriesDataset, TrajectoryData
 from utils.device import device
 from utils.human_feedback import HumanFeedback
 from utils.logging import logger
+from utils.metricslogger import MetricsLogger
 from utils.sceneobservation import SceneObservation
 
 
@@ -71,6 +72,7 @@ class LearnAlgorithm:
 
         # Optimizer
         self._optimizer = optimizer
+        self._metrics_logger = MetricsLogger()
 
         policy.to(device)
         wandb.watch(policy, log_freq=100)
@@ -106,6 +108,15 @@ class LearnAlgorithm:
             torch.save(self._replay_buffer, self._CONFIG.save_dataset)
             logger.info("Successfully saved dataset {}", self._CONFIG.save_dataset)
 
+    def set_metrics_logger(self, metrics_logger: MetricsLogger):
+        """
+        This method is responsible for setting the metrics logger of the learn algorithm.
+
+        Args:
+            metrics_logger (MetricsLogger): The metrics logger to set.
+        """
+        self._metrics_logger = metrics_logger
+
     @abstractmethod
     def train(self, mode: bool = True):
         """
@@ -135,7 +146,7 @@ class LearnAlgorithm:
         """
         return next_action, HumanFeedback.GOOD
 
-    def step(self, controller_step: ControllerStep, feedback: HumanFeedback = HumanFeedback.GOOD):
+    def save_current_step(self, controller_step: ControllerStep, feedback: HumanFeedback = HumanFeedback.GOOD):
         """
         This method is responsible for performing a step in the learning algorithm. And meant to be called
         by the controller after it has performed a step in the environment.
@@ -225,6 +236,8 @@ class LearnAlgorithm:
         self._training_episode_finished()
         training_metrics = {"loss": total_loss}
         wandb.log(training_metrics)
+        if not self._metrics_logger.empty():
+            wandb.log(self._metrics_logger.pop())
 
     def _compute_losses_for_batch(self, trajectories: torch.Tensor):
         """

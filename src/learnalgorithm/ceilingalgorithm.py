@@ -2,6 +2,7 @@ import threading
 from dataclasses import dataclass, field
 from typing import Optional
 
+import numpy
 import torch
 from overrides import override
 from torch.utils.data import RandomSampler, DataLoader
@@ -16,7 +17,7 @@ from utils.gripperstate import GripperState
 from utils.human_feedback import HumanFeedback
 from utils.keyboard_observer import KeyboardObserver
 from utils.labeltoobjectpose import LabelToPoseTranslator
-from utils.logging import log_constructor
+from utils.logging import log_constructor, logger
 from utils.sceneobservation import SceneObservation
 
 
@@ -50,12 +51,15 @@ class CeilingAlgorithm(LearnAlgorithm):
         # TODO: for now have this as a keyboard observer,
         #       but should be a feedback device which could also come from EEG
         self._feedback_device: KeyboardObserver = feedback_device
+        self._feedback_device.subscribe_callback_to_direction(self.__key_pressed_callback)
 
         # Thread to run the training in parallel with the steps as in original CEILing algorithm
         self.__train_thread_running = threading.Event()
         self.__train_thread: Optional[threading.Thread] = None
 
         self.__lstm_state = None
+
+        self.__last_feedback: numpy.array = numpy.zeros(4)
 
     @override
     def train(self, mode: bool = True):
@@ -73,24 +77,30 @@ class CeilingAlgorithm(LearnAlgorithm):
         self, next_action: Goal | RobotAction, scene_observation: SceneObservation
     ) -> (Goal | RobotAction, HumanFeedback):
         action = next_action
-        if self._feedback_device.is_direction_commanded:
-            feedback_device_output = self._feedback_device.direction
-
-            # TODO: This is a hardcoded label for now
+        if numpy.any(self.__last_feedback):
+            # TODO: This is a hardcoded label algorithm for now
             label = torch.zeros(4)
 
             # Conversion from keyboard_observer to label. Needs to be changed so EEG output would also work
-            if feedback_device_output[5] < -0.5:  # "u" key
+            if self.__last_feedback[5] > 0.5:  # "o" key
                 label[0] = True
-            elif feedback_device_output[4] < -0.5:  # "i" key
+            elif self.__last_feedback[4] < -0.5:  # "i" key
                 label[1] = True
-            elif feedback_device_output[5] > 0.5:  # "o" key
+            elif self.__last_feedback[5] < -0.5:  # "u" key
                 label[2] = True
             else:
                 label[3] = True
 
-            action = PickPlaceObject.from_label_tensor(label, scene_observation)
-            feedback = HumanFeedback.CORRECTED
+            self.__last_feedback = numpy.zeros(self.__last_feedback.size)
+
+            action = PickPlaceObject.from_tensor(label, scene_observation)
+            if action != next_action:
+                feedback = HumanFeedback.CORRECTED
+                logger.debug(f"Corrected action:" f" original: {next_action}" f" corrected: {action}")
+            else:
+                # Reset "action" to original given action
+                action = next_action
+                feedback = HumanFeedback.GOOD
         else:
             feedback = self._feedback_device.label
         return action, feedback
@@ -113,3 +123,17 @@ class CeilingAlgorithm(LearnAlgorithm):
     @override
     def episode_finished(self):
         self._feedback_device.reset()
+
+    def __key_pressed_callback(self, action: numpy.array):
+        """
+        This function is a callback that is triggered when a key is pressed.
+
+        It checks if any action has been performed. If not, it returns and does nothing.
+        If an action has been performed, it updates the last action and sets the new command flag to True.
+
+        Args:
+            action (numpy.array): An array representing the action performed.
+        """
+        if not numpy.any(action):
+            return
+        self.__last_feedback = action

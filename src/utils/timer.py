@@ -18,7 +18,7 @@ class Timer:
         __period (float): The period in seconds between each execution of the function.
     """
 
-    def __init__(self, function: Callable[[], None], period_s: float):
+    def __init__(self, function: Callable[[], None], period_s: float, name: Optional[str] = None):
         """
         Initialize the Timer with the function to be executed and the period.
 
@@ -31,6 +31,7 @@ class Timer:
         self.__function: Final[Callable[[], None]] = function
         self.__period: Final[float] = period_s
         self.__current_thread: Optional[threading.Thread] = None
+        self.__name: Optional[str] = name
         super().__init__()
 
     def start(self):
@@ -70,4 +71,4 @@ class Timer:
             if sleep_time > 0.0:
                 time.sleep(sleep_time)
             else:
-                logger.warning("Callback took longer than period. Not sleeping.")
+                logger.warning("Callback from Timer {} took longer than period. Not sleeping.", self.__name)

@@ -96,9 +96,7 @@ class MotionPlannerPolicy(PolicyBase):
         # At the current pose and with the gripper opened
         # The current qpos has the position of all joints (9 in total), the last 2 are the gripper joints, therefore
         # we only take the first 7
-        self.__last_action: RobotAction = TargetJointPositionAction(
-            current_qpos[:7], gripper_command=self.gripper_command
-        )
+        self.__last_action: Tensor = Tensor(np.append(current_qpos[:7], self.gripper_command.value)).unsqueeze(0)
 
         self.__initial_pose: Final[Pose] = Pose(p=np.array([0.615, 0.0, 0.2]), q=np.array([0, 1, 0, 0]))
         self.gripper_command = GripperCommand.OPEN
@@ -129,9 +127,7 @@ class MotionPlannerPolicy(PolicyBase):
         with self.__target_sequence_lock:
             # If there is still a path, keep sampling from it.
             if self.__current_path:
-                action: TargetJointPositionAction = TargetJointPositionAction(
-                    np.array(self.__current_path.pop(0)), self.gripper_command
-                )
+                action: Tensor = Tensor(np.append(self.__current_path.pop(0), self.gripper_command.value)).unsqueeze(0)
                 self.__last_action = action
             else:
                 # Try to update the path to the next target, if there is no target, the last action will be returned.
@@ -177,7 +173,7 @@ class MotionPlannerPolicy(PolicyBase):
         Parameters:
             command (GripperCommand): The command for the gripper.
         """
-        logger.debug("Setting gripper command to {}", command.name)
+        logger.trace("Setting gripper command to {}", command.name)
         self.__gripper_command = command
 
     def __update_path_to_next_target(self) -> bool:
@@ -194,6 +190,7 @@ class MotionPlannerPolicy(PolicyBase):
             )
             self.gripper_command = current_action[1]
             return True
+        self.__goal_being_achieved.complete()
         return False
 
     def __plan_to_pose(self, current_qpos: np.ndarray, target_pose: Pose, time_step=0.05) -> list[np.ndarray]:

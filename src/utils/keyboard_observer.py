@@ -162,7 +162,7 @@ class KeyboardObserver:
     @property
     def direction(self) -> np.array:
         with self.__direction_lock:
-            return self.__direction
+            return self.__direction.copy()
 
     @property
     def is_direction_commanded(self) -> bool:

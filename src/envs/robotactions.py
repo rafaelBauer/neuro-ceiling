@@ -35,7 +35,7 @@ class GripperCommand(IntEnum):
             return cls.CLOSE
 
 
-@tensorclass
+# @tensorclass
 class RobotAction:
     _gripper_command: Tensor
 
@@ -60,6 +60,9 @@ class RobotAction:
     @abstractmethod
     def to_target_joint_position(self) -> "RobotAction":
         pass
+
+    def replaceable(self, other: "RobotAction") -> bool:
+        return True
 
 
 class PoseActionBase(RobotAction):
@@ -136,6 +139,6 @@ class TargetJointPositionAction(RobotAction):
         return self
 
     @classmethod
-    def from_tensor(cls, input_tensor: torch.Tensor) -> RobotAction:
+    def from_tensor(cls, input_tensor: torch.Tensor, *args) -> RobotAction:
         gripper_command = GripperCommand.from_tensor(input_tensor[-1])
         return cls(target_position=input_tensor[:-1].numpy(), gripper_command=gripper_command)
