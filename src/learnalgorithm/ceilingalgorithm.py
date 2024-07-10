@@ -68,9 +68,10 @@ class CeilingAlgorithm(LearnAlgorithm):
             self.__train_thread = threading.Thread(target=self.__train_step)
             self.__train_thread.start()
         else:
-            self.__train_thread_running.clear()
-            self.__train_thread.join()
-            self.__train_thread = None
+            if self.__train_thread_running.is_set():
+                self.__train_thread_running.clear()
+                self.__train_thread.join()
+                self.__train_thread = None
 
     @override
     def get_human_feedback(

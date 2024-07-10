@@ -116,6 +116,8 @@ class ControllerBase:
         if self._learn_algorithm is not None:
             self._learn_algorithm.set_metrics_logger(self._metrics_logger)
 
+        self.__training_mode: bool = False
+
     def train(self, mode: bool = True):
         """
         Trains the controller. If the controller has a child controller, it will first train the child, and then
@@ -123,6 +125,8 @@ class ControllerBase:
         """
         if self._child_controller is not None:
             self._child_controller.train(mode)
+
+        self.__training_mode = mode
 
         if mode:
             self._policy.train(mode)
@@ -132,6 +136,9 @@ class ControllerBase:
             if self._learn_algorithm is not None:
                 self._learn_algorithm.train(mode)
             self._policy.train(mode)
+
+    def eval(self, steps_limit: int = 0):
+        self.train(False)
 
     def start(self):
         """
