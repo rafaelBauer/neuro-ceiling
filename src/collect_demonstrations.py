@@ -78,7 +78,7 @@ def main() -> None:
     """
     np.set_printoptions(suppress=True, precision=3)
     config: Config = create_config_from_args()
-    wandb.init(config=asdict(config), project="neuro-ceiling", mode="disabled")
+    wandb.init(config=asdict(config), project="neuro-ceiling", mode="online")
 
     assert len(config.controllers) == len(
         config.policies
@@ -174,9 +174,18 @@ def main() -> None:
         controllers[0].stop()
         environment.stop()
         keyboard_obs.stop()
-        file_name = "demos_" + str(config.episodes) + ".dat"
+        file_name = "demos_" + str(config.episodes)
         if config.save_demos:
-            torch.save(replay_buffer, save_path + file_name)
+            raw_data = wandb.Artifact(
+                file_name,
+                type="dataset",
+                description="Raw dataset",
+                metadata={"source": "tensordict", "sizes": len(replay_buffer)},
+            )
+            with raw_data.new_file(file_name + ".dat", mode="wb") as file:
+                torch.save(replay_buffer, file)
+            wandb.log_artifact(raw_data)
+            torch.save(replay_buffer, save_path + file_name + ".dat")
         logger.info("Successfully finished to sample {} episodes", episodes_count[0])
 
     except KeyboardInterrupt:

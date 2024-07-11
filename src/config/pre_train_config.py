@@ -24,7 +24,7 @@ learn_algorithms = [
         batch_size=16,
         learning_rate=3e-4,
         weight_decay=3e-6,
-        steps_per_episode=200,
+        steps_per_episode=45,
         load_dataset="demos_10.dat",
         number_of_epochs=800,
     ),

@@ -205,6 +205,9 @@ class ControllerBase:
         """
 
         with self._control_variables_lock:
+            # if self.__last_controller_step.episode_finished:
+            #     return  # Do not log the step if the episode is finished
+
             action, feedback = self.__sample_action_and_feedback(self._previous_observation)
 
         assert isinstance(
@@ -222,7 +225,7 @@ class ControllerBase:
             self.__last_controller_step = ControllerStep(
                 action=action.to_tensor(),
                 scene_observation=self._previous_observation,
-                reward=self._previous_reward,
+                reward=next_reward,
                 episode_finished=new_episode_finished,
                 extra_info=new_extra_info,
             )

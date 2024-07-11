@@ -113,7 +113,7 @@ def main() -> None:
                 learn_algorithm_config, policy=policies[i], feedback_device=keyboard_obs
             )
             if learn_algorithm:
-                learn_algorithm.load_dataset_from_file()
+                learn_algorithm.load_dataset()
             learn_algorithms.append(learn_algorithm)
 
     # Traverse controllers in reverse order to create the controller hierarchy
@@ -180,7 +180,7 @@ def main() -> None:
             logger.info("Successfully trained policy for task {}", config.task)
 
         if config.episodes > 0:
-            learn_algorithms[0].save_dataset_to_file()
+            learn_algorithms[0].save_dataset()
 
     except KeyboardInterrupt:
         logger.info("Keyboard interrupt. Attempting graceful env shutdown ...")

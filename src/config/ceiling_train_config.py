@@ -24,7 +24,7 @@ learn_algorithms = [
         batch_size=16,
         learning_rate=3e-4,
         weight_decay=3e-6,
-        steps_per_episode=200,
+        steps_per_episode=45,
         load_dataset="demos_10.dat",
         save_dataset="demos_ceiling.dat",  # Number of episodes will be appended to the name before the extension
     ),
@@ -55,7 +55,7 @@ policies = [
         proprioceptive_dim=9,
         action_dim=4,
         from_file="ceiling_pretrain_policy.pt",
-        save_to_file="ceiling_trained_policy.pt",
+        save_to_file="ceiling_trained_policy_t.pt",
     ),
     MotionPlannerPolicyConfig(),
 ]
@@ -66,6 +66,6 @@ config = Config(
     policies=policies,
     learn_algorithms=learn_algorithms,
     environment_config=env_config,
-    episodes=50,
+    episodes=5,
     task="StackCubesB",
 )

@@ -55,7 +55,7 @@ config = Config(
     learn_algorithms=learn_algorithms,
     environment_config=env_config,
     episodes=10,
-    trajectory_size=200,
+    trajectory_size=45,
     task="StackCubesB",
     feedback_type="pretrain_manual",
 )
