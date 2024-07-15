@@ -9,14 +9,11 @@ from omegaconf import OmegaConf, SCMode
 
 from controller import create_controller, ControllerBase, ControllerConfig
 from envs import BaseEnvironmentConfig, create_environment, BaseEnvironment
-from envs.object import Object, Spot
-from envs.scene import Scene
 from policy import PolicyBaseConfig, PolicyBase, create_policy
 from utils.argparse import get_config_from_args
 from utils.config import ConfigBase
 from utils.keyboard_observer import KeyboardObserver
 from utils.logging import logger
-from utils.pose import Pose
 
 
 @dataclass
@@ -60,16 +57,6 @@ def main() -> None:
     """
     np.set_printoptions(suppress=True, precision=3)
     config: Config = create_config_from_args()
-
-    cube_a: Object = Object(Pose(p=[0.615, -0.2, 0.02], q=[0, 1, 0, 0]))
-    cube_b: Object = Object(Pose(p=[0.615, 0.0, 0.02], q=[0, 1, 0, 0]))
-    cube_c: Object = Object(Pose(p=[0.615, 0.2, 0.02], q=[0, 1, 0, 0]))
-
-    spot_a: Spot = Spot(object=cube_a)
-    spot_b: Spot = Spot(object=cube_b)
-    spot_c: Spot = Spot(object=cube_c)
-
-    scene: Scene = Scene([cube_a, cube_b, cube_c], [spot_a, spot_b, spot_c])
 
     keyboard_obs = KeyboardObserver()
 

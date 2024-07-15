@@ -142,9 +142,6 @@ class TrajectoriesDataset(Dataset):
         Args:
            step (TrajectoryData): The step to add.
         """
-        if step.action.size(0) == 0 or step.scene_observation.proprioceptive_obs.size(0) == 0:
-            return
-
         self.__current_trajectory.append(step)
 
         assert isinstance(step.feedback, Tensor), f"Expected feedback to be a tensor, got {type(step.feedback)}"
