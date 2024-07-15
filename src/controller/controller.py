@@ -23,6 +23,7 @@ from utils.sceneobservation import SceneObservation
 class ControllerConfig:
     _CONTROLLER_TYPE: str = field(init=True)
     ACTION_TYPE: str = field(init=True)
+    initial_goal: list = field(init=True)
 
     @property
     def controller_type(self) -> str:
@@ -92,7 +93,7 @@ class ControllerBase:
             episode_finished=False,
             extra_info={},
         )
-        self.__last_action: Goal | RobotAction = Goal()
+        self.__last_action: Goal | RobotAction = Goal(input_tensor=Tensor(config.initial_goal))
         self._control_variables_lock: threading.Lock = threading.Lock()
 
         self._goal: Goal = Goal()
@@ -141,6 +142,7 @@ class ControllerBase:
         if self._child_controller is not None:
             self._child_controller.start()
 
+        self._previous_observation = self.__reset_function()
         self._specific_start()
 
     @abstractmethod
@@ -256,7 +258,7 @@ class ControllerBase:
         self._metrics_logger.log_episode(self._episode_metrics)
         self._episode_metrics = EpisodeMetrics(self._episode_metrics.episode_number + 1)
 
-        self.set_goal(Goal())
+        self.set_goal(Goal(input_tensor=Tensor(self.__CONFIG.initial_goal)))
         self._policy.episode_finished()
         if self._learn_algorithm is not None:
             self._learn_algorithm.episode_finished()

@@ -86,10 +86,6 @@ class PickPlaceObject(Goal):
         input_tensor = torch.zeros_like(input_tensor)
         input_tensor[max_index] = 1
 
-        # If statement only to protect against very first iteration where the current_observation is empty
-        if len(current_observation.spots.values()) == 0:
-            return Goal(input_tensor.size(0))
-
         object_poses, object_being_held_by_end_effector = LabelToPoseTranslator.is_object_being_held_by_end_effector(
             current_observation
         )
