@@ -16,14 +16,17 @@ class Goal:
         of actions to perform the goal.
     """
 
-    def __init__(self, length: int = 0):
+    def __init__(self, length: int = 0, input_tensor: torch.Tensor = None):
         """
         The constructor for goal class. It doesn't take any parameters.
 
         Args:
             length (int): The length of the tensor representing the goal. Defaults to 0.
         """
-        self.__zeros: torch.Tensor = torch.zeros(length)
+        if input_tensor is not None:
+            self.__tensor: torch.Tensor = input_tensor
+        else:
+            self.__tensor: torch.Tensor = torch.zeros(length)
         self.__completed: bool = False
         self.__completed_lock: threading.Lock = threading.Lock()
 
@@ -61,7 +64,7 @@ class Goal:
         Returns:
             torch.Tensor: A tensor representing the goal.
         """
-        return self.__zeros
+        return self.__tensor
 
     @abstractmethod
     def replaceable(self, other: "Goal") -> bool:
