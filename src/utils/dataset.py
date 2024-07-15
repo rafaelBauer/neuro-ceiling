@@ -9,6 +9,7 @@ from torch.utils.data import Dataset
 
 from utils.human_feedback import HumanFeedback
 from utils.sceneobservation import SceneObservation
+from utils.logging import logger
 
 
 @tensorclass
@@ -158,6 +159,7 @@ class TrajectoriesDataset(Dataset):
         """
         Saves the current trajectory to the collection of trajectories and resets the current trajectory.
         """
+        logger.info("Saving current trajectory with {} steps to set of trajectories", len(self.__current_trajectory))
         self.__current_trajectory = self.__down_sample_current_trajectory()
         current_trajectory = TrajectoryData.from_list(self.__current_trajectory)
         # If it is empty, then it is the first trajectory
@@ -189,6 +191,18 @@ class TrajectoriesDataset(Dataset):
         indices = random.sample(range(len(self)), batch_size)
         return torch.stack([*[self[i] for i in indices]], dim=1)
 
+    def modify_feedback_from_current_step(self, feedback: HumanFeedback):
+        """
+        Modifies the feedback of the last step in the current trajectory.
+
+        Args:
+            feedback (HumanFeedback): The feedback to set.
+        """
+        if len(self.__current_trajectory) == 0:
+            return
+        self.__current_trajectory[-1].feedback = torch.Tensor([feedback])
+        return
+
     def __down_sample_current_trajectory(self):
         """
         Down-samples the current trajectory to match the trajectory size.
@@ -205,4 +219,4 @@ class TrajectoriesDataset(Dataset):
 
         indices = numpy.linspace(start=0, stop=len(self.__current_trajectory) - 1, num=self.__trajectory_size)
         indices = numpy.round(indices).astype(int)
-        return numpy.array([self.__current_trajectory[i] for i in indices])
+        return [self.__current_trajectory[i] for i in indices]

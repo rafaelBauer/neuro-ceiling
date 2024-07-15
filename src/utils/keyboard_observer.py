@@ -61,7 +61,7 @@ class KeyboardObserver:
         self.__listener = keyboard.Listener(on_press=self.__set_direction, on_release=self.__reset_direction)
         self.__direction_keys_pressed: set = set()  # store which keys are pressed
 
-        self.__label_callbacks: [Callable[[int], None]] = []
+        self.__label_callbacks: [Callable[[HumanFeedback], None]] = []
         self.__gripper_callbacks: [Callable[[float], None]] = []
         self.__direction_callbacks: [Callable[[np.array], None]] = []
         self.__reset_callbacks: [Callable[[], None]] = []
@@ -83,12 +83,12 @@ class KeyboardObserver:
         self.__hotkeys.stop()
         self.__listener.stop()
 
-    def __set_label(self, value: int) -> None:
+    def __set_label(self, value: HumanFeedback) -> None:
         with self.__label_lock:
             self.__label = value
             self.__call_callbacks(self.__label_callbacks, self.__label)
 
-    def subscribe_callback_to_label(self, callback_func: Callable[[int], None]) -> None:
+    def subscribe_callback_to_label(self, callback_func: Callable[[HumanFeedback], None]) -> None:
         with self.__label_lock:
             self.__label_callbacks.append(callback_func)
 
@@ -134,7 +134,9 @@ class KeyboardObserver:
                 idx, value = self.__KEY_MAPPING[key.char]
                 if key not in self.__direction_keys_pressed:
                     self.__direction[idx] = value
-                    self.__call_callbacks(self.__direction_callbacks, self.__direction)
+                    # Copy the value to avoid any modification from the callback
+                    # as well as if the callback uses it, in change by the KeyboardObserver the callback won't get affected
+                    self.__call_callbacks(self.__direction_callbacks, self.__direction.copy())
                     self.__direction_keys_pressed.add(key)
             except (KeyError, AttributeError):
                 pass
@@ -154,7 +156,9 @@ class KeyboardObserver:
                 old_direction_array = self.__direction.copy()
                 self.__direction[idx] = 0
                 if not np.array_equal(old_direction_array, self.__direction):
-                    self.__call_callbacks(self.__direction_callbacks, self.__direction)
+                    # Copy the value to avoid any modification from the callback
+                    # as well as if the callback uses it, in change by the KeyboardObserver the callback won't get affected
+                    self.__call_callbacks(self.__direction_callbacks, self.__direction.copy())
                 self.__direction_keys_pressed.remove(key)
             except (KeyError, AttributeError):
                 pass
@@ -191,8 +195,5 @@ class KeyboardObserver:
     @classmethod
     def __call_callbacks(cls, callbacks, value) -> None:
         if len(callbacks) != 0:
-            # Copy the value to avoid any modification from the callback
-            # as well as if the callback uses it, in change by the KeyboardObserver the callback won't get affected
-            value = value.copy()
             for callback in callbacks:
                 callback(value)
