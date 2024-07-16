@@ -2,26 +2,31 @@ import wandb
 from collections import deque
 
 from utils.human_feedback import HumanFeedback
+from utils.logging import logger
 
 
 class EpisodeMetrics:
     def __init__(self, episode_number: int):
         self.__reward: float = 0
         self.__num_steps: int = 0
-        self.__corrected_steps = 0
-        self.__good_steps = 0
-        self.__bad_steps = 0
+        self.__feedback_counter = {HumanFeedback.GOOD: 0, HumanFeedback.CORRECTED: 0, HumanFeedback.BAD: 0}
+        self.__last_feedback = HumanFeedback.GOOD
         self.__EPISODE_NUMBER = episode_number
 
     def log_step(self, reward, feedback: HumanFeedback):
         self.__reward += reward.item()
         self.__num_steps += 1
-        if feedback == HumanFeedback.CORRECTED:
-            self.__corrected_steps += 1
-        elif feedback == HumanFeedback.GOOD:
-            self.__good_steps += 1
-        elif feedback == HumanFeedback.BAD:
-            self.__bad_steps += 1
+        self.__feedback_counter[feedback] += 1
+        self.__last_feedback = feedback
+        return
+
+    def update_current_step_feedback(self, feedback: HumanFeedback):
+        if self.__num_steps == 0:
+            return
+        logger.debug(f"Metrics: Updated feedback {self.__last_feedback.name} to {feedback.name}")
+        self.__feedback_counter[self.__last_feedback] -= 1
+        self.__feedback_counter[feedback] += 1
+        self.__last_feedback = feedback
         return
 
     @property
@@ -34,33 +39,33 @@ class EpisodeMetrics:
 
     @property
     def corrected_steps(self):
-        return self.__corrected_steps
+        return self.__feedback_counter[HumanFeedback.CORRECTED]
 
     @property
     def good_steps(self):
-        return self.__good_steps
+        return self.__feedback_counter[HumanFeedback.GOOD]
 
     @property
     def bad_steps(self):
-        return self.__bad_steps
+        return self.__feedback_counter[HumanFeedback.BAD]
 
     @property
     def corrected_rate(self):
         if self.__num_steps == 0:
             return 0
-        return self.__corrected_steps / self.__num_steps
+        return self.corrected_steps / self.__num_steps
 
     @property
     def good_rate(self):
         if self.__num_steps == 0:
             return 0
-        return self.__good_steps / self.__num_steps
+        return self.good_steps / self.__num_steps
 
     @property
     def bad_rate(self):
         if self.__num_steps == 0:
             return 0
-        return self.__bad_steps / self.__num_steps
+        return self.bad_steps / self.__num_steps
 
     @property
     def episode_number(self):
@@ -82,9 +87,7 @@ class MetricsLogger:
         self.total_successes = 0
         self.total_episodes = 0
         self.total_steps = 0
-        self.total_corrected_steps = 0
-        self.total_good_steps = 0
-        self.total_bad_steps = 0
+        self.total_feedback_steps = {HumanFeedback.GOOD: 0, HumanFeedback.CORRECTED: 0, HumanFeedback.BAD: 0}
         self.episode_metrics = deque(maxlen=1)
 
         return
@@ -102,9 +105,9 @@ class MetricsLogger:
         if episode_metrics.reward > 0:
             self.total_successes += 1
         self.total_steps += episode_metrics.num_steps
-        self.total_corrected_steps += episode_metrics.corrected_steps
-        self.total_good_steps += episode_metrics.good_steps
-        self.total_bad_steps += episode_metrics.bad_steps
+        self.total_feedback_steps[HumanFeedback.CORRECTED] += episode_metrics.corrected_steps
+        self.total_feedback_steps[HumanFeedback.GOOD] += episode_metrics.good_steps
+        self.total_feedback_steps[HumanFeedback.BAD] += episode_metrics.bad_steps
         return
 
     def log_session(self):
@@ -117,9 +120,9 @@ class MetricsLogger:
             good_rate = 0
             bad_rate = 0
         else:
-            corrected_rate = self.total_corrected_steps / self.total_steps
-            good_rate = self.total_good_steps / self.total_steps
-            bad_rate = self.total_bad_steps / self.total_steps
+            corrected_rate = self.total_feedback_steps[HumanFeedback.CORRECTED] / self.total_steps
+            good_rate = self.total_feedback_steps[HumanFeedback.GOOD] / self.total_steps
+            bad_rate = self.total_feedback_steps[HumanFeedback.BAD] / self.total_steps
         wandb.run.summary["success_rate"] = success_rate
         wandb.run.summary["total_corrected_rate"] = corrected_rate
         wandb.run.summary["total_good_rate"] = good_rate

@@ -1,6 +1,7 @@
+import os.path
 from abc import abstractmethod
 from dataclasses import dataclass, field
-from typing import Final, TypeVar, Type, Optional
+from typing import Final, TypeVar, Type, Optional, Callable
 
 import torch
 import wandb
@@ -72,12 +73,15 @@ class LearnAlgorithm:
 
         # Optimizer
         self._optimizer = optimizer
+
         self._metrics_logger = MetricsLogger()
+
+        self._feedback_update_callback: Optional[Callable[[HumanFeedback], None]] = None
 
         policy.to(device)
         wandb.watch(policy, log_freq=100)
 
-    def load_dataset_from_file(self):
+    def load_dataset(self):
         """
         This method is responsible for loading a dataset from a file into the replay buffer.
 
@@ -96,7 +100,7 @@ class LearnAlgorithm:
                 collate_fn=lambda x: x,
             )
 
-    def save_dataset_to_file(self):
+    def save_dataset(self):
         """
         This method is responsible for saving the current state of the replay buffer to a file.
 
@@ -106,6 +110,16 @@ class LearnAlgorithm:
         """
         if self._CONFIG.save_dataset:
             torch.save(self._replay_buffer, self._CONFIG.save_dataset)
+            file_name_and_extension = os.path.basename(self._CONFIG.save_dataset)
+            raw_data = wandb.Artifact(
+                os.path.splitext(file_name_and_extension)[0],
+                type="dataset",
+                description="Raw dataset",
+                metadata={"source": "tensordict", "sizes": len(self._replay_buffer)},
+            )
+            with raw_data.new_file(file_name_and_extension, mode="wb") as file:
+                torch.save(self._replay_buffer, file)
+            wandb.log_artifact(raw_data)
             logger.info("Successfully saved dataset {}", self._CONFIG.save_dataset)
 
     def set_metrics_logger(self, metrics_logger: MetricsLogger):
@@ -116,6 +130,15 @@ class LearnAlgorithm:
             metrics_logger (MetricsLogger): The metrics logger to set.
         """
         self._metrics_logger = metrics_logger
+
+    def set_feedback_update_callback(self, feedback_update_callback: Callable[[HumanFeedback], None]):
+        """
+        This method is responsible for setting the feedback update callback of the learn algorithm.
+
+        Args:
+            feedback_update_callback: The feedback update callback to set.
+        """
+        self._feedback_update_callback = feedback_update_callback
 
     @abstractmethod
     def train(self, mode: bool = True):

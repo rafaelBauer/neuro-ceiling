@@ -103,6 +103,6 @@ class PickPlaceObject(Goal):
         if target_pose is not None:
             new_goal = cls(pose=target_pose, objective=pick_place, label_source=input_tensor)
         else:
-            new_goal = Goal(input_tensor.size(0))
+            new_goal = Goal(input_tensor=input_tensor)
 
         return new_goal

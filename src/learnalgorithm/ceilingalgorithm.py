@@ -52,6 +52,7 @@ class CeilingAlgorithm(LearnAlgorithm):
         #       but should be a feedback device which could also come from EEG
         self._feedback_device: KeyboardObserver = feedback_device
         self._feedback_device.subscribe_callback_to_direction(self.__key_pressed_callback)
+        self._feedback_device.subscribe_callback_to_label(self.__feedback_device_label_callback)
 
         # Thread to run the training in parallel with the steps as in original CEILing algorithm
         self.__train_thread_running = threading.Event()
@@ -68,9 +69,10 @@ class CeilingAlgorithm(LearnAlgorithm):
             self.__train_thread = threading.Thread(target=self.__train_step)
             self.__train_thread.start()
         else:
-            self.__train_thread_running.clear()
-            self.__train_thread.join()
-            self.__train_thread = None
+            if self.__train_thread_running.is_set():
+                self.__train_thread_running.clear()
+                self.__train_thread.join()
+                self.__train_thread = None
 
     @override
     def get_human_feedback(
@@ -96,7 +98,7 @@ class CeilingAlgorithm(LearnAlgorithm):
             action = PickPlaceObject.from_tensor(label, scene_observation)
             if action != next_action:
                 feedback = HumanFeedback.CORRECTED
-                logger.debug(f"Corrected action:" f" original: {next_action}" f" corrected: {action}")
+                logger.debug(f"Corrected action:\n" f"     original: {next_action}\n" f"     corrected: {action}")
             else:
                 # Reset "action" to original given action
                 action = next_action
@@ -137,3 +139,17 @@ class CeilingAlgorithm(LearnAlgorithm):
         if not numpy.any(action):
             return
         self.__last_feedback = action
+
+    def __feedback_device_label_callback(self, label: HumanFeedback):
+        """
+        This function is a callback that is triggered when a label is received from the feedback device.
+
+        It updates the feedback label.
+
+        Args:
+            label (HumanFeedback): The label received.
+        """
+        if label == HumanFeedback.BAD:
+            self._replay_buffer.modify_feedback_from_current_step(label)
+            self._feedback_update_callback(label)
+        return

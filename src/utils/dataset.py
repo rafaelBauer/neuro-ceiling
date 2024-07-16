@@ -1,4 +1,5 @@
 import random
+import threading
 
 import numpy
 import torch
@@ -9,6 +10,7 @@ from torch.utils.data import Dataset
 
 from utils.human_feedback import HumanFeedback
 from utils.sceneobservation import SceneObservation
+from utils.logging import logger
 
 
 @tensorclass
@@ -99,9 +101,7 @@ class TrajectoriesDataset(Dataset):
         self.__trajectory_size = trajectory_size
         self.__current_trajectory: list[TrajectoryData] = []
         self.__trajectories: TrajectoryData = TrajectoryData.empty()
-        self.__good_count = 0
-        self.__corrected_count = 0
-        self.__bad_count = 0
+        self.__feedback_counter = {HumanFeedback.GOOD: 0, HumanFeedback.CORRECTED: 0, HumanFeedback.BAD: 0}
         return
 
     def __getitem__(self, idx):
@@ -114,10 +114,12 @@ class TrajectoriesDataset(Dataset):
         Returns:
             TrajectoryData: The retrieved trajectory.
         """
-        if self.__corrected_count < 10:
+        if self.__feedback_counter[HumanFeedback.CORRECTED] < 10:
             alpha = 1
         else:
-            alpha = (self.__good_count + self.__bad_count) / self.__corrected_count
+            alpha = (
+                self.__feedback_counter[HumanFeedback.GOOD] + self.__feedback_counter[HumanFeedback.BAD]
+            ) / self.__feedback_counter[HumanFeedback.CORRECTED]
 
         trajectory = self.__trajectories[idx].copy()
         for trajectory_step in trajectory:
@@ -146,18 +148,14 @@ class TrajectoriesDataset(Dataset):
 
         assert isinstance(step.feedback, Tensor), f"Expected feedback to be a tensor, got {type(step.feedback)}"
 
-        if step.feedback[0] == HumanFeedback.GOOD:
-            self.__good_count += 1
-        elif step.feedback[0] == HumanFeedback.CORRECTED:
-            self.__corrected_count += 1
-        elif step.feedback[0] == HumanFeedback.BAD:
-            self.__bad_count += 1
+        self.__feedback_counter[HumanFeedback(step.feedback[0].item())] += 1
         return
 
     def save_current_traj(self):
         """
         Saves the current trajectory to the collection of trajectories and resets the current trajectory.
         """
+        logger.info("Saving current trajectory with {} steps to set of trajectories", len(self.__current_trajectory))
         self.__current_trajectory = self.__down_sample_current_trajectory()
         current_trajectory = TrajectoryData.from_list(self.__current_trajectory)
         # If it is empty, then it is the first trajectory
@@ -189,6 +187,24 @@ class TrajectoriesDataset(Dataset):
         indices = random.sample(range(len(self)), batch_size)
         return torch.stack([*[self[i] for i in indices]], dim=1)
 
+    def modify_feedback_from_current_step(self, feedback: HumanFeedback):
+        """
+        Modifies the feedback of the last step in the current trajectory.
+
+        Args:
+            feedback (HumanFeedback): The feedback to set.
+        """
+        if len(self.__current_trajectory) == 0:
+            return
+        logger.debug(
+            f"Dataset: Updated feedback {HumanFeedback(self.__current_trajectory[-1].feedback[0].item()).name} "
+            f"to {feedback.name}"
+        )
+        self.__feedback_counter[HumanFeedback(self.__current_trajectory[-1].feedback[0].item())] -= 1
+        self.__current_trajectory[-1].feedback = torch.Tensor([feedback])
+        self.__feedback_counter[feedback] += 1
+        return
+
     def __down_sample_current_trajectory(self):
         """
         Down-samples the current trajectory to match the trajectory size.
@@ -205,4 +221,4 @@ class TrajectoriesDataset(Dataset):
 
         indices = numpy.linspace(start=0, stop=len(self.__current_trajectory) - 1, num=self.__trajectory_size)
         indices = numpy.round(indices).astype(int)
-        return numpy.array([self.__current_trajectory[i] for i in indices])
+        return [self.__current_trajectory[i] for i in indices]

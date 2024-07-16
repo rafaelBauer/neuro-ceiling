@@ -116,6 +116,9 @@ class ControllerBase:
 
         if self._learn_algorithm is not None:
             self._learn_algorithm.set_metrics_logger(self._metrics_logger)
+            self._learn_algorithm.set_feedback_update_callback(self.feedback_update_callback)
+
+        self.__training_mode: bool = False
 
     def train(self, mode: bool = True):
         """
@@ -125,6 +128,8 @@ class ControllerBase:
         if self._child_controller is not None:
             self._child_controller.train(mode)
 
+        self.__training_mode = mode
+
         if mode:
             self._policy.train(mode)
             if self._learn_algorithm is not None:
@@ -133,6 +138,9 @@ class ControllerBase:
             if self._learn_algorithm is not None:
                 self._learn_algorithm.train(mode)
             self._policy.train(mode)
+
+    def eval(self, steps_limit: int = 0):
+        self.train(False)
 
     def start(self):
         """
@@ -217,7 +225,7 @@ class ControllerBase:
             self.__last_controller_step = ControllerStep(
                 action=action.to_tensor(),
                 scene_observation=self._previous_observation,
-                reward=self._previous_reward,
+                reward=next_reward,
                 episode_finished=new_episode_finished,
                 extra_info=new_extra_info,
             )
@@ -291,3 +299,6 @@ class ControllerBase:
         with self._control_variables_lock:
             self._previous_observation = child_controller_step.scene_observation
             self._previous_reward = child_controller_step.reward
+
+    def feedback_update_callback(self, feedback: HumanFeedback):
+        self._episode_metrics.update_current_step_feedback(feedback)

@@ -1,7 +1,8 @@
 from pre_train import Config
 
 # from task.stack_cubes_a_config import config as task_config
-from task.stack_cubes_b_config import config as task_config
+# from task.stack_cubes_b_config import config as task_config
+from task.stack_cubes_ind_spot_config import config as task_config
 
 
 # ====== ManiSkill environment ========
@@ -24,8 +25,8 @@ learn_algorithms = [
         batch_size=16,
         learning_rate=3e-4,
         weight_decay=3e-6,
-        steps_per_episode=200,
-        load_dataset="demos_10.dat",
+        steps_per_episode=45,
+        load_dataset="demos_2.dat",
         save_dataset="demos_ceiling.dat",  # Number of episodes will be appended to the name before the extension
     ),
     NoLearnAlgorithmConfig(),
@@ -57,7 +58,7 @@ policies = [
         proprioceptive_dim=9,
         action_dim=4,
         from_file="ceiling_pretrain_policy.pt",
-        save_to_file="ceiling_trained_policy.pt",
+        save_to_file="ceiling_trained_policy_new.pt",
     ),
     MotionPlannerPolicyConfig(),
 ]
@@ -68,6 +69,6 @@ config = Config(
     policies=policies,
     learn_algorithms=learn_algorithms,
     environment_config=env_config,
-    episodes=50,
-    task="StackCubesB",
+    episodes=20,
+    task="StackCubesInd",
 )
