@@ -19,6 +19,7 @@ For a minimal implementation of a simple task, check out
 mani_skill /envs/tasks/push_cube.py which is annotated with comments to explain how it is implemented
 """
 
+import math
 import random
 from typing import Union, Any, Dict, Final
 
@@ -224,11 +225,17 @@ class NeuroCeilingEnv(BaseEnv):
 
         robot_pose: Final[pose_utils.Pose] = pose_utils.Pose(obj=self.agent.robot.pose.sp)
         target_positions = torch.zeros(len(self._task_config.target_objects_pose), device=self.device, dtype=bool)
+        sorted_by_z = sorted(self._task_config.target_objects_pose.items(), key=lambda x: x[1].p[2])
+        if math.isnan(sorted_by_z[0][1].p[1]):
+            target_y = self.actors[sorted_by_z[0][0]].pose.sp.p[1]
+        else:
+            target_y = sorted_by_z[0][1].p[1]
 
-        for i, (name, target_pose) in enumerate(self._task_config.target_objects_pose.items()):
+        for i, (name, target_pose) in enumerate(sorted_by_z):
             actor_pose: pose_utils.Pose = pose_utils.Pose(
                 obj=(robot_pose.inv() * pose_utils.Pose(obj=self.actors[name].pose.sp))
             )
+            target_pose.p = [target_pose.p[0], target_y, target_pose.p[2]]
             # Make sure that the actor is close to the target pose
             target_positions[i] = target_pose.is_close(actor_pose, atol=self.goal_thresh)
         return {

@@ -1,7 +1,8 @@
 from pre_train import Config
 
 # from task.stack_cubes_a_config import config as task_config
-from task.stack_cubes_b_config import config as task_config
+# from task.stack_cubes_b_config import config as task_config
+from task.stack_cubes_ind_spot_config import config as task_config
 
 
 # ====== ManiSkill environment ========
@@ -25,7 +26,7 @@ learn_algorithms = [
         learning_rate=3e-4,
         weight_decay=3e-6,
         steps_per_episode=45,
-        load_dataset="demos_10.dat",
+        load_dataset="demos_2.dat",
         number_of_epochs=800,
     ),
     NoLearnAlgorithmConfig(),
@@ -69,5 +70,5 @@ config = Config(
     learn_algorithms=learn_algorithms,
     environment_config=env_config,
     episodes=0,
-    task="StackCubesB",
+    task="StackCubesInd",
 )

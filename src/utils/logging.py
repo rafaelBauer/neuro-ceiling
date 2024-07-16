@@ -1,8 +1,9 @@
+import sys
 from contextlib import contextmanager
 from contextvars import ContextVar
 from functools import wraps
 
-import tqdm
+from tqdm import tqdm
 from loguru import logger
 
 logger_indentation = ContextVar("logger_indentation", default=0)
@@ -35,7 +36,7 @@ class DuplicateFilter:
 
 
 def write_tqdm(msg):
-    tqdm.tqdm.write(msg, end="")
+    tqdm.write(msg, end="")
 
 
 def formatter(record):
@@ -50,8 +51,7 @@ def formatter(record):
 
 def setup_logger() -> logger:
     logger.remove()
-    duplicate_filter = DuplicateFilter()
-    logger.add(write_tqdm, colorize=True, format=formatter, filter=duplicate_filter, level="DEBUG")
+    logger.add(write_tqdm, colorize=True, format=formatter, level="DEBUG")
 
     return logger
 
@@ -94,6 +94,5 @@ def log_constructor(init_func):
 #         loguru.logger.add(write_tqdm, colorize=True, format=formatter, filter=duplicate_filter)
 #
 #         return loguru.logger
-
 
 logger = setup_logger()

@@ -1,7 +1,8 @@
 from collect_demonstrations import Config
 
 # from task.stack_cubes_a_config import config as task_config
-from task.stack_cubes_b_config import config as task_config
+# from task.stack_cubes_b_config import config as task_config
+from task.stack_cubes_ind_spot_config import config as task_config
 
 
 # ====== ManiSkill environment ========
@@ -56,8 +57,8 @@ config = Config(
     policies=policies,
     learn_algorithms=learn_algorithms,
     environment_config=env_config,
-    episodes=10,
+    episodes=2,
     trajectory_size=45,
-    task="StackCubesB",
+    task="StackCubesInd",
     feedback_type="pretrain_manual",
 )

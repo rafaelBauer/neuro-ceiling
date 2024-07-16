@@ -1,4 +1,5 @@
 import random
+import threading
 
 import numpy
 import torch
@@ -100,9 +101,7 @@ class TrajectoriesDataset(Dataset):
         self.__trajectory_size = trajectory_size
         self.__current_trajectory: list[TrajectoryData] = []
         self.__trajectories: TrajectoryData = TrajectoryData.empty()
-        self.__good_count = 0
-        self.__corrected_count = 0
-        self.__bad_count = 0
+        self.__feedback_counter = {HumanFeedback.GOOD: 0, HumanFeedback.CORRECTED: 0, HumanFeedback.BAD: 0}
         return
 
     def __getitem__(self, idx):
@@ -115,10 +114,12 @@ class TrajectoriesDataset(Dataset):
         Returns:
             TrajectoryData: The retrieved trajectory.
         """
-        if self.__corrected_count < 10:
+        if self.__feedback_counter[HumanFeedback.CORRECTED] < 10:
             alpha = 1
         else:
-            alpha = (self.__good_count + self.__bad_count) / self.__corrected_count
+            alpha = (
+                self.__feedback_counter[HumanFeedback.GOOD] + self.__feedback_counter[HumanFeedback.BAD]
+            ) / self.__feedback_counter[HumanFeedback.CORRECTED]
 
         trajectory = self.__trajectories[idx].copy()
         for trajectory_step in trajectory:
@@ -147,12 +148,7 @@ class TrajectoriesDataset(Dataset):
 
         assert isinstance(step.feedback, Tensor), f"Expected feedback to be a tensor, got {type(step.feedback)}"
 
-        if step.feedback[0] == HumanFeedback.GOOD:
-            self.__good_count += 1
-        elif step.feedback[0] == HumanFeedback.CORRECTED:
-            self.__corrected_count += 1
-        elif step.feedback[0] == HumanFeedback.BAD:
-            self.__bad_count += 1
+        self.__feedback_counter[HumanFeedback(step.feedback[0].item())] += 1
         return
 
     def save_current_traj(self):
@@ -200,7 +196,13 @@ class TrajectoriesDataset(Dataset):
         """
         if len(self.__current_trajectory) == 0:
             return
+        logger.debug(
+            f"Dataset: Updated feedback {HumanFeedback(self.__current_trajectory[-1].feedback[0].item()).name} "
+            f"to {feedback.name}"
+        )
+        self.__feedback_counter[HumanFeedback(self.__current_trajectory[-1].feedback[0].item())] -= 1
         self.__current_trajectory[-1].feedback = torch.Tensor([feedback])
+        self.__feedback_counter[feedback] += 1
         return
 
     def __down_sample_current_trajectory(self):

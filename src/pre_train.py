@@ -7,7 +7,6 @@ import numpy as np
 import torch
 import wandb
 from omegaconf import OmegaConf, SCMode
-from torch.utils.data import RandomSampler, DataLoader
 
 from tqdm.auto import tqdm
 
@@ -21,7 +20,6 @@ from utils.config import ConfigBase
 from utils.device import device
 from utils.keyboard_observer import KeyboardObserver
 from utils.logging import logger
-from utils.metricslogger import MetricsLogger
 
 
 @dataclass
@@ -152,7 +150,7 @@ def main() -> None:
             # In python, immutable objects are passed by value whereas mutable objects are passed by reference.
             episodes_count: list[int] = [0]
 
-            with tqdm(total=config.episodes, desc="Sampling Episodes") as progress_bar:
+            with tqdm(total=config.episodes, desc="Sampling Episodes", position=0) as progress_bar:
 
                 def post_step(controller_step: ControllerStep):
                     if controller_step.episode_finished:

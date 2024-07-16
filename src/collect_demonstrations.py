@@ -78,7 +78,7 @@ def main() -> None:
     """
     np.set_printoptions(suppress=True, precision=3)
     config: Config = create_config_from_args()
-    wandb.init(config=asdict(config), project="neuro-ceiling", mode="online")
+    wandb.init(config=asdict(config), project="neuro-ceiling", mode="offline")
 
     assert len(config.controllers) == len(
         config.policies

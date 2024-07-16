@@ -150,5 +150,6 @@ class CeilingAlgorithm(LearnAlgorithm):
             label (HumanFeedback): The label received.
         """
         if label == HumanFeedback.BAD:
-            self._replay_buffer.modify_feedback_from_current_step(HumanFeedback.BAD)
+            self._replay_buffer.modify_feedback_from_current_step(label)
+            self._feedback_update_callback(label)
         return

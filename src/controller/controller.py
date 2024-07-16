@@ -116,6 +116,7 @@ class ControllerBase:
 
         if self._learn_algorithm is not None:
             self._learn_algorithm.set_metrics_logger(self._metrics_logger)
+            self._learn_algorithm.set_feedback_update_callback(self.feedback_update_callback)
 
         self.__training_mode: bool = False
 
@@ -207,9 +208,6 @@ class ControllerBase:
         """
 
         with self._control_variables_lock:
-            # if self.__last_controller_step.episode_finished:
-            #     return  # Do not log the step if the episode is finished
-
             action, feedback = self.__sample_action_and_feedback(self._previous_observation)
 
         assert isinstance(
@@ -301,3 +299,6 @@ class ControllerBase:
         with self._control_variables_lock:
             self._previous_observation = child_controller_step.scene_observation
             self._previous_reward = child_controller_step.reward
+
+    def feedback_update_callback(self, feedback: HumanFeedback):
+        self._episode_metrics.update_current_step_feedback(feedback)

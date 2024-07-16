@@ -1,7 +1,7 @@
 import os.path
 from abc import abstractmethod
 from dataclasses import dataclass, field
-from typing import Final, TypeVar, Type, Optional
+from typing import Final, TypeVar, Type, Optional, Callable
 
 import torch
 import wandb
@@ -73,7 +73,10 @@ class LearnAlgorithm:
 
         # Optimizer
         self._optimizer = optimizer
+
         self._metrics_logger = MetricsLogger()
+
+        self._feedback_update_callback: Optional[Callable[[HumanFeedback], None]] = None
 
         policy.to(device)
         wandb.watch(policy, log_freq=100)
@@ -127,6 +130,15 @@ class LearnAlgorithm:
             metrics_logger (MetricsLogger): The metrics logger to set.
         """
         self._metrics_logger = metrics_logger
+
+    def set_feedback_update_callback(self, feedback_update_callback: Callable[[HumanFeedback], None]):
+        """
+        This method is responsible for setting the feedback update callback of the learn algorithm.
+
+        Args:
+            feedback_update_callback: The feedback update callback to set.
+        """
+        self._feedback_update_callback = feedback_update_callback
 
     @abstractmethod
     def train(self, mode: bool = True):
