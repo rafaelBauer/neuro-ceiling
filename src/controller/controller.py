@@ -55,13 +55,13 @@ class ControllerBase:
 
     # @log_constructor
     def __init__(
-            self,
-            config: ControllerConfig,
-            environment: BaseEnvironment,
-            policy: PolicyBase,
-            action_type: Type = Goal,
-            child_controller: Optional["ControllerBase"] = None,
-            learn_algorithm: Optional[LearnAlgorithm] = None,
+        self,
+        config: ControllerConfig,
+        environment: BaseEnvironment,
+        policy: PolicyBase,
+        action_type: Type = Goal,
+        child_controller: Optional["ControllerBase"] = None,
+        learn_algorithm: Optional[LearnAlgorithm] = None,
     ):
         """
         Initializes the ControllerBase class.
