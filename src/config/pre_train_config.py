@@ -39,7 +39,9 @@ from controller.periodiccontroller import PeriodicControllerConfig
 # The controller at index N-1 will interact with the environment, while the others will interact with the controller
 # at the next index.
 controllers = [
-    PeriodicControllerConfig(ACTION_TYPE="PickPlaceObject", polling_period_s=5, initial_goal=[0, 0, 0, 1]),
+    PeriodicControllerConfig(
+        ACTION_TYPE="PickPlaceObject", polling_period_s=5, initial_goal=[0, 0, 0, 1], log_metrics=True
+    ),
     PeriodicControllerConfig(
         ACTION_TYPE="TargetJointPositionAction", polling_period_s=0.05, initial_goal=[0, 0, 0, 0, 0, 0, 0]
     ),
