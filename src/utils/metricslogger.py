@@ -95,6 +95,7 @@ class MetricsLogger:
     def log_episode(self, episode_metrics: EpisodeMetrics):
         log_episode_metrics = {
             "reward": episode_metrics.reward,
+            "num_steps": episode_metrics.num_steps,
             "ep_corrected_rate": episode_metrics.corrected_rate,
             "ep_good_rate": episode_metrics.good_rate,
             "ep_bad_rate": episode_metrics.bad_rate,

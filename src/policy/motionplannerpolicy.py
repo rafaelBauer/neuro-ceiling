@@ -230,7 +230,11 @@ class MotionPlannerPolicy(PolicyBase):
         #   - acceleration: a NumPy array of shape (n x m) describing the joint accelerations of the waypoints.
         plan = self.__path_planner.plan_screw(target_pose.mplib_pose, current_qpos, time_step=time_step)
         if not plan["status"] == "Success":
-            plan = self.__path_planner.plan_pose(target_pose.mplib_pose, current_qpos, time_step=time_step)
+            try:
+                plan = self.__path_planner.plan_pose(target_pose.mplib_pose, current_qpos, time_step=time_step)
+            except Exception as e:
+                logger.error("Could not plan path. Current pose {} -> Target pose {}", current_qpos, target_pose)
+                return []
             if not plan["status"] == "Success":
                 logger.error("Could not plan path. Current pose {} -> Target pose {}", current_qpos, target_pose)
                 return []
