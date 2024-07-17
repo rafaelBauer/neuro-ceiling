@@ -5,7 +5,7 @@ import torch
 from torch import nn, Tensor
 
 from goal.goal import Goal
-from utils.logging import log_constructor
+from utils.logging import log_constructor, logger
 from utils.sceneobservation import SceneObservation
 
 
@@ -57,10 +57,12 @@ class PolicyBase(nn.Module):
 
     def load_from_file(self):
         if self._CONFIG.from_file:
+            logger.info(f"Loading policy from file: {self._CONFIG.from_file}")
             self.load_state_dict(torch.load(self._CONFIG.from_file))
 
     def save_to_file(self):
         if self._CONFIG.save_to_file:
+            logger.info(f"Saving policy to file: {self._CONFIG.save_to_file}")
             torch.save(self.state_dict(), self._CONFIG.save_to_file)
 
     @abstractmethod

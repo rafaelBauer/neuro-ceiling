@@ -21,14 +21,7 @@ from learnalgorithm.ceilingalgorithm import CeilingAlgorithmConfig
 from learnalgorithm.learnalgorithm import LearnAlgorithmConfig, NoLearnAlgorithmConfig
 
 learn_algorithms = [
-    BehaviorCloningAlgorithmConfig(
-        batch_size=16,
-        learning_rate=3e-4,
-        weight_decay=3e-6,
-        steps_per_episode=45,
-        load_dataset="demos_2.dat",
-        number_of_epochs=800,
-    ),
+    NoLearnAlgorithmConfig(),
     NoLearnAlgorithmConfig(),
 ]
 
@@ -40,7 +33,7 @@ from controller.periodiccontroller import PeriodicControllerConfig
 # at the next index.
 controllers = [
     PeriodicControllerConfig(
-        ACTION_TYPE="PickPlaceObject", polling_period_s=5, initial_goal=[0, 0, 0, 1], log_metrics=True
+        ACTION_TYPE="PickPlaceObject", polling_period_s=5, initial_goal=[0, 0, 0, 1], max_steps=30, log_metrics=True
     ),
     PeriodicControllerConfig(
         ACTION_TYPE="TargetJointPositionAction", polling_period_s=0.05, initial_goal=[0, 0, 0, 0, 0, 0, 0]
@@ -59,8 +52,7 @@ policies = [
         visual_embedding_dim=256,
         proprioceptive_dim=9,
         action_dim=4,
-        # from_file="pretrain_manual_policy.pt"
-        save_to_file="ceiling_pretrain_policy.pt",
+        from_file="ceiling_trained_policy_new.pt",
     ),
     MotionPlannerPolicyConfig(),
 ]
@@ -71,6 +63,6 @@ config = Config(
     policies=policies,
     learn_algorithms=learn_algorithms,
     environment_config=env_config,
-    episodes=0,
+    episodes=100,
     task="StackCubesInd",
 )

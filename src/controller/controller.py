@@ -3,6 +3,7 @@ from abc import abstractmethod
 from dataclasses import dataclass, field
 from typing import Final, Optional, Callable, Generic, TypeVar, Type
 
+import wandb
 from tensordict import TensorDict
 from torch import Tensor
 import torch
@@ -13,6 +14,7 @@ from envs.robotactions import RobotAction
 from learnalgorithm.learnalgorithm import LearnAlgorithm
 from policy import PolicyBase
 from goal.goal import Goal
+from utils.device import device
 from utils.human_feedback import HumanFeedback
 from utils.logging import log_constructor, logger
 from utils.metricslogger import MetricsLogger, EpisodeMetrics
@@ -24,6 +26,8 @@ class ControllerConfig:
     _CONTROLLER_TYPE: str = field(init=True)
     ACTION_TYPE: str = field(init=True)
     initial_goal: list = field(init=True)
+    max_steps: int = field(init=True, default=0)
+    log_metrics: bool = field(init=True, default=False)
 
     @property
     def controller_type(self) -> str:
@@ -77,6 +81,7 @@ class ControllerBase:
         self._learn_algorithm: Final[LearnAlgorithm] = learn_algorithm
         self._child_controller: Optional[ControllerBase] = child_controller
 
+        self._policy.to(device)
         # Control variables for learning
         self._previous_observation: SceneObservation = SceneObservation(
             camera_observation={},
@@ -111,14 +116,20 @@ class ControllerBase:
         if self._child_controller is not None:
             self._child_controller.set_post_step_function(self.child_controller_observation_callback)
 
-        self._episode_metrics = EpisodeMetrics(0)
-        self._metrics_logger = MetricsLogger()
+        if self.__CONFIG.log_metrics:
+            self._episode_metrics = EpisodeMetrics(0)
+            self._metrics_logger = MetricsLogger()
+        else:
+            self._episode_metrics = None
+            self._metrics_logger = None
 
         if self._learn_algorithm is not None:
             self._learn_algorithm.set_metrics_logger(self._metrics_logger)
             self._learn_algorithm.set_feedback_update_callback(self.feedback_update_callback)
 
         self.__training_mode: bool = False
+
+        self.__step_number: int = 0
 
     def train(self, mode: bool = True):
         """
@@ -169,7 +180,8 @@ class ControllerBase:
             self._child_controller.stop()
 
         self._specific_stop()
-        self._metrics_logger.log_session()
+        if self.__CONFIG.log_metrics:
+            self._metrics_logger.log_session()
 
     @abstractmethod
     def _specific_stop(self):
@@ -206,6 +218,11 @@ class ControllerBase:
         Performs a step in the controller. This method is responsible for executing the action and updating the state
         of the controller.
         """
+        if 0 < self.__CONFIG.max_steps < self.__step_number:
+            self.__last_controller_step.episode_finished = True
+            if self.__post_step_function is not None:
+                self.__post_step_function(self.__last_controller_step)
+            return
 
         with self._control_variables_lock:
             action, feedback = self.__sample_action_and_feedback(self._previous_observation)
@@ -230,7 +247,8 @@ class ControllerBase:
                 extra_info=new_extra_info,
             )
 
-            self._episode_metrics.log_step(self.__last_controller_step.reward, feedback)
+            if self.__CONFIG.log_metrics:
+                self._episode_metrics.log_step(self.__last_controller_step.reward, feedback)
             # Only updates if there is no child controller, because the child controller will update the previous
             # at every step of itself.
             if self._child_controller is None:
@@ -242,6 +260,8 @@ class ControllerBase:
 
         if self.__post_step_function is not None:
             self.__post_step_function(self.__last_controller_step)
+
+        self.__step_number += 1
 
     def __sample_action_and_feedback(self, scene_observation: SceneObservation) -> (Goal | RobotAction, HumanFeedback):
         action = self._policy(scene_observation)
@@ -263,13 +283,19 @@ class ControllerBase:
 
     def reset(self) -> SceneObservation:
         # Log current episode metrics and create new episode metrics object
-        self._metrics_logger.log_episode(self._episode_metrics)
-        self._episode_metrics = EpisodeMetrics(self._episode_metrics.episode_number + 1)
+        if self.__CONFIG.log_metrics:
+            self._metrics_logger.log_episode(self._episode_metrics)
+            self._episode_metrics = EpisodeMetrics(self._episode_metrics.episode_number + 1)
+
+        self.__step_number = 0
 
         self.set_goal(Goal(input_tensor=Tensor(self.__CONFIG.initial_goal)))
         self._policy.episode_finished()
         if self._learn_algorithm is not None:
             self._learn_algorithm.episode_finished()
+        elif self.__CONFIG.log_metrics:
+            wandb.log(self._metrics_logger.pop())
+
         with self._control_variables_lock:
             self._previous_reward = torch.tensor(0.0)
             self._previous_observation = self.__reset_function()
@@ -301,4 +327,5 @@ class ControllerBase:
             self._previous_reward = child_controller_step.reward
 
     def feedback_update_callback(self, feedback: HumanFeedback):
-        self._episode_metrics.update_current_step_feedback(feedback)
+        if self.__CONFIG.log_metrics:
+            self._episode_metrics.update_current_step_feedback(feedback)

@@ -78,7 +78,6 @@ class LearnAlgorithm:
 
         self._feedback_update_callback: Optional[Callable[[HumanFeedback], None]] = None
 
-        policy.to(device)
         wandb.watch(policy, log_freq=100)
 
     def load_dataset(self):
@@ -191,6 +190,7 @@ class LearnAlgorithm:
         self._replay_buffer.add(step)
         if controller_step.episode_finished:
             self._replay_buffer.save_current_traj()
+            self.save_dataset()
 
     def reset(self):
         """
