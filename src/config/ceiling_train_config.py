@@ -19,13 +19,16 @@ env_config = ManiSkillEnvironmentConfig(task_config=task_config)
 from learnalgorithm.behaviorcloningalgorithm import BehaviorCloningAlgorithmConfig
 from learnalgorithm.ceilingalgorithm import CeilingAlgorithmConfig
 from learnalgorithm.learnalgorithm import LearnAlgorithmConfig, NoLearnAlgorithmConfig
+from learnalgorithm.feedbackdevice.keyboardfeedback import KeyboardFeedbackConfig
 
+feedback_device_config = KeyboardFeedbackConfig(action_dim=4)
 learn_algorithms = [
     CeilingAlgorithmConfig(
         batch_size=16,
         learning_rate=3e-4,
         weight_decay=3e-6,
         steps_per_episode=45,
+        feedback_device_config=feedback_device_config,
         load_dataset="demos_2.dat",
         save_dataset="demos_ceiling.dat",  # Number of episodes will be appended to the name before the extension
     ),
@@ -58,7 +61,7 @@ policies = [
     CeilingPolicyConfig(
         visual_embedding_dim=256,
         proprioceptive_dim=9,
-        action_dim=4,
+        action_dim=feedback_device_config.action_dim,
         from_file="ceiling_pretrain_policy.pt",
         save_to_file="ceiling_trained_policy.pt",
     ),

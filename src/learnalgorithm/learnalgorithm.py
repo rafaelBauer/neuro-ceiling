@@ -27,8 +27,8 @@ class LearnAlgorithmConfig:
     learning_rate: float = field(init=True)
     weight_decay: float = field(init=True)
     steps_per_episode: int = field(init=True)
-    load_dataset: str = field(init=True, default="")
-    save_dataset: str = field(init=True, default="")
+    load_dataset: str = field(init=True)
+    save_dataset: str = field(init=True)
 
     @property
     def algo_type(self) -> str:
@@ -46,6 +46,8 @@ class NoLearnAlgorithmConfig(LearnAlgorithmConfig):
     learning_rate: float = field(init=False, default=0)
     weight_decay: float = field(init=False, default=0)
     steps_per_episode: int = field(init=False, default=0)
+    load_dataset: str = field(init=True, default="")
+    save_dataset: str = field(init=True, default="")
 
 
 class LearnAlgorithm:

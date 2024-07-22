@@ -108,7 +108,7 @@ def main() -> None:
                 )
 
             learn_algorithm: LearnAlgorithm = create_learn_algorithm(
-                learn_algorithm_config, policy=policies[i], feedback_device=keyboard_obs
+                learn_algorithm_config, policy=policies[i], keyboard_observer=keyboard_obs
             )
             if learn_algorithm:
                 learn_algorithm.load_dataset()

@@ -5,10 +5,10 @@ from overrides import override
 from torch.utils.data import RandomSampler, DataLoader
 from tqdm import tqdm
 
+from learnalgorithm.feedbackdevice.feedbackdevice import FeedbackDevice
 from learnalgorithm.learnalgorithm import LearnAlgorithmConfig, LearnAlgorithm
 from policy import PolicyBase
 from utils.logging import log_constructor
-from utils.metricslogger import MetricsLogger
 from utils.sceneobservation import SceneObservation
 
 
@@ -16,11 +16,13 @@ from utils.sceneobservation import SceneObservation
 class BehaviorCloningAlgorithmConfig(LearnAlgorithmConfig):
     _ALGO_TYPE: str = field(init=False, default="BehaviorCloningAlgorithm")
     number_of_epochs: int = field(init=True, default=0)
+    load_dataset: str = field(init=True, default="")
+    save_dataset: str = field(init=True, default="")
 
 
 class BehaviorCloningAlgorithm(LearnAlgorithm):
     @log_constructor
-    def __init__(self, config: BehaviorCloningAlgorithmConfig, policy: PolicyBase, feedback_device):
+    def __init__(self, config: BehaviorCloningAlgorithmConfig, policy: PolicyBase, feedback_device: FeedbackDevice):
 
         # Which loss function to use for the algorithm
         loss_function = torch.nn.CrossEntropyLoss()
