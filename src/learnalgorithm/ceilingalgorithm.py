@@ -7,15 +7,13 @@ import torch
 from overrides import override
 from torch.utils.data import RandomSampler, DataLoader
 
-from controller.controllerstep import ControllerStep
 from envs.robotactions import RobotAction
 from goal import PickPlaceObject
 from goal.goal import Goal
+from learnalgorithm.feedbackdevice.feedbackdevice import FeedbackDevice, FeedbackDeviceConfig
 from learnalgorithm.learnalgorithm import LearnAlgorithmConfig, LearnAlgorithm
 from policy import PolicyBase
-from utils.gripperstate import GripperState
 from utils.human_feedback import HumanFeedback
-from utils.keyboard_observer import KeyboardObserver
 from utils.labeltoobjectpose import LabelToPoseTranslator
 from utils.logging import log_constructor, logger
 from utils.sceneobservation import SceneObservation
@@ -24,6 +22,9 @@ from utils.sceneobservation import SceneObservation
 @dataclass
 class CeilingAlgorithmConfig(LearnAlgorithmConfig):
     _ALGO_TYPE: str = field(init=False, default="CeilingAlgorithm")
+    feedback_device_config: FeedbackDeviceConfig = field(init=True, default_factory=FeedbackDeviceConfig(4))
+    load_dataset: str = field(init=True, default="")
+    save_dataset: str = field(init=True, default="")
 
 
 class CeilingAlgorithm(LearnAlgorithm):
@@ -32,7 +33,7 @@ class CeilingAlgorithm(LearnAlgorithm):
         self,
         config: CeilingAlgorithmConfig,
         policy: PolicyBase,
-        feedback_device,
+        feedback_device: FeedbackDevice,
     ):
 
         # Which loss function to use for the algorithm
@@ -50,17 +51,14 @@ class CeilingAlgorithm(LearnAlgorithm):
 
         # TODO: for now have this as a keyboard observer,
         #       but should be a feedback device which could also come from EEG
-        self._feedback_device: KeyboardObserver = feedback_device
-        self._feedback_device.subscribe_callback_to_direction(self.__key_pressed_callback)
-        self._feedback_device.subscribe_callback_to_label(self.__feedback_device_label_callback)
+        self._feedback_device: FeedbackDevice = feedback_device
+        self._feedback_device.subscribe_callback_to_evaluative_feedback(self.__feedback_device_label_callback)
 
         # Thread to run the training in parallel with the steps as in original CEILing algorithm
         self.__train_thread_running = threading.Event()
         self.__train_thread: Optional[threading.Thread] = None
 
         self.__lstm_state = None
-
-        self.__last_feedback: numpy.array = numpy.zeros(4)
 
     @override
     def train(self, mode: bool = True):
@@ -79,23 +77,10 @@ class CeilingAlgorithm(LearnAlgorithm):
         self, next_action: Goal | RobotAction, scene_observation: SceneObservation
     ) -> (Goal | RobotAction, HumanFeedback):
         action = next_action
-        if numpy.any(self.__last_feedback):
-            # TODO: This is a hardcoded label algorithm for now
-            label = torch.zeros(4)
+        if self._feedback_device.has_corrective_feedback:
+            feedback_action = self._feedback_device.check_corrective_feedback()
 
-            # Conversion from keyboard_observer to label. Needs to be changed so EEG output would also work
-            if self.__last_feedback[5] > 0.5:  # "o" key
-                label[0] = True
-            elif self.__last_feedback[4] < -0.5:  # "i" key
-                label[1] = True
-            elif self.__last_feedback[5] < -0.5:  # "u" key
-                label[2] = True
-            else:
-                label[3] = True
-
-            self.__last_feedback = numpy.zeros(self.__last_feedback.size)
-
-            action = PickPlaceObject.from_tensor(label, scene_observation)
+            action = PickPlaceObject.from_tensor(feedback_action, scene_observation)
             if action != next_action:
                 feedback = HumanFeedback.CORRECTED
                 logger.debug(f"Corrected action:\n" f"     original: {next_action}\n" f"     corrected: {action}")
@@ -104,7 +89,7 @@ class CeilingAlgorithm(LearnAlgorithm):
                 action = next_action
                 feedback = HumanFeedback.GOOD
         else:
-            feedback = self._feedback_device.label
+            feedback = self._feedback_device.get_evaluative_feedback()
         return action, feedback
 
     @override

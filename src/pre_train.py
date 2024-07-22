@@ -108,7 +108,7 @@ def main() -> None:
                 )
 
             learn_algorithm: LearnAlgorithm = create_learn_algorithm(
-                learn_algorithm_config, policy=policies[i], feedback_device=keyboard_obs
+                learn_algorithm_config, policy=policies[i], keyboard_observer=keyboard_obs
             )
             if learn_algorithm:
                 learn_algorithm.load_dataset()
@@ -129,7 +129,6 @@ def main() -> None:
         controllers.insert(0, controller)
 
     def reset_episode():
-        learn_algorithms[0].reset()
         controllers[0].reset()
 
     keyboard_obs.subscribe_callback_to_reset(reset_episode)
@@ -177,7 +176,7 @@ def main() -> None:
             controllers[0].save_model()
             logger.info("Successfully trained policy for task {}", config.task)
 
-        if config.episodes > 0:
+        if config.episodes > 0 and learn_algorithms[0] is not None:
             learn_algorithms[0].save_dataset()
 
     except KeyboardInterrupt:

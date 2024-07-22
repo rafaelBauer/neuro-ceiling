@@ -8,13 +8,12 @@ from torch import Tensor
 from mplib import Planner
 
 from envs import BaseEnvironment
-from envs.robotactions import TargetJointPositionAction, RobotAction, GripperCommand
+from envs.robotactions import GripperCommand
 from envs.robotinfo import RobotInfo
 from policy.policy import PolicyBaseConfig, PolicyBase
 from goal.goal import Goal
 from utils.logging import logger, log_constructor
 from utils.pose import Pose
-from utils.sceneobservation import SceneObservation
 
 
 @dataclass(kw_only=True)

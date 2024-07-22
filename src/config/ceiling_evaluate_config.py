@@ -52,7 +52,7 @@ policies = [
         visual_embedding_dim=256,
         proprioceptive_dim=9,
         action_dim=4,
-        from_file="ceiling_trained_policy_new.pt",
+        from_file="ceiling_trained_policy.pt",
     ),
     MotionPlannerPolicyConfig(),
 ]

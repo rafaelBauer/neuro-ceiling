@@ -293,6 +293,7 @@ class ControllerBase:
         self._policy.episode_finished()
         if self._learn_algorithm is not None:
             self._learn_algorithm.episode_finished()
+            self._learn_algorithm.reset()
         elif self.__CONFIG.log_metrics:
             wandb.log(self._metrics_logger.pop())
 
