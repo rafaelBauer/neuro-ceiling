@@ -7,6 +7,7 @@ import torch
 from torch import Tensor
 
 from utils.human_feedback import HumanFeedback
+from utils.sceneobservation import SceneObservation
 
 
 @dataclass
@@ -25,11 +26,11 @@ class FeedbackDevice:
         self._reset_feedback_after_evaluation = reset_feedback_after_evaluation
         pass
 
-    def check_corrective_feedback(self) -> Tensor:
-        return_value = torch.tensor(self._last_feedback)
+    def check_corrective_feedback(self, scene_observation: SceneObservation) -> Tensor:
+        corrective_feedback = self._specific_corrective_feedback(scene_observation)
         if self._reset_feedback_after_evaluation:
             self._last_feedback = numpy.zeros(self._last_feedback.size)
-        return return_value
+        return corrective_feedback
 
     @property
     def has_corrective_feedback(self) -> bool:
@@ -44,6 +45,10 @@ class FeedbackDevice:
 
     @abstractmethod
     def _specific_reset(self):
+        pass
+
+    @abstractmethod
+    def _specific_corrective_feedback(self, scene_observation: SceneObservation) -> Tensor:
         pass
 
     @abstractmethod

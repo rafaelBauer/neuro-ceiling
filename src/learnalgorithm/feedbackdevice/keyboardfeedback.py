@@ -2,11 +2,14 @@ from dataclasses import dataclass, field
 from typing import Callable
 
 import numpy
+import torch
 from overrides import override
+from torch import Tensor
 
 from learnalgorithm.feedbackdevice.feedbackdevice import FeedbackDevice, FeedbackDeviceConfig
 from utils.human_feedback import HumanFeedback
 from utils.keyboard_observer import KeyboardObserver
+from utils.sceneobservation import SceneObservation
 
 
 @dataclass
@@ -39,6 +42,10 @@ class KeyboardFeedback(FeedbackDevice):
     @override
     def _specific_reset(self):
         self._keyboard_observer.reset()
+
+    @override
+    def _specific_corrective_feedback(self, scene_observation: SceneObservation) -> Tensor:
+        return torch.tensor(self._last_feedback)
 
     def __key_pressed_callback(self, action: numpy.array):
         """
