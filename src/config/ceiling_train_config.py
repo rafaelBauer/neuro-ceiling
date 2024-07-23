@@ -20,8 +20,9 @@ from learnalgorithm.behaviorcloningalgorithm import BehaviorCloningAlgorithmConf
 from learnalgorithm.ceilingalgorithm import CeilingAlgorithmConfig
 from learnalgorithm.learnalgorithm import LearnAlgorithmConfig, NoLearnAlgorithmConfig
 from learnalgorithm.feedbackdevice.keyboardfeedback import KeyboardFeedbackConfig
+from learnalgorithm.feedbackdevice.automaticfeedback import AutomaticFeedbackConfig
 
-feedback_device_config = KeyboardFeedbackConfig(action_dim=4)
+feedback_device_config = AutomaticFeedbackConfig(action_dim=4, task_config=task_config)
 learn_algorithms = [
     CeilingAlgorithmConfig(
         batch_size=16,
@@ -63,7 +64,7 @@ policies = [
         proprioceptive_dim=9,
         action_dim=feedback_device_config.action_dim,
         from_file="ceiling_pretrain_policy.pt",
-        save_to_file="ceiling_trained_policy.pt",
+        save_to_file="ceiling_trained_policy_100.pt",
     ),
     MotionPlannerPolicyConfig(),
 ]
@@ -74,6 +75,6 @@ config = Config(
     policies=policies,
     learn_algorithms=learn_algorithms,
     environment_config=env_config,
-    episodes=50,
+    episodes=100,
     task="StackCubesInd",
 )

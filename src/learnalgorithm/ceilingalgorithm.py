@@ -77,20 +77,19 @@ class CeilingAlgorithm(LearnAlgorithm):
         self, next_action: Goal | RobotAction, scene_observation: SceneObservation
     ) -> (Goal | RobotAction, HumanFeedback):
         action = next_action
-        if self._feedback_device.has_corrective_feedback:
-            feedback_action = self._feedback_device.check_corrective_feedback()
-
-            action = PickPlaceObject.from_tensor(feedback_action, scene_observation)
+        corrective_feedback = self._feedback_device.check_corrective_feedback(scene_observation)
+        if torch.any(corrective_feedback):
+            action = PickPlaceObject.from_tensor(corrective_feedback, scene_observation)
             if action != next_action:
-                feedback = HumanFeedback.CORRECTED
+                evaluative_feedback = HumanFeedback.CORRECTED
                 logger.debug(f"Corrected action:\n" f"     original: {next_action}\n" f"     corrected: {action}")
             else:
                 # Reset "action" to original given action
                 action = next_action
-                feedback = HumanFeedback.GOOD
+                evaluative_feedback = HumanFeedback.GOOD
         else:
-            feedback = self._feedback_device.get_evaluative_feedback()
-        return action, feedback
+            evaluative_feedback = self._feedback_device.get_evaluative_feedback()
+        return action, evaluative_feedback
 
     @override
     def _training_episode_finished(self):
