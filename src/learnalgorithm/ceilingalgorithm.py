@@ -4,6 +4,7 @@ from typing import Optional
 
 import numpy
 import torch
+import wandb
 from overrides import override
 from torch.utils.data import RandomSampler, DataLoader
 
@@ -59,6 +60,7 @@ class CeilingAlgorithm(LearnAlgorithm):
         self.__train_thread: Optional[threading.Thread] = None
 
         self.__lstm_state = None
+        wandb.run.tags = ["CEILing"]
 
     @override
     def train(self, mode: bool = True):

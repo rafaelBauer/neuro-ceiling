@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 
 import torch
+import wandb
 from overrides import override
 from torch.utils.data import RandomSampler, DataLoader
 from tqdm import tqdm
@@ -33,6 +34,7 @@ class BehaviorCloningAlgorithm(LearnAlgorithm):
             lr=config.learning_rate,
             weight_decay=config.weight_decay,
         )
+        wandb.run.tags = ["BC"]
         super().__init__(config, policy, RandomSampler, DataLoader, loss_function, optimizer)
 
     @override

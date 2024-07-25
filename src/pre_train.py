@@ -139,6 +139,8 @@ def main() -> None:
         if config.train:
             logger.info("Training starting!")
             controllers[0].train()
+        else:
+            wandb.run.tags = ["Evaluation"]
 
         if config.episodes > 0:
             logger.info("Sampling episodes starting!")
