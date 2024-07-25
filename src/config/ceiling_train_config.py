@@ -64,7 +64,7 @@ policies = [
         proprioceptive_dim=9,
         action_dim=feedback_device_config.action_dim,
         from_file="ceiling_pretrain_policy.pt",
-        save_to_file="ceiling_trained_policy_100.pt",
+        save_to_file="ceiling_trained_policy.pt",  # Number of episodes will be appended to the name before the extension
     ),
     MotionPlannerPolicyConfig(),
 ]

@@ -69,7 +69,7 @@ def main() -> None:
     """
     np.set_printoptions(suppress=True, precision=3)
     config: Config = create_config_from_args()
-    wandb.init(config=asdict(config), project="neuro-ceiling", mode="online")
+    wandb.init(config=asdict(config), project=config.task, mode="online")
 
     assert len(config.controllers) == len(
         config.policies
@@ -88,10 +88,12 @@ def main() -> None:
 
     for policy_config in config.policies:
         if policy_config.from_file:
-            policy_config.from_file = os.path.join(source_path + policy_config.from_file)
+            policy_config.from_file = os.path.join(source_path, policy_config.from_file)
 
         if policy_config.save_to_file:
-            policy_config.save_to_file = os.path.join(source_path + policy_config.save_to_file)
+            filename, file_extension = os.path.splitext(policy_config.save_to_file)
+            policy_config.save_to_file = f"{filename}_{str(config.episodes)}{file_extension}"
+            policy_config.save_to_file = os.path.join(source_path, policy_config.save_to_file)
 
         policy: PolicyBase = create_policy(policy_config, keyboard_observer=keyboard_obs, environment=environment)
         policy.load_from_file()
@@ -173,11 +175,11 @@ def main() -> None:
             keyboard_obs.stop()
 
         if config.train:
-            controllers[0].save_model()
+            controllers[0].publish_model()
             logger.info("Successfully trained policy for task {}", config.task)
 
         if config.episodes > 0 and learn_algorithms[0] is not None:
-            learn_algorithms[0].save_dataset()
+            controllers[0].publish_dataset()
 
     except KeyboardInterrupt:
         logger.info("Keyboard interrupt. Attempting graceful env shutdown ...")
