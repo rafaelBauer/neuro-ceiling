@@ -81,7 +81,7 @@ class PolicyBase(nn.Module):
             self.save_to_file()
             logger.info(f"Publishing policy to wandb: {self._CONFIG.save_to_file}")
             file_name_and_extension = os.path.basename(self._CONFIG.save_to_file)
-            artifact = wandb.Artifact(f"{os.path.splitext(file_name_and_extension)[0]}", type='model')
+            artifact = wandb.Artifact(f"{os.path.splitext(file_name_and_extension)[0]}", type="model")
             artifact.add_file(self._CONFIG.save_to_file)
             wandb.run.log_artifact(artifact)
 

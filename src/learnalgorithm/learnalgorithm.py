@@ -133,9 +133,7 @@ class LearnAlgorithm:
                 f"{os.path.splitext(file_name_and_extension)[0]}",
                 type="dataset",
                 description=f"{str(len(self._replay_buffer))} trajectories from task {task_name}",
-                metadata={"task": task_name,
-                          "source": "TrajectoriesDataset",
-                          "sizes": len(self._replay_buffer)},
+                metadata={"task": task_name, "source": "TrajectoriesDataset", "sizes": len(self._replay_buffer)},
             )
             with raw_data.new_file(file_name_and_extension, mode="wb") as file:
                 torch.save(self._replay_buffer, file)
