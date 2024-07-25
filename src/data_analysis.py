@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 from utils.dataset import TrajectoriesDataset
 
-dataset_name = "data/StackCubesInd/demos_ceiling_50.dat"
+dataset_name = "data/StackCubesInd/demos_ceiling_100.dat"
 
 
 def main():

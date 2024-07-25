@@ -92,7 +92,18 @@ class LearnAlgorithm:
         It creates a dataloader for the replay buffer with the created sampler, the batch size specified in the configuration object, and a collate function that returns the input as is.
         """
         if self._CONFIG.load_dataset:
-            self._replay_buffer: TrajectoriesDataset = torch.load(self._CONFIG.load_dataset)
+            try:
+                file_name_and_extension = os.path.basename(self._CONFIG.load_dataset)
+                task_name = os.path.dirname(self._CONFIG.load_dataset).split("/")[-1]
+                artifact = wandb.run.use_artifact(f"{task_name}/{os.path.splitext(file_name_and_extension)[0]}:latest")
+                dataset_file = artifact.download()
+            except wandb.CommError as exception:
+                logger.info("Could not download artifact from wandb: {}", exception)
+                logger.info("Using dataset from local filesystem: {}", self._CONFIG.load_dataset)
+                dataset_file = self._CONFIG.load_dataset
+
+            logger.info("Loading dataset from file: {}", dataset_file)
+            self._replay_buffer: TrajectoriesDataset = torch.load(dataset_file)
             self._sampler = self.__sampler_type(self._replay_buffer)
             self._dataloader = self.__dataloader_type(
                 dataset=self._replay_buffer,
@@ -111,17 +122,22 @@ class LearnAlgorithm:
         """
         if self._CONFIG.save_dataset:
             torch.save(self._replay_buffer, self._CONFIG.save_dataset)
+            logger.info("Successfully saved dataset {}", self._CONFIG.save_dataset)
+
+    def publish_dataset(self):
+        if self._CONFIG.save_dataset:
+            self.save_dataset()
             file_name_and_extension = os.path.basename(self._CONFIG.save_dataset)
+            task_name = os.path.dirname(self._CONFIG.save_dataset).split("/")[-1]
             raw_data = wandb.Artifact(
-                os.path.splitext(file_name_and_extension)[0],
+                f"{os.path.splitext(file_name_and_extension)[0]}",
                 type="dataset",
-                description="Raw dataset",
-                metadata={"source": "tensordict", "sizes": len(self._replay_buffer)},
+                description=f"{str(len(self._replay_buffer))} trajectories from task {task_name}",
+                metadata={"task": task_name, "source": "TrajectoriesDataset", "sizes": len(self._replay_buffer)},
             )
             with raw_data.new_file(file_name_and_extension, mode="wb") as file:
                 torch.save(self._replay_buffer, file)
             wandb.log_artifact(raw_data)
-            logger.info("Successfully saved dataset {}", self._CONFIG.save_dataset)
 
     def set_metrics_logger(self, metrics_logger: MetricsLogger):
         """

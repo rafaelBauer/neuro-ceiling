@@ -319,8 +319,12 @@ class ControllerBase:
         """
         self.__post_step_function = post_step_function
 
-    def save_model(self):
-        self._policy.save_to_file()
+    def publish_model(self):
+        self._policy.publish_model()
+
+    def publish_dataset(self):
+        if self._learn_algorithm is not None:
+            self._learn_algorithm.publish_dataset()
 
     def child_controller_observation_callback(self, child_controller_step: ControllerStep):
         with self._control_variables_lock:

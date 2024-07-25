@@ -93,6 +93,9 @@ class MetricsLogger:
         return
 
     def log_episode(self, episode_metrics: EpisodeMetrics):
+        if episode_metrics.reward > 0:
+            self.total_successes += 1
+        self.total_episodes += 1
         log_episode_metrics = {
             "reward": episode_metrics.reward,
             "num_steps": episode_metrics.num_steps,
@@ -100,11 +103,9 @@ class MetricsLogger:
             "ep_good_rate": episode_metrics.good_rate,
             "ep_bad_rate": episode_metrics.bad_rate,
             "episode": episode_metrics.episode_number,
+            "success_rate": self.total_successes / self.total_episodes,
         }
         self.append(log_episode_metrics)
-        self.total_episodes += 1
-        if episode_metrics.reward > 0:
-            self.total_successes += 1
         self.total_steps += episode_metrics.num_steps
         self.total_feedback_steps[HumanFeedback.CORRECTED] += episode_metrics.corrected_steps
         self.total_feedback_steps[HumanFeedback.GOOD] += episode_metrics.good_steps

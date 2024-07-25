@@ -65,4 +65,5 @@ config = Config(
     environment_config=env_config,
     episodes=100,
     task="StackCubesInd",
+    train=False,
 )

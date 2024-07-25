@@ -1,7 +1,9 @@
+import os
 from abc import abstractmethod
 from dataclasses import dataclass, field
 
 import torch
+import wandb
 from torch import nn, Tensor
 
 from goal.goal import Goal
@@ -55,13 +57,33 @@ class PolicyBase(nn.Module):
 
     def load_from_file(self):
         if self._CONFIG.from_file:
-            logger.info(f"Loading policy from file: {self._CONFIG.from_file}")
-            self.load_state_dict(torch.load(self._CONFIG.from_file))
+            try:
+                file_name_and_extension = os.path.basename(self._CONFIG.from_file)
+                task_name = os.path.dirname(self._CONFIG.from_file).split("/")[-1]
+                artifact = wandb.run.use_artifact(f"{task_name}/{os.path.splitext(file_name_and_extension)[0]}:latest")
+                model_dir = artifact.download()
+                model_file = os.path.join(model_dir, file_name_and_extension)
+            except wandb.CommError as exception:
+                logger.info("Could not download artifact from wandb: {}", exception)
+                logger.info(f"Using policy from  local filesystem: {self._CONFIG.from_file}")
+                model_file = self._CONFIG.from_file
+
+            logger.info("Loading policy from file: {}", model_file)
+            self.load_state_dict(torch.load(model_file))
 
     def save_to_file(self):
         if self._CONFIG.save_to_file:
             logger.info(f"Saving policy to file: {self._CONFIG.save_to_file}")
             torch.save(self.state_dict(), self._CONFIG.save_to_file)
+
+    def publish_model(self):
+        if self._CONFIG.save_to_file:
+            self.save_to_file()
+            logger.info(f"Publishing policy to wandb: {self._CONFIG.save_to_file}")
+            file_name_and_extension = os.path.basename(self._CONFIG.save_to_file)
+            artifact = wandb.Artifact(f"{os.path.splitext(file_name_and_extension)[0]}", type="model")
+            artifact.add_file(self._CONFIG.save_to_file)
+            wandb.run.log_artifact(artifact)
 
     @abstractmethod
     def forward(self, states) -> Tensor:
