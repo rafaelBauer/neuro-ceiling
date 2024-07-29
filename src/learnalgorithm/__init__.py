@@ -5,9 +5,7 @@ from .feedbackdevice.feedbackdevice import FeedbackDevice, FeedbackDeviceConfig
 from .learnalgorithm import LearnAlgorithm, LearnAlgorithmConfig
 
 
-def create_learn_algorithm(
-    config: LearnAlgorithmConfig, keyboard_observer, **kwargs
-) -> LearnAlgorithm:
+def create_learn_algorithm(config: LearnAlgorithmConfig, keyboard_observer, **kwargs) -> LearnAlgorithm:
     if config.algo_type == "NoLearnAlgorithm":
         return None
     config_module = importlib.import_module("." + str.lower(config.algo_type), "learnalgorithm")

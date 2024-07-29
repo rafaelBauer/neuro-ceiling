@@ -87,6 +87,7 @@ def main() -> None:
         keyboard_obs = None
     else:
         from utils.keyboard_observer import KeyboardObserver
+
         keyboard_obs = KeyboardObserver()
 
     environment: Final[BaseEnvironment] = create_environment(config.environment_config)
