@@ -27,6 +27,11 @@ class CeilingAlgorithmConfig(LearnAlgorithmConfig):
     load_dataset: str = field(init=True, default="")
     save_dataset: str = field(init=True, default="")
 
+    @property
+    @override
+    def name(self) -> str:
+        return "ceiling"
+
 
 class CeilingAlgorithm(LearnAlgorithm):
     @log_constructor

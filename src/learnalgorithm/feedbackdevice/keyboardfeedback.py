@@ -17,8 +17,9 @@ class KeyboardFeedbackConfig(FeedbackDeviceConfig):
     _DEVICE_TYPE: str = field(init=False, default="KeyboardFeedback")
 
     @property
-    def device_type(self) -> str:
-        return self._DEVICE_TYPE
+    @override
+    def name(self) -> str:
+        return "keyboard"
 
 
 class KeyboardFeedback(FeedbackDevice):

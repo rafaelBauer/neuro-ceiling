@@ -109,7 +109,7 @@ class ControllerBase:
             Callable[[Goal | RobotAction], tuple[SceneObservation, Tensor, Tensor, TensorDict]]
         ] = (self._environment.step if self._child_controller is None else self._child_controller.set_goal)
 
-        self.__reset_function: Final[Callable] = (
+        self.__reset_function: Final[Callable[[], SceneObservation]] = (
             self._environment.reset if self._child_controller is None else self._child_controller.reset
         )
 
@@ -117,8 +117,8 @@ class ControllerBase:
             self._child_controller.set_post_step_function(self.child_controller_observation_callback)
 
         if self.__CONFIG.log_metrics:
-            self._episode_metrics = EpisodeMetrics(0)
             self._metrics_logger = MetricsLogger()
+
         else:
             self._episode_metrics = None
             self._metrics_logger = None
@@ -162,6 +162,9 @@ class ControllerBase:
             self._child_controller.start()
 
         self._previous_observation = self.__reset_function()
+        if self.__CONFIG.log_metrics:
+            self._episode_metrics = EpisodeMetrics(0, self._previous_observation.objects)
+
         self._specific_start()
 
     @abstractmethod
@@ -282,12 +285,10 @@ class ControllerBase:
         return self.__last_action, feedback
 
     def reset(self) -> SceneObservation:
-        # Log current episode metrics and create new episode metrics object
+        self.__step_number = 0
+
         if self.__CONFIG.log_metrics:
             self._metrics_logger.log_episode(self._episode_metrics)
-            self._episode_metrics = EpisodeMetrics(self._episode_metrics.episode_number + 1)
-
-        self.__step_number = 0
 
         self.set_goal(Goal(input_tensor=Tensor(self.__CONFIG.initial_goal)))
         self._policy.episode_finished()
@@ -307,7 +308,11 @@ class ControllerBase:
                 episode_finished=False,
                 extra_info={},
             )
-            return_val = self._previous_observation.copy()
+            return_val: SceneObservation = self._previous_observation.copy()
+        # Log current episode metrics and create new episode metrics object
+        if self.__CONFIG.log_metrics:
+            self._episode_metrics = EpisodeMetrics(self._episode_metrics.episode_number + 1, return_val.objects)
+
         return return_val
 
     def set_post_step_function(self, post_step_function):

@@ -34,6 +34,11 @@ class LearnAlgorithmConfig:
     def algo_type(self) -> str:
         return self._ALGO_TYPE
 
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        pass
+
 
 @dataclass
 class NoLearnAlgorithmConfig(LearnAlgorithmConfig):

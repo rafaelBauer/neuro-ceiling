@@ -8,7 +8,7 @@ from task.stack_cubes_ind_spot_config import config as task_config
 # ====== ManiSkill environment ========
 from envs.maniskill import ManiSkillEnvironmentConfig
 
-env_config = ManiSkillEnvironmentConfig(task_config=task_config)
+env_config = ManiSkillEnvironmentConfig(task_config=task_config, headless=False)
 
 # ====== Mock environment ========
 # from envs.mock import MockEnvironmentConfig
@@ -64,7 +64,9 @@ policies = [
         proprioceptive_dim=9,
         action_dim=feedback_device_config.action_dim,
         from_file="ceiling_pretrain_policy.pt",
-        save_to_file="ceiling_trained_policy.pt",  # Number of episodes will be appended to the name before the extension
+        save_to_file=feedback_device_config.name
+        + learn_algorithms[0].name
+        + "_policy.pt",  # Number of episodes will be appended to the name before the extension
     ),
     MotionPlannerPolicyConfig(),
 ]

@@ -20,10 +20,20 @@ from utils.sceneobservation import SceneObservation
 class AutomaticFeedbackConfig(FeedbackDeviceConfig):
     _DEVICE_TYPE: str = field(init=False, default="AutomaticFeedback")
     task_config: TaskConfig = field(init=True)
+    corrective_evaluative_ratio: int = field(
+        init=True, default=100
+    )  # Ratio of corrective feedback over evaluative feedback. 100 means 100% corrective feedback and 0% evaluative feedback
 
     @property
-    def device_type(self) -> str:
-        return self._DEVICE_TYPE
+    @override
+    def name(self) -> str:
+        return (
+            "automatic_"
+            + str(self.corrective_evaluative_ratio)
+            + "_corr"
+            + str(100 - self.corrective_evaluative_ratio)
+            + "_eval"
+        )
 
 
 class AutomaticFeedback(FeedbackDevice):

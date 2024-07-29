@@ -19,15 +19,15 @@ from .taskconfig import TaskConfig
 @dataclass
 class ManiSkillEnvironmentConfig(BaseEnvironmentConfig):
     task_config: TaskConfig = field(init=True)
+    headless: bool = field(init=True, default=False)
 
-    def __init__(self, task_config: TaskConfig):
+    def __init__(self, task_config: TaskConfig, headless: bool = False):
         super().__init__("ManiSkill", task_config)
-        self.headless: bool = False
         self.render_sapien: bool = True
+        self.headless: bool = headless
 
 
 class ManiSkillEnv(BaseEnvironment):
-    __RENDER_MODE: Final[str] = "human"
     __CONTROL_MODE: Final[str] = "pd_joint_pos"  # "pd_joint_pos", "pd_ee_delta_pose"
     __OBS_MODE: Final[str] = "rgbd"  # "state", "state_dict", "none", "sensor_data", "rgb", "rgbd", "pointcloud"
 
@@ -37,7 +37,7 @@ class ManiSkillEnv(BaseEnvironment):
     @log_constructor
     def __init__(self, config: ManiSkillEnvironmentConfig) -> None:
         super().__init__(config)
-        self.__HEADLESS: bool = config.headless
+        self.__RENDER_MODE: Final[str] = "rgb_array" if config.headless else "human"
         self.__render_sapien: bool = config.render_sapien
 
         kwargs = {
