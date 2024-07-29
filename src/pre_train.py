@@ -83,7 +83,7 @@ def main() -> None:
     if config.task:
         source_path = os.path.join(source_path, config.task + "/")
 
-    if isinstance(config.environment_config, ManiSkillEnvironmentConfig) and not config.environment_config.headless:
+    if isinstance(config.environment_config, ManiSkillEnvironmentConfig) and config.environment_config.headless:
         keyboard_obs = None
     else:
         from utils.keyboard_observer import KeyboardObserver
