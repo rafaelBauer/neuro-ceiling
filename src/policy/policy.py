@@ -61,6 +61,8 @@ class PolicyBase(nn.Module):
                 file_name_and_extension = os.path.basename(self._CONFIG.from_file)
                 task_name = os.path.dirname(self._CONFIG.from_file).split("/")[-1]
                 artifact = wandb.run.use_artifact(f"{task_name}/{os.path.splitext(file_name_and_extension)[0]}:latest")
+                wandb.run.summary["model_version"] = artifact.source_name
+                wandb.run.summary["model_source_run"] = artifact.logged_by().name
                 model_dir = artifact.download()
                 model_file = os.path.join(model_dir, file_name_and_extension)
             except wandb.CommError as exception:

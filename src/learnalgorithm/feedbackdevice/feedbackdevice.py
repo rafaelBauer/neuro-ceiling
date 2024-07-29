@@ -19,6 +19,11 @@ class FeedbackDeviceConfig:
     def device_type(self) -> str:
         return self._DEVICE_TYPE
 
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        pass
+
 
 class FeedbackDevice:
     def __init__(self, config: FeedbackDeviceConfig, reset_feedback_after_evaluation: bool = True):

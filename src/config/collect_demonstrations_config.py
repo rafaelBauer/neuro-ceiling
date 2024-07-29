@@ -31,7 +31,9 @@ from controller.periodiccontroller import PeriodicControllerConfig
 # The controller at index N-1 will interact with the environment, while the others will interact with the controller
 # at the next index.
 controllers = [
-    PeriodicControllerConfig(ACTION_TYPE="PickPlaceObject", polling_period_s=5, initial_goal=[0, 0, 0, 1]),
+    PeriodicControllerConfig(
+        ACTION_TYPE="PickPlaceObject", polling_period_s=5, initial_goal=[0, 0, 0, 1], log_metrics=True
+    ),
     PeriodicControllerConfig(
         ACTION_TYPE="TargetJointPositionAction", polling_period_s=0.05, initial_goal=[0, 0, 0, 0, 0, 0, 0]
     ),
@@ -42,12 +44,14 @@ from policy.manualobjectactionpolicy import ManualObjectActionPolicyConfig
 from policy.manualrobotactionpolicy import ManualRobotActionPolicyConfig
 from policy.motionplannerpolicy import MotionPlannerPolicyConfig
 
-policy0 = ManualObjectActionPolicyConfig()
-policy1 = MotionPlannerPolicyConfig()
+from learnalgorithm.feedbackdevice.keyboardfeedback import KeyboardFeedbackConfig
+from learnalgorithm.feedbackdevice.automaticfeedback import AutomaticFeedbackConfig
+
+feedback_device_config = AutomaticFeedbackConfig(action_dim=4, task_config=task_config)
 
 # The policy at index 0 is added to controllers[0], the policy at index N-1 is added to controllers[N-1]
 policies = [
-    ManualObjectActionPolicyConfig(),
+    ManualObjectActionPolicyConfig(feedback_device_config=feedback_device_config),
     MotionPlannerPolicyConfig(),
 ]
 
@@ -57,7 +61,7 @@ config = Config(
     policies=policies,
     learn_algorithms=learn_algorithms,
     environment_config=env_config,
-    episodes=2,
+    episodes=10,
     trajectory_size=45,
     task="StackCubesInd",
     feedback_type="pretrain_manual",

@@ -7,6 +7,8 @@ from overrides import override
 from torch import Tensor
 
 from goal.goal import Goal
+from learnalgorithm import create_feedback_device
+from learnalgorithm.feedbackdevice.feedbackdevice import FeedbackDevice, FeedbackDeviceConfig
 from policy.policy import PolicyBase, PolicyBaseConfig
 from utils.keyboard_observer import KeyboardObserver
 from utils.logging import log_constructor
@@ -20,6 +22,7 @@ class ManualPolicyConfig(PolicyBaseConfig):
     """
 
     _POLICY_TYPE: str = field(init=False, default="ManualPolicy")
+    feedback_device_config: FeedbackDeviceConfig = field(init=True)
 
 
 class ManualPolicy(PolicyBase):
@@ -38,18 +41,18 @@ class ManualPolicy(PolicyBase):
         :param kwargs: Additional keyword arguments.
         """
         super().__init__(config, **kwargs)
-        self._keyboard_observer: Final[KeyboardObserver] = keyboard_observer
+        self._feedback_device: Final[FeedbackDevice] = create_feedback_device(
+            config.feedback_device_config, keyboard_observer=keyboard_observer
+        )
         self._CONFIG: ManualPolicyConfig = config
 
     @override
     def forward(self, states) -> Tensor:
         # For when the keyboard observer is not working
-        # action = numpy.array([0.0, 0.0, 0.0, -0.9, 0.0, 0.9])
-        # gripper = numpy.array([0.0])
-        action = self._keyboard_observer.get_ee_action()
-        gripper = numpy.array([self._keyboard_observer.gripper])
+        # action = numpy.array([0.0, 0.0, 0.0, -0.9, 0.0, 0.9, 0.0])
         assert isinstance(states, SceneObservation), "states should be of type SceneObservation"
-        return self.specific_forward(numpy.concatenate((action, gripper)), states)
+        action = self._feedback_device.check_corrective_feedback(states).numpy()
+        return self.specific_forward(action, states)
 
     @override
     def goal_to_be_achieved(self, goal: Goal):

@@ -34,6 +34,11 @@ class LearnAlgorithmConfig:
     def algo_type(self) -> str:
         return self._ALGO_TYPE
 
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        pass
+
 
 @dataclass
 class NoLearnAlgorithmConfig(LearnAlgorithmConfig):
@@ -96,7 +101,10 @@ class LearnAlgorithm:
                 file_name_and_extension = os.path.basename(self._CONFIG.load_dataset)
                 task_name = os.path.dirname(self._CONFIG.load_dataset).split("/")[-1]
                 artifact = wandb.run.use_artifact(f"{task_name}/{os.path.splitext(file_name_and_extension)[0]}:latest")
-                dataset_file = artifact.download()
+                wandb.run.summary["dataset_version"] = artifact.source_name
+                wandb.run.summary["dataset_source_run"] = artifact.logged_by().name
+                dataset_dir = artifact.download()
+                dataset_file = os.path.join(dataset_dir, file_name_and_extension)
             except wandb.CommError as exception:
                 logger.info("Could not download artifact from wandb: {}", exception)
                 logger.info("Using dataset from local filesystem: {}", self._CONFIG.load_dataset)

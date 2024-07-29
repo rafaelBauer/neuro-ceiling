@@ -69,7 +69,13 @@ def main() -> None:
     """
     np.set_printoptions(suppress=True, precision=3)
     config: Config = create_config_from_args()
-    wandb.init(config=asdict(config), project=config.task, mode="online")
+
+    if config.train:
+        job_type = "train"
+    else:
+        job_type = "evaluation"
+
+    wandb.init(config=asdict(config), project=config.task, mode="online", job_type=job_type)
 
     assert len(config.controllers) == len(
         config.policies
@@ -182,6 +188,7 @@ def main() -> None:
 
         if config.episodes > 0 and learn_algorithms[0] is not None:
             controllers[0].publish_dataset()
+            wandb.run.summary["learn_algorithm"] = config.learn_algorithms[0].name
 
     except KeyboardInterrupt:
         logger.info("Keyboard interrupt. Attempting graceful env shutdown ...")

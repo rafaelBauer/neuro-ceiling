@@ -14,6 +14,8 @@ def create_learn_algorithm(
     learn_algorithm_class: LearnAlgorithm = getattr(config_module, config.algo_type)
     if hasattr(config, "feedback_device_config"):
         feedback_device = create_feedback_device(config.feedback_device_config, keyboard_observer=keyboard_observer)
+    else:
+        feedback_device = None
     return learn_algorithm_class(config, feedback_device=feedback_device, **kwargs)
 
 

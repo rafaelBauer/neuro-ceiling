@@ -20,6 +20,11 @@ class BehaviorCloningAlgorithmConfig(LearnAlgorithmConfig):
     load_dataset: str = field(init=True, default="")
     save_dataset: str = field(init=True, default="")
 
+    @property
+    @override
+    def name(self) -> str:
+        return "bc"
+
 
 class BehaviorCloningAlgorithm(LearnAlgorithm):
     @log_constructor

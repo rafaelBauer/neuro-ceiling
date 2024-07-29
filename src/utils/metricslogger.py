@@ -1,14 +1,19 @@
+from dataclasses import dataclass
+
 import wandb
 from collections import deque
+
+from tensordict import TensorDict
 
 from utils.human_feedback import HumanFeedback
 from utils.logging import logger
 
 
 class EpisodeMetrics:
-    def __init__(self, episode_number: int):
+    def __init__(self, episode_number: int, initial_observation: TensorDict):
         self.__reward: float = 0
         self.__num_steps: int = 0
+        self.__initial_observation = initial_observation.copy()
         self.__feedback_counter = {HumanFeedback.GOOD: 0, HumanFeedback.CORRECTED: 0, HumanFeedback.BAD: 0}
         self.__last_feedback = HumanFeedback.GOOD
         self.__EPISODE_NUMBER = episode_number
@@ -71,6 +76,10 @@ class EpisodeMetrics:
     def episode_number(self):
         return self.__EPISODE_NUMBER
 
+    @property
+    def initial_observation(self):
+        return self.__initial_observation
+
     def __str__(self):
         return (
             f"Episode {self.episode_number}: "
@@ -82,6 +91,23 @@ class EpisodeMetrics:
         )
 
 
+@dataclass
+class InitialCondition:
+    total_successes: int = 0
+    total_episodes: int = 0
+
+    @property
+    def success_rate(self):
+        return self.total_successes / self.total_episodes
+
+    def json(self) -> dict:
+        return {
+            "total_successes": self.total_successes,
+            "total_episodes": self.total_episodes,
+            "success_rate": self.success_rate,
+        }
+
+
 class MetricsLogger:
     def __init__(self):
         self.total_successes = 0
@@ -89,13 +115,30 @@ class MetricsLogger:
         self.total_steps = 0
         self.total_feedback_steps = {HumanFeedback.GOOD: 0, HumanFeedback.CORRECTED: 0, HumanFeedback.BAD: 0}
         self.episode_metrics = deque(maxlen=1)
+        self.initial_conditions: dict[str, InitialCondition] = {}
 
         return
 
     def log_episode(self, episode_metrics: EpisodeMetrics):
         if episode_metrics.reward > 0:
             self.total_successes += 1
+            success = 1
+        else:
+            success = 0
         self.total_episodes += 1
+
+        initial_observation_objects = sorted(episode_metrics.initial_observation.items(), key=lambda y: y[1][1])
+        initial_object_positions = ", ".join([name for name, pos in initial_observation_objects])
+        self.initial_conditions[initial_object_positions] = self.initial_conditions.get(
+            initial_object_positions, InitialCondition()
+        )
+        self.initial_conditions[initial_object_positions].total_episodes += 1
+        self.initial_conditions[initial_object_positions].total_successes += success
+
+        initial_conditions = {}
+        for initial_condition, value in self.initial_conditions.items():
+            initial_conditions[initial_condition] = value.json()
+
         log_episode_metrics = {
             "reward": episode_metrics.reward,
             "num_steps": episode_metrics.num_steps,
@@ -104,6 +147,7 @@ class MetricsLogger:
             "ep_bad_rate": episode_metrics.bad_rate,
             "episode": episode_metrics.episode_number,
             "success_rate": self.total_successes / self.total_episodes,
+            "initial_condition": initial_conditions,
         }
         self.append(log_episode_metrics)
         self.total_steps += episode_metrics.num_steps
@@ -136,6 +180,8 @@ class MetricsLogger:
         return
 
     def pop(self):
+        if self.empty():
+            return
         return self.episode_metrics.popleft()
 
     def empty(self):
