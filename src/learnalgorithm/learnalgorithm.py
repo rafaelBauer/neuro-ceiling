@@ -105,7 +105,7 @@ class LearnAlgorithm:
                 wandb.run.summary["dataset_source_run"] = artifact.logged_by().name
                 dataset_dir = artifact.download()
                 dataset_file = os.path.join(dataset_dir, file_name_and_extension)
-            except wandb.CommError as exception:
+            except Exception as exception:
                 logger.info("Could not download artifact from wandb: {}", exception)
                 logger.info("Using dataset from local filesystem: {}", self._CONFIG.load_dataset)
                 dataset_file = self._CONFIG.load_dataset

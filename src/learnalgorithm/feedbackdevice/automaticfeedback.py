@@ -10,7 +10,6 @@ from torch import Tensor
 from envs.taskconfig import TaskConfig
 from learnalgorithm.feedbackdevice.feedbackdevice import FeedbackDevice, FeedbackDeviceConfig
 from utils.human_feedback import HumanFeedback
-from utils.keyboard_observer import KeyboardObserver
 from utils.labeltoobjectpose import LabelToPoseTranslator
 from utils.pose import Pose
 from utils.sceneobservation import SceneObservation
@@ -37,7 +36,7 @@ class AutomaticFeedbackConfig(FeedbackDeviceConfig):
 
 
 class AutomaticFeedback(FeedbackDevice):
-    def __init__(self, config: AutomaticFeedbackConfig, keyboard_observer: KeyboardObserver):
+    def __init__(self, config: AutomaticFeedbackConfig, keyboard_observer=None):
         self._CONFIG = config
         super().__init__(config)
 

@@ -19,7 +19,8 @@ env_config = ManiSkillEnvironmentConfig(task_config=task_config, headless=False)
 from learnalgorithm.behaviorcloningalgorithm import BehaviorCloningAlgorithmConfig
 from learnalgorithm.ceilingalgorithm import CeilingAlgorithmConfig
 from learnalgorithm.learnalgorithm import LearnAlgorithmConfig, NoLearnAlgorithmConfig
-from learnalgorithm.feedbackdevice.keyboardfeedback import KeyboardFeedbackConfig
+
+# from learnalgorithm.feedbackdevice.keyboardfeedback import KeyboardFeedbackConfig
 from learnalgorithm.feedbackdevice.automaticfeedback import AutomaticFeedbackConfig
 
 feedback_device_config = AutomaticFeedbackConfig(action_dim=4, task_config=task_config)
@@ -30,7 +31,7 @@ learn_algorithms = [
         weight_decay=3e-6,
         steps_per_episode=45,
         feedback_device_config=feedback_device_config,
-        load_dataset="demos_2.dat",
+        load_dataset="demos_10.dat",
         save_dataset="demos_ceiling.dat",  # Number of episodes will be appended to the name before the extension
     ),
     NoLearnAlgorithmConfig(),
@@ -52,9 +53,7 @@ controllers = [
 ]
 
 # ====== Policy configuration ========
-from policy.manualobjectactionpolicy import ManualObjectActionPolicyConfig
 from policy.ceilingpolicy import CeilingPolicyConfig
-from policy.manualrobotactionpolicy import ManualRobotActionPolicyConfig
 from policy.motionplannerpolicy import MotionPlannerPolicyConfig
 
 # The policy at index 0 is added to controllers[0], the policy at index N-1 is added to controllers[N-1]
@@ -63,7 +62,7 @@ policies = [
         visual_embedding_dim=256,
         proprioceptive_dim=9,
         action_dim=feedback_device_config.action_dim,
-        from_file="ceiling_pretrain_policy.pt",
+        from_file="ceiling_10_pretrain_policy_0.pt",
         save_to_file=feedback_device_config.name
         + learn_algorithms[0].name
         + "_policy.pt",  # Number of episodes will be appended to the name before the extension

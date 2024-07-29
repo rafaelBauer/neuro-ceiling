@@ -4,7 +4,6 @@ from dataclasses import dataclass, asdict
 from typing import Final
 
 import numpy as np
-import torch
 import wandb
 from omegaconf import OmegaConf, SCMode
 
@@ -13,12 +12,11 @@ from tqdm.auto import tqdm
 from controller import create_controller, ControllerBase, ControllerConfig
 from controller.controllerstep import ControllerStep
 from envs import BaseEnvironmentConfig, create_environment, BaseEnvironment
+from envs.maniskill import ManiSkillEnvironmentConfig
 from learnalgorithm import LearnAlgorithmConfig, create_learn_algorithm, LearnAlgorithm
 from policy import PolicyBaseConfig, PolicyBase, create_policy
 from utils.argparse import get_config_from_args
 from utils.config import ConfigBase
-from utils.device import device
-from utils.keyboard_observer import KeyboardObserver
 from utils.logging import logger
 
 
@@ -85,7 +83,13 @@ def main() -> None:
     if config.task:
         source_path = os.path.join(source_path, config.task + "/")
 
-    keyboard_obs = KeyboardObserver()
+    if isinstance(config.environment_config, ManiSkillEnvironmentConfig) and config.environment_config.headless:
+        keyboard_obs = None
+    else:
+        from utils.keyboard_observer import KeyboardObserver
+
+        keyboard_obs = KeyboardObserver()
+
     environment: Final[BaseEnvironment] = create_environment(config.environment_config)
 
     policies: list[PolicyBase] = []
@@ -139,7 +143,8 @@ def main() -> None:
     def reset_episode():
         controllers[0].reset()
 
-    keyboard_obs.subscribe_callback_to_reset(reset_episode)
+    if keyboard_obs is not None:
+        keyboard_obs.subscribe_callback_to_reset(reset_episode)
 
     try:
         if config.train:
@@ -153,7 +158,8 @@ def main() -> None:
 
             environment.start()
             time.sleep(5)
-            keyboard_obs.start()
+            if keyboard_obs is not None:
+                keyboard_obs.start()
 
             # Have to make as a list to be able to modify it in the post_step_function.
             # In python, immutable objects are passed by value whereas mutable objects are passed by reference.
@@ -180,7 +186,8 @@ def main() -> None:
 
             controllers[0].stop()
             environment.stop()
-            keyboard_obs.stop()
+            if keyboard_obs is not None:
+                keyboard_obs.stop()
 
         if config.train:
             controllers[0].publish_model()
@@ -194,7 +201,8 @@ def main() -> None:
         logger.info("Keyboard interrupt. Attempting graceful env shutdown ...")
         controllers[0].stop()
         environment.stop()
-        keyboard_obs.stop()
+        if keyboard_obs is not None:
+            keyboard_obs.stop()
 
 
 if __name__ == "__main__":

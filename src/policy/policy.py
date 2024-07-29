@@ -65,7 +65,7 @@ class PolicyBase(nn.Module):
                 wandb.run.summary["model_source_run"] = artifact.logged_by().name
                 model_dir = artifact.download()
                 model_file = os.path.join(model_dir, file_name_and_extension)
-            except wandb.CommError as exception:
+            except Exception as exception:
                 logger.info("Could not download artifact from wandb: {}", exception)
                 logger.info(f"Using policy from  local filesystem: {self._CONFIG.from_file}")
                 model_file = self._CONFIG.from_file
