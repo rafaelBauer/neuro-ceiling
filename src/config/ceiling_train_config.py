@@ -30,7 +30,7 @@ learn_algorithms = [
         weight_decay=3e-6,
         steps_per_episode=45,
         feedback_device_config=feedback_device_config,
-        load_dataset="demos_2.dat",
+        load_dataset="demos_10.dat",
         save_dataset="demos_ceiling.dat",  # Number of episodes will be appended to the name before the extension
     ),
     NoLearnAlgorithmConfig(),
@@ -61,7 +61,7 @@ policies = [
         visual_embedding_dim=256,
         proprioceptive_dim=9,
         action_dim=feedback_device_config.action_dim,
-        from_file="ceiling_pretrain_policy.pt",
+        from_file="ceiling_10_pretrain_policy_0.pt",
         save_to_file=feedback_device_config.name
         + learn_algorithms[0].name
         + "_policy.pt",  # Number of episodes will be appended to the name before the extension
