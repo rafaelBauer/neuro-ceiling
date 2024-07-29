@@ -21,7 +21,6 @@ from utils.dataset import TrajectoriesDataset, TrajectoryData
 from utils.human_feedback import HumanFeedback
 from utils.keyboard_observer import KeyboardObserver
 from utils.logging import logger
-from utils.metricslogger import MetricsLogger
 
 
 @dataclass
@@ -78,7 +77,8 @@ def main() -> None:
     """
     np.set_printoptions(suppress=True, precision=3)
     config: Config = create_config_from_args()
-    wandb.init(config=asdict(config), project=config.task, mode="offline")
+    wandb.init(config=asdict(config), project=config.task, job_type="collect_demos", mode="online")
+    wandb.run.tags = ["CollectDemos"]
 
     assert len(config.controllers) == len(
         config.policies
@@ -104,7 +104,9 @@ def main() -> None:
 
     for i, learn_algorithm_config in enumerate(config.learn_algorithms):
         if learn_algorithm_config:
-            learn_algorithm: LearnAlgorithm = create_learn_algorithm(learn_algorithm_config, policy=policies[i])
+            learn_algorithm: LearnAlgorithm = create_learn_algorithm(
+                learn_algorithm_config, policy=policies[i], keyboard_observer=keyboard_obs
+            )
             learn_algorithms.append(learn_algorithm)
 
     # Traverse controllers in reverse order to create the controller hierarchy

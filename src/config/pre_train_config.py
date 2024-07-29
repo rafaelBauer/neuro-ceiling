@@ -26,7 +26,7 @@ learn_algorithms = [
         learning_rate=3e-4,
         weight_decay=3e-6,
         steps_per_episode=45,
-        load_dataset="demos_2.dat",
+        load_dataset="demos_10.dat",
         number_of_epochs=800,
     ),
     NoLearnAlgorithmConfig(),
@@ -60,7 +60,7 @@ policies = [
         proprioceptive_dim=9,
         action_dim=4,
         # from_file="pretrain_manual_policy.pt"
-        save_to_file="ceiling_pretrain_policy.pt",
+        save_to_file="ceiling_10_pretrain_policy.pt",
     ),
     MotionPlannerPolicyConfig(),
 ]
