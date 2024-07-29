@@ -8,7 +8,6 @@ from torch import nn, Tensor
 from goal.goal import Goal
 from policy.policy import PolicyBase, PolicyBaseConfig
 from utils.device import device
-from utils.keyboard_observer import KeyboardObserver
 from utils.logging import log_constructor
 from utils.sceneobservation import SceneObservation
 
