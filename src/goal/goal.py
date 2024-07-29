@@ -3,6 +3,8 @@ from abc import abstractmethod
 
 import torch
 
+from utils.device import device
+
 
 class Goal:
     """
@@ -24,9 +26,9 @@ class Goal:
             length (int): The length of the tensor representing the goal. Defaults to 0.
         """
         if input_tensor is not None:
-            self.__tensor: torch.Tensor = input_tensor
+            self.__tensor: torch.Tensor = input_tensor.to(device=device)
         else:
-            self.__tensor: torch.Tensor = torch.zeros(length)
+            self.__tensor: torch.Tensor = torch.zeros(length).to(device=device)
         self.__completed: bool = False
         self.__completed_lock: threading.Lock = threading.Lock()
 

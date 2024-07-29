@@ -5,6 +5,7 @@ from typing import Callable
 import numpy
 from torch import Tensor
 
+from utils.device import device
 from utils.human_feedback import HumanFeedback
 from utils.sceneobservation import SceneObservation
 
@@ -32,6 +33,7 @@ class FeedbackDevice:
 
     def check_corrective_feedback(self, scene_observation: SceneObservation) -> Tensor:
         corrective_feedback = self._specific_corrective_feedback(scene_observation)
+        corrective_feedback = corrective_feedback.to(device)
         if self._reset_feedback_after_evaluation:
             self._last_feedback = numpy.zeros(self._last_feedback.size)
         return corrective_feedback

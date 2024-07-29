@@ -228,7 +228,8 @@ class ControllerBase:
             return
 
         with self._control_variables_lock:
-            action, feedback = self.__sample_action_and_feedback(self._previous_observation)
+            observation_copy = self._previous_observation.copy()
+        action, feedback = self.__sample_action_and_feedback(observation_copy)
 
         assert isinstance(
             action, Goal | RobotAction
@@ -267,11 +268,9 @@ class ControllerBase:
         self.__step_number += 1
 
     def __sample_action_and_feedback(self, scene_observation: SceneObservation) -> (Goal | RobotAction, HumanFeedback):
-        action = self._policy(scene_observation)
-        if isinstance(action, torch.Tensor):
-            action = action.to("cpu")
-            # Squeeze the batch dimension
-            action = self._action_type.from_tensor(action.squeeze(0).detach(), scene_observation)
+        action: Tensor = self._policy(scene_observation)
+        action = action.squeeze(0)
+        action: RobotAction | Goal = self._action_type.from_tensor(action.squeeze(0).detach(), scene_observation)
 
         if self._learn_algorithm is not None:
             action, feedback = self._learn_algorithm.get_human_feedback(action, scene_observation)
