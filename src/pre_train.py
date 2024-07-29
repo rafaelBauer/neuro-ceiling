@@ -4,7 +4,6 @@ from dataclasses import dataclass, asdict
 from typing import Final
 
 import numpy as np
-import torch
 import wandb
 from omegaconf import OmegaConf, SCMode
 
@@ -18,8 +17,6 @@ from learnalgorithm import LearnAlgorithmConfig, create_learn_algorithm, LearnAl
 from policy import PolicyBaseConfig, PolicyBase, create_policy
 from utils.argparse import get_config_from_args
 from utils.config import ConfigBase
-from utils.device import device
-from utils.keyboard_observer import KeyboardObserver
 from utils.logging import logger
 
 
@@ -86,9 +83,10 @@ def main() -> None:
     if config.task:
         source_path = os.path.join(source_path, config.task + "/")
 
-    if isinstance(config.environment_config, ManiSkillEnvironmentConfig):
-        keyboard_obs = None if config.environment_config.headless else KeyboardObserver()
+    if isinstance(config.environment_config, ManiSkillEnvironmentConfig) and not config.environment_config.headless:
+        keyboard_obs = None
     else:
+        from utils.keyboard_observer import KeyboardObserver
         keyboard_obs = KeyboardObserver()
 
     environment: Final[BaseEnvironment] = create_environment(config.environment_config)

@@ -8,7 +8,7 @@ from task.stack_cubes_ind_spot_config import config as task_config
 # ====== ManiSkill environment ========
 from envs.maniskill import ManiSkillEnvironmentConfig
 
-env_config = ManiSkillEnvironmentConfig(task_config=task_config, headless=False)
+env_config = ManiSkillEnvironmentConfig(task_config=task_config, headless=True)
 
 # ====== Mock environment ========
 # from envs.mock import MockEnvironmentConfig

@@ -1,12 +1,12 @@
 import importlib
 
-from utils.keyboard_observer import KeyboardObserver
+# from utils.keyboard_observer import KeyboardObserver
 from .feedbackdevice.feedbackdevice import FeedbackDevice, FeedbackDeviceConfig
 from .learnalgorithm import LearnAlgorithm, LearnAlgorithmConfig
 
 
 def create_learn_algorithm(
-    config: LearnAlgorithmConfig, keyboard_observer: KeyboardObserver, **kwargs
+    config: LearnAlgorithmConfig, keyboard_observer, **kwargs
 ) -> LearnAlgorithm:
     if config.algo_type == "NoLearnAlgorithm":
         return None
