@@ -3,7 +3,6 @@ from dataclasses import dataclass, field
 from typing import Callable
 
 import numpy
-import torch
 from torch import Tensor
 
 from utils.human_feedback import HumanFeedback
