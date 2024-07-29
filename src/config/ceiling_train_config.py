@@ -19,7 +19,7 @@ env_config = ManiSkillEnvironmentConfig(task_config=task_config, headless=True)
 from learnalgorithm.behaviorcloningalgorithm import BehaviorCloningAlgorithmConfig
 from learnalgorithm.ceilingalgorithm import CeilingAlgorithmConfig
 from learnalgorithm.learnalgorithm import LearnAlgorithmConfig, NoLearnAlgorithmConfig
-from learnalgorithm.feedbackdevice.keyboardfeedback import KeyboardFeedbackConfig
+# from learnalgorithm.feedbackdevice.keyboardfeedback import KeyboardFeedbackConfig
 from learnalgorithm.feedbackdevice.automaticfeedback import AutomaticFeedbackConfig
 
 feedback_device_config = AutomaticFeedbackConfig(action_dim=4, task_config=task_config)
