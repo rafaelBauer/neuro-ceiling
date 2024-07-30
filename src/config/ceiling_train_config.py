@@ -23,7 +23,7 @@ from learnalgorithm.learnalgorithm import LearnAlgorithmConfig, NoLearnAlgorithm
 # from learnalgorithm.feedbackdevice.keyboardfeedback import KeyboardFeedbackConfig
 from learnalgorithm.feedbackdevice.automaticfeedback import AutomaticFeedbackConfig
 
-feedback_device_config = AutomaticFeedbackConfig(action_dim=4, task_config=task_config)
+feedback_device_config = AutomaticFeedbackConfig(action_dim=4, task_config=task_config, corrective_probability=100)
 learn_algorithms = [
     CeilingAlgorithmConfig(
         batch_size=16,
