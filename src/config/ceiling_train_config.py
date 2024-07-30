@@ -64,6 +64,7 @@ policies = [
         action_dim=feedback_device_config.action_dim,
         from_file="ceiling_10_pretrain_policy_0.pt",
         save_to_file=feedback_device_config.name
+        + "_"
         + learn_algorithms[0].name
         + "_policy.pt",  # Number of episodes will be appended to the name before the extension
     ),
