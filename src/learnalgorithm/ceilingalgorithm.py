@@ -55,8 +55,6 @@ class CeilingAlgorithm(LearnAlgorithm):
 
         super().__init__(config, policy, RandomSampler, DataLoader, loss_function, optimizer)
 
-        # TODO: for now have this as a keyboard observer,
-        #       but should be a feedback device which could also come from EEG
         self._feedback_device: FeedbackDevice = feedback_device
         self._feedback_device.subscribe_callback_to_evaluative_feedback(self.__feedback_device_label_callback)
 
@@ -84,18 +82,13 @@ class CeilingAlgorithm(LearnAlgorithm):
         self, next_action: Goal | RobotAction, scene_observation: SceneObservation
     ) -> (Goal | RobotAction, HumanFeedback):
         action = next_action
-        corrective_feedback = self._feedback_device.check_corrective_feedback(scene_observation)
-        if torch.any(corrective_feedback):
-            action = PickPlaceObject.from_tensor(corrective_feedback, scene_observation)
-            if action != next_action:
-                evaluative_feedback = HumanFeedback.CORRECTED
-                logger.debug(f"Corrected action:\n" f"     original: {next_action}\n" f"     corrected: {action}")
-            else:
-                # Reset "action" to original given action
-                action = next_action
-                evaluative_feedback = HumanFeedback.GOOD
-        else:
-            evaluative_feedback = self._feedback_device.get_evaluative_feedback()
+        action_tensor = next_action.to_tensor()
+        corrected_action_tensor, evaluative_feedback = self._feedback_device.sample_feedback(
+            action_tensor, scene_observation
+        )
+        if evaluative_feedback == HumanFeedback.CORRECTED:
+            action = PickPlaceObject.from_tensor(corrected_action_tensor, scene_observation)
+            logger.debug(f"Corrected action:\n" f"     original: {next_action}\n" f"     corrected: {action}")
         return action, evaluative_feedback
 
     @override

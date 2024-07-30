@@ -46,7 +46,7 @@ class KeyboardFeedback(FeedbackDevice):
 
     @override
     def _specific_corrective_feedback(self, scene_observation: SceneObservation) -> Tensor:
-        return torch.tensor(self._last_feedback)
+        return torch.tensor(self._last_corrective_feedback)
 
     def __key_pressed_callback(self, action: numpy.array):
         """
@@ -62,10 +62,10 @@ class KeyboardFeedback(FeedbackDevice):
             return
 
         if action[5] > 0.5:  # "o" key
-            self._last_feedback[0] = True
+            self._last_corrective_feedback[0] = True
         elif action[4] < -0.5:  # "i" key
-            self._last_feedback[1] = True
+            self._last_corrective_feedback[1] = True
         elif action[5] < -0.5:  # "u" key
-            self._last_feedback[2] = True
+            self._last_corrective_feedback[2] = True
         else:
-            self._last_feedback[3] = True
+            self._last_corrective_feedback[3] = True
