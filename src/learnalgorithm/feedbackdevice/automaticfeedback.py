@@ -29,7 +29,7 @@ class AutomaticFeedbackConfig(FeedbackDeviceConfig):
         return (
             "automatic_"
             + str(self.corrective_evaluative_ratio)
-            + "_corr"
+            + "_corr_"
             + str(100 - self.corrective_evaluative_ratio)
             + "_eval"
         )

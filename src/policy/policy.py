@@ -62,7 +62,9 @@ class PolicyBase(nn.Module):
                 task_name = os.path.dirname(self._CONFIG.from_file).split("/")[-1]
                 artifact = wandb.run.use_artifact(f"{task_name}/{os.path.splitext(file_name_and_extension)[0]}:latest")
                 wandb.run.summary["model_version"] = artifact.source_name
+                wandb.run.summary["model_name"] = artifact.name.split(":")[0]
                 wandb.run.summary["model_source_run"] = artifact.logged_by().name
+                wandb.run.summary["policy_type"] = self._CONFIG.policy_type
                 model_dir = artifact.download()
                 model_file = os.path.join(model_dir, file_name_and_extension)
             except Exception as exception:
