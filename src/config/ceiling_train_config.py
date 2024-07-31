@@ -8,7 +8,7 @@ from task.stack_cubes_ind_spot_config import config as task_config
 # ====== ManiSkill environment ========
 from envs.maniskill import ManiSkillEnvironmentConfig
 
-env_config = ManiSkillEnvironmentConfig(task_config=task_config, headless=False)
+env_config = ManiSkillEnvironmentConfig(task_config=task_config, headless=True)
 
 # ====== Mock environment ========
 # from envs.mock import MockEnvironmentConfig
@@ -23,7 +23,12 @@ from learnalgorithm.learnalgorithm import LearnAlgorithmConfig, NoLearnAlgorithm
 # from learnalgorithm.feedbackdevice.keyboardfeedback import KeyboardFeedbackConfig
 from learnalgorithm.feedbackdevice.automaticfeedback import AutomaticFeedbackConfig
 
-feedback_device_config = AutomaticFeedbackConfig(action_dim=4, task_config=task_config, corrective_probability=100)
+noise_distribution = [[88.9, 6.6, 0.2, 4.3], [9.7, 85.3, 0.2, 4.8], [0.5, 1.1, 90.4, 8.0], [1.6, 2.1, 3.8, 92.5]]
+# noise_distribution = []
+
+feedback_device_config = AutomaticFeedbackConfig(
+    action_dim=4, task_config=task_config, corrective_probability=100, noise_distribution=noise_distribution
+)
 learn_algorithms = [
     CeilingAlgorithmConfig(
         batch_size=16,
@@ -56,6 +61,8 @@ controllers = [
 from policy.ceilingpolicy import CeilingPolicyConfig
 from policy.motionplannerpolicy import MotionPlannerPolicyConfig
 
+has_noise = "noisy" if noise_distribution else "no_noise"
+
 # The policy at index 0 is added to controllers[0], the policy at index N-1 is added to controllers[N-1]
 policies = [
     CeilingPolicyConfig(
@@ -66,6 +73,8 @@ policies = [
         save_to_file=feedback_device_config.name
         + "_"
         + learn_algorithms[0].name
+        + "_"
+        + has_noise
         + "_policy.pt",  # Number of episodes will be appended to the name before the extension
     ),
     MotionPlannerPolicyConfig(),

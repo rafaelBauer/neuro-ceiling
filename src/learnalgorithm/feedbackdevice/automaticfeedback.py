@@ -16,7 +16,7 @@ from utils.pose import Pose
 from utils.sceneobservation import SceneObservation
 
 
-@dataclass
+@dataclass(kw_only=True)
 class AutomaticFeedbackConfig(FeedbackDeviceConfig):
     _DEVICE_TYPE: str = field(init=False, default="AutomaticFeedback")
     task_config: TaskConfig = field(init=True)

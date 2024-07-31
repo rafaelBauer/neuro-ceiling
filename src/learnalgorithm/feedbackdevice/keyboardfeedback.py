@@ -12,7 +12,7 @@ from utils.keyboard_observer import KeyboardObserver
 from utils.sceneobservation import SceneObservation
 
 
-@dataclass
+@dataclass(kw_only=True)
 class KeyboardFeedbackConfig(FeedbackDeviceConfig):
     _DEVICE_TYPE: str = field(init=False, default="KeyboardFeedback")
 

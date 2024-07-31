@@ -23,7 +23,7 @@ from utils.sceneobservation import SceneObservation
 @dataclass
 class CeilingAlgorithmConfig(LearnAlgorithmConfig):
     _ALGO_TYPE: str = field(init=False, default="CeilingAlgorithm")
-    feedback_device_config: FeedbackDeviceConfig = field(init=True, default_factory=FeedbackDeviceConfig(4))
+    feedback_device_config: FeedbackDeviceConfig = field(init=True, default_factory=FeedbackDeviceConfig(action_dim=0))
     load_dataset: str = field(init=True, default="")
     save_dataset: str = field(init=True, default="")
 
