@@ -125,6 +125,8 @@ class TrajectoriesDataset(Dataset):
         for trajectory_step in trajectory:
             if trajectory_step.feedback == HumanFeedback.CORRECTED:
                 trajectory_step.feedback = alpha
+            elif trajectory_step.feedback == HumanFeedback.BAD:
+                trajectory_step.feedback = 1
 
         return trajectory
 
@@ -149,6 +151,7 @@ class TrajectoriesDataset(Dataset):
         assert isinstance(step.feedback, Tensor), f"Expected feedback to be a tensor, got {type(step.feedback)}"
 
         self.__feedback_counter[HumanFeedback(step.feedback[0].item())] += 1
+        self.adapt_action(self.__current_trajectory[-1])
         return
 
     def save_current_traj(self):
@@ -203,7 +206,13 @@ class TrajectoriesDataset(Dataset):
         self.__feedback_counter[HumanFeedback(self.__current_trajectory[-1].feedback[0].item())] -= 1
         self.__current_trajectory[-1].feedback = torch.Tensor([feedback])
         self.__feedback_counter[feedback] += 1
+        self.adapt_action(self.__current_trajectory[-1])
         return
+
+    def adapt_action(self, step: TrajectoryData):
+        if step.feedback == HumanFeedback.BAD:
+            # One-cold encode the bad action
+            step.action = 1-step.action
 
     def __down_sample_current_trajectory(self):
         """
