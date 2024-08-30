@@ -58,6 +58,8 @@ def create_config_from_args() -> Config:
     config: Config = OmegaConf.to_container(dict_config, resolve=True, structured_config_mode=SCMode.INSTANTIATE)
     if args.task:
         config.task = args.task
+    if args.model_file:
+        config.policies[0].from_file = args.model_file
     return config
 
 
@@ -190,7 +192,7 @@ def main() -> None:
                 keyboard_obs.stop()
 
         if config.train:
-            controllers[0].publish_model()
+            controllers[0].publish_model(config.train)
             logger.info("Successfully trained policy for task {}", config.task)
 
         if config.episodes > 0 and learn_algorithms[0] is not None:

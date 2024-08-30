@@ -50,7 +50,7 @@ policies = [
         visual_embedding_dim=256,
         proprioceptive_dim=9,
         action_dim=4,
-        from_file="automatic_100_corr0_evalceiling_policy_100.pt",
+        from_file="automatic_100_corr_0_eval_ceiling_noisy_policy_100.pt",
     ),
     MotionPlannerPolicyConfig(),
 ]
@@ -61,7 +61,7 @@ config = Config(
     policies=policies,
     learn_algorithms=learn_algorithms,
     environment_config=env_config,
-    episodes=100,
+    episodes=200,
     task="StackCubesInd",
     train=False,
 )

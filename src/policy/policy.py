@@ -80,14 +80,17 @@ class PolicyBase(nn.Module):
             logger.info(f"Saving policy to file: {self._CONFIG.save_to_file}")
             torch.save(self.state_dict(), self._CONFIG.save_to_file)
 
-    def publish_model(self):
+    def publish_model(self, trained_model: bool = False):
         if self._CONFIG.save_to_file:
             self.save_to_file()
             logger.info(f"Publishing policy to wandb: {self._CONFIG.save_to_file}")
             file_name_and_extension = os.path.basename(self._CONFIG.save_to_file)
             artifact = wandb.Artifact(f"{os.path.splitext(file_name_and_extension)[0]}", type="model")
             artifact.add_file(self._CONFIG.save_to_file)
-            wandb.run.log_artifact(artifact)
+            published_artifact = wandb.run.log_artifact(artifact)
+            if trained_model:
+                wandb.run.summary["model_version"] = published_artifact.source_name
+                wandb.run.summary["model_name"] = published_artifact.name.split(":")[0]
 
     @abstractmethod
     def forward(self, states) -> Tensor:

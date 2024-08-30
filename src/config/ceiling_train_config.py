@@ -50,7 +50,7 @@ from controller.periodiccontroller import PeriodicControllerConfig
 # at the next index.
 controllers = [
     PeriodicControllerConfig(
-        ACTION_TYPE="PickPlaceObject", polling_period_s=5, initial_goal=[0, 0, 0, 1], log_metrics=True
+        ACTION_TYPE="PickPlaceObject", polling_period_s=5, initial_goal=[0, 0, 0, 1], log_metrics=True, max_steps=100
     ),
     PeriodicControllerConfig(
         ACTION_TYPE="TargetJointPositionAction", polling_period_s=0.05, initial_goal=[0, 0, 0, 0, 0, 0, 0]

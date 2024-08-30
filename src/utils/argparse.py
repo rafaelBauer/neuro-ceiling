@@ -49,6 +49,14 @@ def parse_args(
             help="Path to a dataset. May be provided instead of -t.",
         )
 
+    parser.add_argument(
+        "-m",
+        "--model_file",
+        type=str,
+        default="",
+        help="Sets model file name",
+    )
+
     for arg in extra_args:
         arg_flag = arg.pop("flag")
         arg_name = arg.pop("name")
