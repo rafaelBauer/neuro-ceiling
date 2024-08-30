@@ -51,7 +51,7 @@ class ManualPolicy(PolicyBase):
         # For when the keyboard observer is not working
         action = Tensor([0.0, 0.0, 0.0, -0.9, 0.0, 0.9, 0.0])
         assert isinstance(states, SceneObservation), "states should be of type SceneObservation"
-        action = self._feedback_device.check_corrective_feedback(action, states).to('cpu').numpy()
+        action = self._feedback_device.check_corrective_feedback(action, states).to("cpu").numpy()
         return self.specific_forward(action, states)
 
     @override

@@ -23,7 +23,7 @@ from learnalgorithm.learnalgorithm import LearnAlgorithmConfig, NoLearnAlgorithm
 # from learnalgorithm.feedbackdevice.keyboardfeedback import KeyboardFeedbackConfig
 from learnalgorithm.feedbackdevice.automaticfeedback import AutomaticFeedbackConfig
 
-#noise_distribution = [[88.9, 6.6, 0.2, 4.3], [9.7, 85.3, 0.2, 4.8], [0.5, 1.1, 90.4, 8.0], [1.6, 2.1, 3.8, 92.5]]
+# noise_distribution = [[88.9, 6.6, 0.2, 4.3], [9.7, 85.3, 0.2, 4.8], [0.5, 1.1, 90.4, 8.0], [1.6, 2.1, 3.8, 92.5]]
 noise_distribution = []
 
 feedback_device_config = AutomaticFeedbackConfig(

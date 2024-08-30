@@ -212,7 +212,7 @@ class TrajectoriesDataset(Dataset):
     def adapt_action(self, step: TrajectoryData):
         if step.feedback == HumanFeedback.BAD:
             # One-cold encode the bad action
-            step.action = 1-step.action
+            step.action = 1 - step.action
 
     def __down_sample_current_trajectory(self):
         """
