@@ -323,8 +323,8 @@ class ControllerBase:
         """
         self.__post_step_function = post_step_function
 
-    def publish_model(self):
-        self._policy.publish_model()
+    def publish_model(self, trained_model: bool = False):
+        self._policy.publish_model(trained_model)
 
     def publish_dataset(self):
         if self._learn_algorithm is not None:

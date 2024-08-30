@@ -43,7 +43,7 @@ class CeilingPolicy(PolicyBase):
         self.__lstm = nn.LSTM(LSTM_DIM, LSTM_DIM)
         self.__lstm_state: tuple[torch.Tensor, torch.Tensor] | None = None
 
-        self.__action_net = nn.Sequential(nn.Linear(LSTM_DIM, config.action_dim), nn.Tanh(), nn.Softmax(dim=-1))
+        self.__action_net = nn.Sequential(nn.Linear(LSTM_DIM, config.action_dim), nn.Tanh())
         self.__action_net = self.__action_net.to(device)
 
         self._CONFIG: CeilingPolicyConfig = config
